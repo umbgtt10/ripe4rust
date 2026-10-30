@@ -1,0 +1,27 @@
+[package]
+name = "cargo-ripe4rust"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Cargo subcommand that decides, for every upgrade a Rust workspace could take, whether it is ripe to apply, worth asking about, or not yet"
+readme = "../README.md"
+documentation = "https://docs.rs/cargo-ripe4rust"
+keywords = ["cargo", "subcommand", "dependencies", "upgrade", "semver"]
+categories = [
+    "development-tools::cargo-plugins",
+    "development-tools",
+    "command-line-utilities",
+]
+
+[[bin]]
+name = "cargo-ripe4rust"
+path = "src/main.rs"
+
+[dependencies]
+ripe4rust-core.workspace = true
+
+[lints]
+workspace = true

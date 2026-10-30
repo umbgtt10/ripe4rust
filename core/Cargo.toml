@@ -1,0 +1,16 @@
+[package]
+name = "ripe4rust-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "The rules behind cargo-ripe4rust: for every upgrade a Rust workspace could take, whether it is ripe, worth asking about, or not yet"
+readme = "../README.md"
+documentation = "https://docs.rs/ripe4rust-core"
+keywords = ["cargo", "dependencies", "upgrade", "semver"]
+categories = ["development-tools"]
+
+[lints]
+workspace = true
