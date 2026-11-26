@@ -112,7 +112,11 @@ const FIELDS: [(&str, &str, &str); 115] = [
         "the crates it moves directly: a group's members, `rust` for the toolchain",
     ),
     ("plan", "units[].from", "the version it leaves"),
-    ("plan", "units[].to", "the version it takes"),
+    (
+        "plan",
+        "units[].to",
+        "the version it takes; null for the rest, and for a compatible unit whose own move a pin holds -- `evidence.held` names that move, and the table writes `held`",
+    ),
     (
         "plan",
         "units[].moves",

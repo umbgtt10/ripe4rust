@@ -4,6 +4,7 @@
 
 use crate::support::plans::breaking;
 use crate::support::plans::compatible;
+use crate::support::plans::moved;
 use crate::support::plans::plan;
 use crate::support::plans::rest;
 use crate::support::plans::toolchain;
@@ -67,6 +68,24 @@ fn hold_prints_the_pins() {
         text.starts_with(
             "hold compatible:widget: under [workspace.metadata.ripe4rust.pins] at Cargo.toml:40\n"
         ),
+        "{text}"
+    );
+}
+
+#[test]
+fn plan_marks_a_unit_whose_own_move_is_held() {
+    // Arrange
+    let mut held = compatible();
+    held.unit.to = None;
+    held.unit.moves = vec![moved("widget_builder", Some("4.6.6"), Some("4.6.7"))];
+    held.unit.held = vec![moved("widget", Some("4.6.6"), Some("4.6.7"))];
+
+    // Act
+    let text = TableRenderer.plan(&plan(vec![held]));
+
+    // Assert
+    assert!(
+        text.contains("widget (+1 transitive)  compatible  4.6.6     held      ripe"),
         "{text}"
     );
 }

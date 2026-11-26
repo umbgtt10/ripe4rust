@@ -617,6 +617,13 @@ In the table, `(+N)` counts a group's other members and `(+N transitive)` the
 crates a compatible unit pulls in; the workspace is named by its fingerprint's
 first eight characters, and the diagnostics follow the table, one a line.
 
+A compatible unit whose own move a pin holds -- its crate pinned with `hold =
+"all"` -- takes that crate to no version: its `to` is null, the table writes
+`held` in its place, and `evidence.held` names the move, so it never reads as a
+move to the version in use. It still applies the moves it pulls in, one by one.
+One whose crate does not move, only what it pulls in, keeps the version in use
+as its `to`.
+
 A breaking unit's `apply` names every manifest line that states the
 dependency's requirement, as `file:line`, the requirement to write there, and
 then the `cargo update -p <crate>` that takes it; its evidence carries the

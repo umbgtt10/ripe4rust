@@ -4,6 +4,7 @@
 
 use crate::support::json::value;
 use crate::support::plans::compatible;
+use crate::support::plans::moved;
 use crate::support::plans::rest;
 use cargo_ripe4rust::render::json::unit_json::UnitJson;
 use serde_json::json;
@@ -53,6 +54,26 @@ fn document_of_a_compatible_unit_is_the_design_s_shape() {
                 "held": [],
             },
         })
+    );
+}
+
+#[test]
+fn document_of_a_unit_whose_own_move_is_held_takes_no_version() {
+    // Arrange
+    let mut held = compatible();
+    held.unit.to = None;
+    held.unit.moves = vec![moved("widget_builder", Some("4.6.6"), Some("4.6.7"))];
+    held.evidence.held = vec![moved("widget", Some("4.6.6"), Some("4.6.7"))];
+
+    // Act
+    let value = value(&UnitJson.document(&held));
+
+    // Assert
+    assert_eq!(value["from"], json!("4.6.6"));
+    assert_eq!(value["to"], json!(null));
+    assert_eq!(
+        value["evidence"]["held"],
+        json!([{ "crate": "widget", "from": "4.6.6", "to": "4.6.7" }])
     );
 }
 

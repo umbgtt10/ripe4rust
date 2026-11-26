@@ -180,6 +180,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `xtask` states its own `rust-version`, 1.88, which its let-chain needs, instead of inheriting the workspace's 1.85.
 - `CLAUDE.md`, the README and `docs/DESIGN.md`'s status say slice 1 is in place, and where its code lives.
 
+### Fixed
+- A compatible unit whose own move a pin holds (`hold = "all"`) no longer reads as a move to the version in use,
+  `memchr 2.5.0 -> 2.5.0`: its `to` is null in the JSON, `held` in the table, and `evidence.held` names the move;
+  its summary counts the crates it pulls in, and its question asks to move the crate, naming no version.
+
 ## [0.0.1] — 2026-10-30
 
 ### Added

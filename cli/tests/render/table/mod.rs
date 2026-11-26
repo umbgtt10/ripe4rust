@@ -9,3 +9,4 @@ pub mod guide_table_tests;
 pub mod hold_table_tests;
 pub mod row_label_tests;
 pub mod table_renderer_tests;
+pub mod target_cell_tests;
