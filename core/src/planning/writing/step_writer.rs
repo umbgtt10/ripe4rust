@@ -48,8 +48,11 @@ impl StepWriter {
             UnitKind::Compatible => self.compatible(unit),
             UnitKind::Breaking => {
                 let mut apply = edits.to_vec();
-                apply.extend(unit.members.iter().map(|member| Step::Run {
-                    command: format!("cargo update -p {}", self.spec(member, unit.from.as_ref())),
+                apply.extend(unit.moves.iter().map(|lock_move| Step::Run {
+                    command: format!(
+                        "cargo update -p {}",
+                        self.spec(&lock_move.name, lock_move.from.as_ref())
+                    ),
                 }));
                 apply
             }

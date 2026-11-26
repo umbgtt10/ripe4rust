@@ -58,6 +58,26 @@ fn spec_of_a_crate_held_at_several_versions_names_its_own() {
 }
 
 #[test]
+fn steps_of_a_breaking_group_update_every_member_at_its_own_version() {
+    // Arrange
+    let mut group = breaking("widget", "2.0.119", "3.0.9");
+    group.members.push(String::from("syn"));
+    group.moves.push(moved("syn", "1.0.109", "2.0.0"));
+
+    // Act
+    let steps = writer().steps(&group, &[]);
+
+    // Assert
+    assert_eq!(
+        steps.map(|steps| steps.apply),
+        Some(vec![
+            run("cargo update -p widget"),
+            run("cargo update -p syn@1.0.109")
+        ])
+    );
+}
+
+#[test]
 fn steps_of_a_breaking_unit_edit_its_lines_then_update_it() {
     // Arrange
     let edits = vec![
