@@ -1,8 +1,9 @@
 # ripe4rust -- design
 
-Status: settled 2026-11-26; the agent's contract added the same day. Nothing
-here is implemented. The decisions that were not obvious each have an ADR
-under `docs/ADRs/`.
+Status: settled 2026-11-26; the agent's contract added the same day. Slices
+0 and 1 of "Delivery" are implemented: the scaffolding, and the core with the
+renderers. The decisions that were not obvious each have an ADR under
+`docs/ADRs/`.
 
 ## The question
 
@@ -73,8 +74,10 @@ the workspace's owner has. Everything else it carries out on its own.
     stable release (ADR-TheToolchainIsAUnit).
 - **Unit id** -- `<kind>:<crate>`: `compatible:clap`, `breaking:syn`,
   `toolchain:rust`; `rest` for the last compatible unit; `advisory:<id>` for
-  an advisory no unit clears. A group goes by its first member's name. A
-  compatible unit's single moves, for bisecting it, are `<unit>/<crate>`.
+  an advisory no unit clears, and `advisory:<crate>@<version>` for a yanked
+  release none clears; such a row's kind is `advisory`. A group goes by its
+  first member's name. A compatible unit's single moves, for bisecting it, are
+  `<unit>/<crate>`.
 - **Line** -- every release of one major (`2.x`), or one minor for `0.x`
   (`0.13.x`). For the toolchain, one minor (`1.100.x`).
 - **Group** -- crates released together, moved as one unit
@@ -102,7 +105,7 @@ the workspace's owner has. Everything else it carries out on its own.
 
 | signal | from |
 |---|---|
-| available versions, yanked flags, `rust-version`, release dates | the crates.io sparse index (`pubtime`), for every crate in the lock |
+| available versions, yanked flags, `rust-version`, release dates | the crates.io sparse index (`pubtime`), for every crate in the lock and every crate a pin's condition names |
 | a direct dependency's repository, for grouping | the crates.io API, for direct dependencies only |
 | what a compatible unit moves | `cargo update --dry-run --recursive -p <crate>` |
 | the dependency graph, which targets reach a crate | `cargo metadata` |
@@ -144,12 +147,21 @@ version is not offered yet, recorded as evidence on the toolchain unit
 
 A version within the toolchain but needing more than the workspace's declared
 `rust-version` is a candidate. Its unit raises `rust-version` too, and for a
-published crate that is rule 8's question.
+published crate that is rule 8's question. It raises the `rust-version` of
+every member that uses the crate and declares a lower one; a member that
+declares none promises nothing, and is not raised.
+
+The toolchain's youth is judged by `toolchain-young-days` alone: a minor
+rarely has three releases. Its evidence names, for each direct dependency, the
+newest release the toolchain in use cannot build and the new one can.
 
 A line is **young** while either holds: its first release is under
 `young-days` old, or it has fewer than `young-releases` releases. It has
 **settled** otherwise. A line is **active** while it has had a release within
-`stale-months`, and **stale** otherwise.
+`stale-months`, and **stale** otherwise. A line's releases are those neither
+yanked nor pre-releases, whether or not the toolchain can build them. A
+release the index gives no date for is older than any it does: it makes no
+line young and no line active.
 
 ## What each unit moves
 
@@ -159,7 +171,10 @@ A line is **young** while either holds: its first release is under
   because applying it moves it for the rest. The moves `cargo update
   --dry-run` makes for the whole workspace and no unit reaches form one last
   unit, **the rest**. A move of a crate pinned with `hold = "all"` is left
-  out of every unit, which then applies its other moves one by one.
+  out of every unit, which then applies its other moves one by one -- unless
+  it clears an advisory or a yanked release, which no pin holds. A unit whose
+  moves all belong to earlier units is no unit. A crate the members use at
+  several versions is judged from the oldest.
 - **Breaking:** the direct crate and its target version. What the lock moves
   with it is known only once the manifest is edited, which ripe4rust never
   does; `check` reports it after the agent has applied it.
@@ -169,9 +184,14 @@ A line is **young** while either holds: its first release is under
 
 An advisory or a yanked release in use is attached to the unit whose moves
 clear it, wherever it sits in the tree -- an advisory on a transitive crate
-lands on the unit of the direct dependency that pulls it. One that no unit
-clears gets a row of its own: **ask**, urgent, "replace the crate, or accept it
-in `deny.toml`'s `[advisories] ignore` with its reason".
+lands on the unit of the direct dependency that pulls it. Where several units
+clear it, it lands on the first in plan order: units by crate name, a crate's
+compatible unit before its breaking one, the toolchain as `rust`, then the
+rest, then the advisory rows. A move clears an advisory when it takes the
+crate off the affected version to one the advisory names patched or
+unaffected; it clears a yanked release when it takes the crate off it. One
+that no unit clears gets a row of its own: **ask**, urgent, "replace the
+crate, or accept it in `deny.toml`'s `[advisories] ignore` with its reason".
 
 ## The rules
 
@@ -201,19 +221,28 @@ asks it in every workspace that names one.
 A pin holds what its `hold` names (ADR-APinHoldsALine): by default the move to
 a new line, so a crate pinned on its major still takes its patch releases;
 with `hold = "all"`, every move. Rules 4 and 5 apply to a unit only where its
-pin holds what the unit would move.
+pin holds what the unit would move. Where several pins hold it, rule 4 needs
+them all unreleased and holding all of it, and rule 5 takes the first that is
+released.
 
 With no gates declared, nothing can validate a unit, so every unit rules 2,
 10 and 11 would call ripe is reported **ask**, "declare the gates", and the
-plan carries the diagnostic that says so.
+plan carries the diagnostic that says so. The unit keeps the rule that called
+it ripe, and its urgency. An advisory row is decided by no rule: its `rule` is
+null.
 
 ### The verdict for a breaking unit that needs asking
 
 - **Migrate now**: the line in use is stale while the new one is active, or
-  migrating removes a second copy of the crate from the tree.
+  migrating removes a second copy of the crate from the tree -- the lock
+  already holds it on the new line, and nothing outside the workspace's
+  members depends on the copy in use.
 - **Plan it**: the new line has settled and the footprint is under
   `moderate-footprint`.
 - **Wait**: anything else, with the reason.
+
+A breaking unit that rule 7 or rule 8 asks carries its verdict too, among its
+reasons and as its question's recommendation.
 
 ### Against drift
 
@@ -226,7 +255,10 @@ hold:
 
 Either turns the unit into **ask** with the suggestion "overripe". A freeze
 still holds: it ends on its own date. Rules 1 to 3 already override
-everything.
+everything. "Two majors behind" counts lines -- majors, or minors for `0.x`
+and the toolchain -- among the candidates newer than the line in use, and "a
+newer line" is any of them; the unit keeps the number of the rule whose hold
+it overrides, 4 or 9.
 
 ## Footprint and exposure
 
@@ -242,8 +274,9 @@ One `syn` parse of the workspace's sources answers both
   reachable from the crate's `lib.rs` through `pub mod` declarations.
 
 A parse can be wrong about exposure (a type alias, a macro that expands to a
-public item). The policy can override it, crate by crate. A source file the
-parse cannot read is a warning: the footprint may be low.
+public item). The policy can override it, crate by crate: `public` exposes the
+crate in every published member that uses it, `private` in none. A source file
+the parse cannot read is a warning: the footprint may be low.
 
 ## Groups
 
@@ -252,6 +285,9 @@ in lockstep. They form one unit when
 
 - they share a repository and released the same version on the same day, or
 - one requires an exact version (`=x.y.z`) of the other.
+
+Only units of one kind group: the version is the one each moves to, and the
+exact requirement is read from the lock.
 
 A group is judged as one unit; its footprint and exposure are the members'
 together, and its youth is its youngest member's.
@@ -293,7 +329,11 @@ memchr = { reason = "2.7.6 broke stage 2: <the gate's failure>", review = "2026-
 ```
 
 A pin without a reason, or without a review date or a release condition, is
-an error, reported before any rule runs. A release condition is either
+an error, reported before any rule runs. A pin is released on its review date
+or after it, or once the index holds a release, not yanked, that meets its
+condition. A pin named `rust` on its line lets a patch release of the
+toolchain through and holds a new minor. A freeze is open while the plan's
+date is before `freeze-until`. A release condition is either
 checkable -- a crate reaching a version, read from the index -- or in words.
 One in words is honest but cannot be checked, so it must come with a review
 date; a pin with neither is refused (ADR-APinConditionCanBeChecked). A pin
@@ -301,7 +341,11 @@ named `rust` holds the toolchain unit. A pin on a crate that is not in the
 tree any more is a warning: remove it.
 
 A key the policy does not know is an error, not ignored: a misspelt threshold
-would otherwise apply its default without a word.
+would otherwise apply its default without a word. A value of the wrong kind --
+a threshold in words, a date that is no date, a `hold` other than `line` or
+`all` -- is the error `policy-invalid-value`; every problem the policy has is
+reported at once, before any rule runs. An empty `reason` is no reason, and
+`gates = []` declares no gates.
 
 ## What a run prints
 
@@ -337,6 +381,11 @@ Every problem found on the way is a diagnostic (ADR-EveryProblemSaysWhatToDo):
 ripe4rust does not panic at its caller. A failure of its own is the
 diagnostic `internal`, with what it was doing and where to report it.
 
+The policy is read first, and its errors stop the command before any other
+input is read; then the toolchain, whose unknown targets stop it too; then the
+rest. An input that cannot be read stops the command at once, with every
+diagnostic found up to it.
+
 The problems the design already names, at least:
 
 | code | severity | when |
@@ -356,6 +405,14 @@ The problems the design already names, at least:
 | `source-unparsed` | warning | a source file the parse could not read |
 | `plan-stale` | error | `check` or `hold` against a workspace changed outside the plan |
 | `internal` | error | a failure of ripe4rust's own |
+| `policy-invalid-value` | error | a key in `[workspace.metadata.ripe4rust]` whose value is not the kind it must be |
+| `cargo-update-failed` | error | `cargo update --dry-run` could not run |
+| `cargo-metadata-failed` | error | `cargo metadata` could not run |
+| `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
+| `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
+
+Of these, the policy's own codes, `target-unknown` and `gates-undeclared` need
+a person: each asks for a fact or a decision only the owner has.
 
 ### The plan
 
@@ -420,11 +477,33 @@ the rest              compatible  --        --        ripe             2 moves n
 }
 ```
 
+Beyond the example, a unit carries its `members` -- a group's crates, `rust`
+for the toolchain -- and its `reasons`, the table's last column; an `apply`
+step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
+"value": "..." }`; `evidence` also names the line in use with its first
+release, the footprint's locations, the versions the toolchain unit would
+release and the moves a pin holds out of the unit. The document's own keys
+come in the order shown; the objects within it, with their keys sorted. A
+document for a failure carries `schema`, `command` and `diagnostics` alone.
+
+In the table, `(+N)` counts a group's other members and `(+N transitive)` the
+crates a compatible unit pulls in; the workspace is named by its fingerprint's
+first eight characters, and the diagnostics follow the table, one a line.
+
 A breaking unit's `apply` names every manifest line that states the
 dependency's requirement, as `file:line`, the requirement to write there, and
 then the `cargo update -p <crate>` that takes it; its evidence carries the
-footprint's locations, the migration's work list. The toolchain unit's
-`apply` is the channel to write in `rust-toolchain.toml`.
+footprint's locations, the migration's work list. The requirement written is
+the target version itself, `3.0.9`, a caret requirement; a `rust-version` the
+target needs raised is written the same way, at its own line. The toolchain
+unit's `apply` is the channel to write in `rust-toolchain.toml`.
+
+A compatible unit with a move held out of it, and the rest, whose moves are
+taken one at a time so as not to take another unit's, apply one `cargo update
+-p <crate> --precise <version>` per move; a compatible unit splits only where
+it moves two crates or more. A crate the lock holds at several versions is
+named `<crate>@<version>`. `revert` restores `Cargo.lock`, the manifests a
+breaking unit edits too, and only `rust-toolchain.toml` for the toolchain.
 
 The rule that decided and the evidence it read are always included: a caller
 asking a person must be able to show why.
@@ -454,6 +533,19 @@ An urgent unit with no fix offers "replace the crate" and "accept it in
 `deny.toml`"; a pin to revisit offers "unpin" and "keep it, with a new review
 date". Every option's `then` is a step the agent can carry out without asking
 again.
+
+The answers, by the way a unit asks:
+
+| the unit | options | recommended |
+|---|---|---|
+| an advisory row | `replace`, `accept` | `replace` |
+| urgent, with no gates | `declare-gates`, `take-it` (`migrate-now` if breaking), `accept` | `declare-gates` |
+| urgent | `take-it` (`migrate-now` if breaking), `accept` -- an urgent unit is never held | `take-it` |
+| not urgent, with no gates | `declare-gates`, `take-it` (`migrate-now` if breaking), `wait` | `declare-gates` |
+| a pin due (rule 5), or a pinned unit overripe | `unpin`, `keep-pinned` | `unpin` |
+| breaking, overripe | `migrate-now`, `plan-it`, `wait` | `migrate-now` |
+| breaking, otherwise | `migrate-now`, `plan-it`, `wait` | its verdict |
+| anything else | `take-it`, `wait` | `take-it` |
 
 ## Commands
 
@@ -556,7 +648,8 @@ In slices, each releasable and each held to the family's stages 1 and 2:
 0. **The scaffolding.** `CLAUDE.md`, the `justfile`, the `xtask` gates, the
    score hook, CI.
 1. **The core.** Units, version choice, rules, verdicts, questions, steps,
-   diagnostics and the plan, against fakes; the table and JSON renderers.
+   diagnostics and the plan, against fakes; the table and JSON renderers, in
+   the cli.
 2. **The adapters, and `plan`.** `cargo metadata`, `cargo update --dry-run`,
    the index and the API with the cache, `cargo deny`, the clock, the
    fingerprint: `plan` end to end on recorded fixtures.

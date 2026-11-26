@@ -14,8 +14,9 @@ a workspace being behind is information, not a defect in the change being gated.
 The design is settled: `docs/DESIGN.md` holds it, and `docs/ADRs/` the decisions that were not obvious. The
 implementation comes in slices, each held to stages 1 and 2 from its first commit, as `docs/DESIGN.md`'s "Delivery"
 lists them: 0 the scaffolding, 1 the core, 2 the adapters and `plan`, 3 `check`, `hold` and `guide`, 4 the parse,
-5 the toolchain unit. Slice 0 is in place. Version 0.0.1, on crates.io, holds the design's vocabulary -- `Outcome`,
-`UnitKind` -- and nothing that decides; the command says so and exits 2.
+5 the toolchain unit. Slices 0 and 1 are in place: the core decides, against fakes of every port, and the cli renders
+a plan as JSON or a table; the command still says it is not ready and exits 2, until slice 2 wires `plan`. Version
+0.0.1, on crates.io, holds the design's vocabulary -- `Outcome`, `UnitKind` -- and nothing that decides.
 
 It is self-contained.
 
@@ -38,8 +39,8 @@ A workspace of three members, with a virtual root that holds no package:
 
 | member | what it is |
 |---|---|
-| `core/` | package `ripe4rust-core`, library `ripe4rust_core`: the units, the version choice, the rules, the verdicts, the questions, the steps, the diagnostics and the plan. `#![no_std]`, no dependency, no technology. Today `outcome.rs` and `unit_kind.rs`. |
-| `cli/` | package `cargo-ripe4rust`: the `cargo-ripe4rust` binary and, as the slices bring them, the real implementations of the core's contracts -- the index and the API with their cache, `cargo metadata`, `cargo update --dry-run`, `cargo deny`, the channel manifests, the `syn` parse, the workspace's files, the clock, the renderers. Today `main.rs`, depending on the core only. |
+| `core/` | package `ripe4rust-core`, library `ripe4rust_core`: the units, the version choice, the rules, the verdicts, the questions, the steps, the diagnostics and the plan. `#![no_std]`, no dependency, no technology. The ports in `traits/`, the data they hand over in `inputs/`, the hand-written arithmetic -- versions, requirements, dates -- in `values/`, the codes in `diagnostics/`, and the plan, from the policy to the questions, in `planning/`. |
+| `cli/` | package `cargo-ripe4rust`: the `cargo-ripe4rust` binary and, as the slices bring them, the real implementations of the core's contracts -- the index and the API with their cache, `cargo metadata`, `cargo update --dry-run`, `cargo deny`, the channel manifests, the `syn` parse, the workspace's files, the clock, the renderers. Today the renderers, in `src/render/` of the library `cargo_ripe4rust`, and `main.rs`, the stub that exits 2. |
 | `xtask/` | gate orchestration, run as `cargo xtask`. `publish = false`. |
 
 Each `tests/` mirrors its `src/`, one registry, `all_tests.rs`, per package.

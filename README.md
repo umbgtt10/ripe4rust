@@ -18,9 +18,11 @@ it is safe and asked where it is not.
 
 ## Status
 
-**Design stage.** Version 0.0.1 holds the vocabulary and nothing that decides
-yet; the command says so and exits 2. The design is in
-[`docs/DESIGN.md`](docs/DESIGN.md).
+**In development.** The core decides -- the units, the version choice, the
+rules, the steps and the questions, tested against fakes of every input -- and
+the renderers print a plan; the command still exits 2 until it reads a real
+workspace. Version 0.0.1, on crates.io, holds the vocabulary only. The design
+is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License
 
