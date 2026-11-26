@@ -18,6 +18,7 @@ use crate::support::surveyed::at;
 use crate::support::surveyed::surveyed;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
 use ripe4rust_core::planning::ports::Ports;
+use std::cell::RefCell;
 
 /// Every port faked, answering what the `surveyed` fixture holds.
 pub struct FakePorts {
@@ -43,6 +44,7 @@ impl FakePorts {
                 read_on: surveyed.registry_read,
                 releases: surveyed.releases.clone(),
                 failure: None,
+                asked: RefCell::new(Vec::new()),
             },
             repositories: FakeRepositories { known: Vec::new() },
             lock_moves: FakeLockMoves {

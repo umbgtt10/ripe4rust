@@ -85,13 +85,7 @@ impl<'a> Survey<'a> {
             .collect::<Vec<String>>();
         names.sort();
         names.dedup();
-        names
-            .into_iter()
-            .map(|name| {
-                let releases = self.ports.index.releases(&name)?;
-                Ok((name, releases))
-            })
-            .collect()
+        self.ports.index.releases(&names)
     }
 
     pub fn repositories(

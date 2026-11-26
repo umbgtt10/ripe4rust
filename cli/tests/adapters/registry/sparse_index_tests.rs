@@ -10,12 +10,23 @@ use cargo_ripe4rust::adapters::registry::curl::Curl;
 use cargo_ripe4rust::adapters::registry::day_cache::DayCache;
 use cargo_ripe4rust::adapters::registry::sparse_index::SparseIndex;
 use ripe4rust_core::inputs::port_failure::PortFailure;
+use ripe4rust_core::inputs::release::Release;
 use ripe4rust_core::traits::index::Index;
 use ripe4rust_core::values::date::Date;
 use std::path::PathBuf;
 
 const ITOA: &str = include_str!("../../fixtures/workspace/registry/index/itoa.txt");
 const URL: &str = "https://index.crates.io/it/oa/itoa";
+
+fn counted(
+    releases: Result<Vec<(String, Vec<Release>)>, PortFailure>,
+) -> Result<Vec<(String, usize)>, PortFailure> {
+    releases.map(|all| {
+        all.into_iter()
+            .map(|(name, releases)| (name, releases.len()))
+            .collect()
+    })
+}
 
 fn today() -> Date {
     Date::parse("2026-11-26").expect("a date")
@@ -44,7 +55,7 @@ fn releases_answered_with_another_status_are_unreachable() {
     let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
 
     // Act
-    let releases = SparseIndex::new(&curl, &cache).releases("itoa");
+    let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
 
     // Assert
     assert_eq!(
@@ -67,10 +78,10 @@ fn releases_of_a_cached_crate_read_the_cache_alone() {
     let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
 
     // Act
-    let releases = SparseIndex::new(&curl, &cache).releases("itoa");
+    let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
 
     // Assert
-    assert_eq!(releases.map(|releases| releases.len()), Ok(1));
+    assert_eq!(counted(releases), Ok(vec![(String::from("itoa"), 1)]));
     assert_eq!(runner.commands(), Vec::<String>::new());
 }
 
@@ -83,10 +94,10 @@ fn releases_of_a_crate_fetch_its_index_file_and_cache_it_for_the_day() {
     let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
 
     // Act
-    let releases = SparseIndex::new(&curl, &cache).releases("itoa");
+    let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
 
     // Assert
-    assert_eq!(releases.map(|releases| releases.len()), Ok(38));
+    assert_eq!(counted(releases), Ok(vec![(String::from("itoa"), 38)]));
     let (body, _) = ITOA.rsplit_once('\n').expect("a status");
     assert_eq!(
         files.contents("/cache/2026-11-26/index/itoa"),
@@ -109,12 +120,46 @@ fn releases_of_a_crate_the_index_does_not_hold_are_none_cached_as_such() {
     let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
 
     // Act
-    let releases = SparseIndex::new(&curl, &cache).releases("itoa");
+    let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
 
     // Assert
-    assert_eq!(releases, Ok(Vec::new()));
+    assert_eq!(releases, Ok(vec![(String::from("itoa"), Vec::new())]));
     assert_eq!(
         files.contents("/cache/2026-11-26/index/itoa"),
+        Some(String::new())
+    );
+}
+
+#[test]
+fn releases_of_several_crates_fetch_those_not_cached_together_answering_in_their_order() {
+    // Arrange
+    let missing = "https://index.crates.io/3/r/ryu";
+    let runner = ReplayRunner::new()
+        .reply(&curl(URL), printed(ITOA, ""))
+        .reply(&curl(missing), printed("not here\n404", ""));
+    let files = MemoryFiles::new().with(
+        "/cache/2026-11-26/index/anyhow",
+        r#"{"name":"anyhow","vers":"1.0.102","yanked":false}"#,
+    );
+    let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
+    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let names = ["itoa", "anyhow", "ryu"].map(String::from);
+
+    // Act
+    let releases = SparseIndex::new(&curl, &cache).releases(&names);
+
+    // Assert
+    assert_eq!(
+        counted(releases),
+        Ok(vec![
+            (String::from("itoa"), 38),
+            (String::from("anyhow"), 1),
+            (String::from("ryu"), 0),
+        ])
+    );
+    assert_eq!(*runner.batches.borrow(), vec![2]);
+    assert_eq!(
+        files.contents("/cache/2026-11-26/index/ryu"),
         Some(String::new())
     );
 }

@@ -120,9 +120,10 @@ the workspace's owner has. Everything else it carries out on its own.
 | today's date | injected, so a plan is reproducible |
 
 The registry is read politely: the sparse index for everything it carries,
-the API only for a direct dependency's repository, at most one request a
-second, with a user agent that names the tool, its version and its repository
-and nothing personal. Every answer is cached for the day it was read, under
+the static files cargo itself fetches several at a time, at most eight at
+once; the API only for a direct dependency's repository, at most one request
+a second; each with a user agent that names the tool, its version and its
+repository and nothing personal. Every answer is cached for the day it was read, under
 `~/.cache/ripe4rust/<date>/`; a plan names that date, and with the same cache
 and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). The
 requests go through a `curl` process, not an HTTP crate
@@ -187,8 +188,13 @@ Where the sections above are silent, the adapters read the inputs this way:
 - **The registry** is read through `curl` (ADR-TheRegistryThroughCurl): a
   crate's index file at `https://index.crates.io/` under the path its name's
   length gives it, and the API at `https://crates.io/api/v1/crates/<crate>?include=`,
-  which answers the crate without its versions. The API waits a second before
-  every request after the first; a cached answer costs no request and no wait.
+  which answers the crate without its versions. The index files the day's
+  cache lacks are fetched together, one batch for the command runner, which
+  runs at most eight `curl` processes at once, each on a thread of its own,
+  and answers in the batch's order, so the plan and the cache are what one at
+  a time would make; the first failure in the crates' order is the one
+  reported. The API waits a second before every request after the first; a
+  cached answer costs no request and no wait.
   The cache is `ripe4rust/` under `$XDG_CACHE_HOME`, or `~/.cache` where it is
   not set, or `%LOCALAPPDATA%` on Windows, one directory a day,
   `<date>/index/<crate>` and `<date>/api/<crate>`, each the body as it came; a

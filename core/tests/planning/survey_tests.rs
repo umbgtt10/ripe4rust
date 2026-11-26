@@ -92,6 +92,25 @@ fn reached_asks_the_metadata_for_each_target() {
 }
 
 #[test]
+fn releases_ask_the_index_once_for_every_name_in_order() {
+    // Arrange
+    let fakes = FakePorts::new();
+
+    // Act
+    let _ = Survey::new(fakes.ports()).releases(&surveyed().workspace, &surveyed().policy);
+
+    // Assert
+    assert_eq!(
+        *fakes.index.asked.borrow(),
+        vec![
+            ["gadget", "gizmo", "libc", "widget"]
+                .map(String::from)
+                .to_vec()
+        ]
+    );
+}
+
+#[test]
 fn releases_read_every_locked_crate_and_every_crate_a_pin_waits_for() {
     // Arrange
     let mut fakes = FakePorts::new();

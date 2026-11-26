@@ -48,6 +48,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   reasons say "named nowhere in the sources: possibly an unused dependency" whatever rule decided it, and its
   question offers the new answer `remove` beside its others -- a person decides, as a crate can be needed for its
   features or side effects (`ripe4rust_core::planning::judging::named_nowhere::NamedNowhere`).
+- A plan with a cold day cache fetched the sparse index one `curl` process per crate, one after the other. The index
+  files the day lacks are now one batch, which the command runner runs at most eight at once, each on a thread of
+  its own, answering in the batch's order, so the plan and the cache are the same as before: for a workspace of 461
+  locked crates, 163 s became 71 s. The core's `Index` port is asked once for every crate, and the cli's
+  `CommandRunner` and `Http` seams take a batch (`run_all`, `get_all`); the API keeps its one request a second.
 
 ## [0.1.0] — 2026-11-26
 

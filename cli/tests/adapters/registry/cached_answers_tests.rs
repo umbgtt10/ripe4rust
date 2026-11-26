@@ -9,6 +9,7 @@ use crate::support::replay_runner::ReplayRunner;
 use cargo_ripe4rust::adapters::registry::cached_answers::CachedAnswers;
 use cargo_ripe4rust::adapters::registry::curl::Curl;
 use cargo_ripe4rust::adapters::registry::day_cache::DayCache;
+use cargo_ripe4rust::system::model::fetched::Fetched;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::date::Date;
 use std::path::PathBuf;
@@ -91,4 +92,46 @@ fn fetched_of_another_status_is_unreachable_naming_who_answered() {
         })
     );
     assert_eq!(files.contents("/cache/2026-11-26/index/itoa"), None);
+}
+
+#[test]
+fn kept_of_an_answer_fetched_elsewhere_reads_its_status_and_keeps_its_body() {
+    // Arrange
+    let runner = ReplayRunner::new();
+    let files = MemoryFiles::new();
+    let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
+    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let answers = CachedAnswers::new(&curl, &cache);
+
+    // Act
+    let kept = [
+        answers.kept(
+            "index",
+            "itoa",
+            URL,
+            "the index",
+            Ok(Fetched {
+                status: 200,
+                body: String::from("an answer"),
+            }),
+        ),
+        answers.kept(
+            "index",
+            "ryu",
+            URL,
+            "the index",
+            Err(PortFailure::CurlMissing),
+        ),
+    ];
+
+    // Assert
+    assert_eq!(
+        kept,
+        [Ok(String::from("an answer")), Err(PortFailure::CurlMissing)]
+    );
+    assert_eq!(
+        files.contents("/cache/2026-11-26/index/itoa"),
+        Some(String::from("an answer"))
+    );
+    assert_eq!(runner.commands(), Vec::<String>::new());
 }

@@ -4,6 +4,7 @@
 
 use crate::adapters::registry::cached_answers::CachedAnswers;
 use crate::adapters::registry::index_reader::IndexReader;
+use crate::adapters::unreadable::Unreadable;
 use crate::system::traits::answer_cache::AnswerCache;
 use crate::system::traits::http::Http;
 use ripe4rust_core::inputs::port_failure::PortFailure;
@@ -16,7 +17,8 @@ const INDEX: &str = "index";
 const BASE: &str = "https://index.crates.io";
 
 /// The crates.io sparse index, every answer cached for the day: a crate's
-/// file at the path its name's length gives it.
+/// file at the path its name's length gives it, those the day lacks fetched
+/// together, answered in the order asked.
 pub struct SparseIndex<'a> {
     http: &'a dyn Http,
     cache: &'a dyn AnswerCache,
@@ -44,12 +46,35 @@ impl Index for SparseIndex<'_> {
         self.cache.read_on()
     }
 
-    fn releases(&self, name: &str) -> Result<Vec<Release>, PortFailure> {
+    fn releases(&self, names: &[String]) -> Result<Vec<(String, Vec<Release>)>, PortFailure> {
         let answers = CachedAnswers::new(self.http, self.cache);
-        let body = match answers.cached(INDEX, name)? {
-            Some(body) => body,
-            None => answers.fetched(INDEX, name, &self.url(name), "the index")?,
-        };
-        IndexReader.releases(name, &body)
+        let cached = names
+            .iter()
+            .map(|name| answers.cached(INDEX, name))
+            .collect::<Result<Vec<Option<String>>, PortFailure>>()?;
+        let missing = names
+            .iter()
+            .zip(&cached)
+            .filter(|(_, body)| body.is_none())
+            .map(|(name, _)| self.url(name))
+            .collect::<Vec<String>>();
+        let mut fetched = self.http.get_all(&missing).into_iter();
+        names
+            .iter()
+            .zip(cached)
+            .map(|(name, body)| {
+                let body = if let Some(body) = body {
+                    body
+                } else {
+                    let url = self.url(name);
+                    let answer = fetched.next().unwrap_or_else(|| {
+                        Err(Unreadable::new("fetching the index")
+                            .failure(&format!("no answer for `{url}`")))
+                    });
+                    answers.kept(INDEX, name, &url, "the index", answer)?
+                };
+                Ok((name.clone(), IndexReader.releases(name, &body)?))
+            })
+            .collect()
     }
 }
