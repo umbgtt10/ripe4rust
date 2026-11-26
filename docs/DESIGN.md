@@ -1,8 +1,9 @@
 # ripe4rust -- design
 
-Status: settled 2026-11-26; the agent's contract added the same day. Nothing
-here is implemented. The decisions that were not obvious each have an ADR
-under `docs/ADRs/`.
+Status: settled 2026-11-26; the agent's contract added the same day. Slices
+0 and 1 of "Delivery" are implemented: the scaffolding, and the core with the
+renderers. The decisions that were not obvious each have an ADR under
+`docs/ADRs/`.
 
 ## The question
 
