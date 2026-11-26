@@ -173,6 +173,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   owns. A name nothing declares that a glob may have brought -- starting a longer path, or in capitals -- is put down
   to the file's globs; the standard library's names, built-in attributes, derives and macros never are. A
   dependency's own name alone in code is a variable's, and an item of the file's own shadows it.
+- A target's modules walked (`cargo_ripe4rust::adapters::workspace::sources::walking`), the parse's second part: from
+  the target's root through every `mod` item it and its modules declare, at the top or in inline modules -- `name.rs`
+  then `name/mod.rs`, beside a file owning its directory or under its own name, a `#[path]` resolved beside the
+  declaring file --, each file read once and parsed with `syn`, and marked reachable where every module on the way is
+  `pub`. A file that does not parse is unparsed at the line its parse stopped at, one that cannot be read at its first
+  line, one a `mod` item names but is not there at that item.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
