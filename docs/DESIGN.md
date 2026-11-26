@@ -476,6 +476,19 @@ the rest              compatible  --        --        ripe             2 moves n
 }
 ```
 
+Beyond the example, a unit carries its `members` -- a group's crates, `rust`
+for the toolchain -- and its `reasons`, the table's last column; an `apply`
+step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
+"value": "..." }`; `evidence` also names the line in use with its first
+release, the footprint's locations, the versions the toolchain unit would
+release and the moves a pin holds out of the unit. The document's own keys
+come in the order shown; the objects within it, with their keys sorted. A
+document for a failure carries `schema`, `command` and `diagnostics` alone.
+
+In the table, `(+N)` counts a group's other members and `(+N transitive)` the
+crates a compatible unit pulls in; the workspace is named by its fingerprint's
+first eight characters, and the diagnostics follow the table, one a line.
+
 A breaking unit's `apply` names every manifest line that states the
 dependency's requirement, as `file:line`, the requirement to write there, and
 then the `cargo update -p <crate>` that takes it; its evidence carries the

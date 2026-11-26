@@ -3,3 +3,5 @@
 // SPDX-License-Identifier: MIT
 
 mod main_tests;
+mod render;
+mod support;

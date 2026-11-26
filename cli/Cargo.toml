@@ -18,6 +18,10 @@ categories = [
 
 autotests = false
 
+[lib]
+name = "cargo_ripe4rust"
+path = "src/lib.rs"
+
 [[bin]]
 name = "cargo-ripe4rust"
 path = "src/main.rs"
@@ -28,6 +32,8 @@ path = "tests/all_tests.rs"
 
 [dependencies]
 ripe4rust-core.workspace = true
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 [lints]
 workspace = true

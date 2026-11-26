@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- The renderers, in the cli (`cargo_ripe4rust::render`), a library target beside the command, which still exits 2:
+  the JSON document -- `schema`, `command`, `date`, `registry_read`, `workspace`, `gates`, `diagnostics` and
+  `units`, each unit with its moves, outcome, rule, suggestion, reasons, summary, steps, question and evidence; on
+  failure, `schema`, `command` and `diagnostics` -- and the table for a person, the diagnostics after it in text.
 - `plan` in the core, against its ports (`ripe4rust_core::traits`): the index, the repositories, the lock moves,
   the workspace's metadata and files, the advisories, the toolchain, the source scan and the clock, each a trait
   the cli will implement in slice 2, faked in the tests. `Survey` reads every port once -- the policy first, its
