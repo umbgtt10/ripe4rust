@@ -8,6 +8,7 @@ pub mod memory_files;
 pub mod moves;
 pub mod outputs;
 pub mod plans;
+pub mod recorded;
 pub mod registry;
 pub mod replay_runner;
 pub mod workspace;

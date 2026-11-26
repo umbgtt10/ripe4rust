@@ -15,6 +15,7 @@ pub enum DiagnosticCode {
     CargoMetadataFailed,
     CargoUpdateFailed,
     CargoUpdateUnrecognised,
+    CommandUnavailable,
     CurlMissing,
     GatesUndeclared,
     Internal,
@@ -33,6 +34,7 @@ pub enum DiagnosticCode {
     ToolchainReleasesUnknown,
     ToolchainUnpinned,
     ToolchainUnreachable,
+    UsageInvalid,
     WorkspaceUnreadable,
 }
 
@@ -55,6 +57,7 @@ impl DiagnosticCode {
             Self::CargoMetadataFailed => "cargo-metadata-failed",
             Self::CargoUpdateFailed => "cargo-update-failed",
             Self::CargoUpdateUnrecognised => "cargo-update-unrecognised",
+            Self::CommandUnavailable => "command-unavailable",
             Self::CurlMissing => "curl-missing",
             Self::GatesUndeclared => "gates-undeclared",
             Self::Internal => "internal",
@@ -73,6 +76,7 @@ impl DiagnosticCode {
             Self::ToolchainReleasesUnknown => "toolchain-releases-unknown",
             Self::ToolchainUnpinned => "toolchain-unpinned",
             Self::ToolchainUnreachable => "toolchain-unreachable",
+            Self::UsageInvalid => "usage-invalid",
             Self::WorkspaceUnreadable => "workspace-unreadable",
         }
     }

@@ -1,9 +1,9 @@
 # ripe4rust -- design
 
 Status: settled 2026-11-26; the agent's contract added the same day. Slices
-0 and 1 of "Delivery" are implemented: the scaffolding, and the core with the
-renderers. The decisions that were not obvious each have an ADR under
-`docs/ADRs/`.
+0, 1 and 2 of "Delivery" are implemented: the scaffolding, the core with the
+renderers, and the adapters with `plan` end to end. The decisions that were not
+obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
 
@@ -450,8 +450,9 @@ reported at once, before any rule runs. An empty `reason` is no reason, and
 
 Every command prints one document: a table and text for a person, or, with
 `--format json`, a JSON document for the agent -- on success and on failure
-alike, so the agent always has one thing to read. Each carries `schema`,
-which moves when the shape does, the command, and the diagnostics.
+alike, so the agent always has one thing to read, and on stdout either way.
+Each carries `schema`, which moves when the shape does, the command, and the
+diagnostics.
 
 ### Diagnostics
 
@@ -513,6 +514,8 @@ The problems the design already names, at least:
 | `registry-cache-unusable` | error | the day cache cannot be read or written, or there is no directory for it |
 | `source-unscanned` | notice | the sources are not parsed yet: no footprint or exposure is known |
 | `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
+| `usage-invalid` | error | a command or an option ripe4rust does not know, or an option's value of the wrong kind |
+| `command-unavailable` | error | a command of the design this release does not run yet |
 
 Of these, the policy's own codes, `target-unknown` and `gates-undeclared` need
 a person: each asks for a fact or a decision only the owner has.
@@ -664,7 +667,15 @@ The answers, by the way a unit asks:
 
 Every command takes `--format table|json`. `plan` also takes `--date
 <YYYY-MM-DD>`, for a reproducible plan, and `--offline`, to read the cache
-only.
+only -- and to keep cargo and cargo-deny off the network too, so an offline
+plan reaches none. With no command, the command is `plan`; the name cargo
+passes a subcommand first is skipped, so `cargo ripe4rust` and
+`cargo-ripe4rust` read alike. An option takes its value after it or after `=`.
+A command or an option ripe4rust does not know is `usage-invalid`, and, until
+slice 3 builds them, `check`, `hold` and `guide` are `command-unavailable`:
+both errors, exit 2, the document in the format the line asked for. `main` is
+a thin shim over the library's entry point, which takes every seam it reaches
+the system through.
 
 ### check
 

@@ -18,11 +18,13 @@ it is safe and asked where it is not.
 
 ## Status
 
-**In development.** The core decides -- the units, the version choice, the
-rules, the steps and the questions, tested against fakes of every input -- and
-the renderers print a plan; the command still exits 2 until it reads a real
-workspace. Version 0.0.1, on crates.io, holds the vocabulary only. The design
-is in [`docs/DESIGN.md`](docs/DESIGN.md).
+**In development.** `cargo ripe4rust plan [--format table|json] [--date
+YYYY-MM-DD] [--offline]` reads a real workspace -- cargo, cargo-deny, rustc,
+and the crates.io registry through `curl`, cached for the day -- and prints the
+plan. The parse of the sources and the toolchain's releases are still to come:
+until then the plan reads them conservatively and says so; `check`, `hold` and
+`guide` come after. Version 0.0.1, on crates.io, holds the vocabulary only. The
+design is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License
 

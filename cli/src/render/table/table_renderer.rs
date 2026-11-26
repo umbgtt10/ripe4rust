@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::render::plan_renderer::PlanRenderer;
 use crate::render::table::columns::Columns;
 use crate::render::table::diagnostic_line::DiagnosticLine;
 use crate::render::table::row_label::RowLabel;
@@ -18,11 +19,20 @@ const NONE: &str = "--";
 pub struct TableRenderer;
 
 impl TableRenderer {
-    pub fn failure(&self, failure: &PlanFailure) -> String {
+    fn diagnostics(diagnostics: &[Diagnostic]) -> String {
+        diagnostics
+            .iter()
+            .flat_map(|diagnostic| [DiagnosticLine.line(diagnostic), String::from("\n")])
+            .collect()
+    }
+}
+
+impl PlanRenderer for TableRenderer {
+    fn failure(&self, failure: &PlanFailure) -> String {
         Self::diagnostics(&failure.diagnostics)
     }
 
-    pub fn plan(&self, plan: &Plan) -> String {
+    fn plan(&self, plan: &Plan) -> String {
         let fingerprint = plan
             .workspace
             .fingerprint
@@ -58,12 +68,5 @@ impl TableRenderer {
             text.push_str(&Self::diagnostics(&plan.diagnostics));
         }
         text
-    }
-
-    fn diagnostics(diagnostics: &[Diagnostic]) -> String {
-        diagnostics
-            .iter()
-            .flat_map(|diagnostic| [DiagnosticLine.line(diagnostic), String::from("\n")])
-            .collect()
     }
 }

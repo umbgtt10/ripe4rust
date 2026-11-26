@@ -1,0 +1,496 @@
+{
+  "schema": 1,
+  "command": "plan",
+  "date": "2026-11-26",
+  "registry_read": "2026-11-26",
+  "workspace": {
+    "fingerprint": "af9871a4ebb0c8b9",
+    "lock": [
+      "either 1.5.0",
+      "itertools 0.10.0",
+      "itoa 0.4.7",
+      "memchr 2.5.0",
+      "smallvec 1.6.0"
+    ]
+  },
+  "gates": [
+    "cargo test"
+  ],
+  "diagnostics": [
+    {
+      "severity": "notice",
+      "code": "toolchain-releases-unknown",
+      "where": "rust-toolchain.toml:2",
+      "what": "the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named",
+      "do": "nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand",
+      "needs_person": false
+    },
+    {
+      "severity": "notice",
+      "code": "source-unscanned",
+      "where": null,
+      "what": "the workspace's sources are not parsed yet, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8)",
+      "do": "nothing is needed; until a release of ripe4rust parses the sources, size each breaking unit's migration by hand",
+      "needs_person": false
+    }
+  ],
+  "units": [
+    {
+      "id": "compatible:itertools",
+      "kind": "compatible",
+      "crate": "itertools",
+      "members": [
+        "itertools"
+      ],
+      "from": "0.10.0",
+      "to": "0.10.5",
+      "moves": [
+        {
+          "crate": "either",
+          "from": "1.5.0",
+          "to": "1.19.0"
+        },
+        {
+          "crate": "itertools",
+          "from": "0.10.0",
+          "to": "0.10.5"
+        }
+      ],
+      "outcome": "ask",
+      "urgent": false,
+      "rule": 7,
+      "suggestion": "apply-then-validate",
+      "reasons": [
+        "reaches thumbv7em-none-eabihf"
+      ],
+      "summary": "Move itertools to 0.10.5, with 1 crate it pulls in",
+      "steps": {
+        "apply": [
+          {
+            "run": "cargo update --recursive -p itertools"
+          }
+        ],
+        "check": "cargo ripe4rust check compatible:itertools --plan plan.json",
+        "gates": [
+          "cargo test"
+        ],
+        "revert": {
+          "restore": [
+            "Cargo.lock"
+          ],
+          "run": "git restore -- Cargo.lock"
+        },
+        "split": [
+          {
+            "id": "compatible:itertools/either",
+            "apply": [
+              {
+                "run": "cargo update -p either --precise 1.19.0"
+              }
+            ]
+          },
+          {
+            "id": "compatible:itertools/itertools",
+            "apply": [
+              {
+                "run": "cargo update -p itertools --precise 0.10.5"
+              }
+            ]
+          }
+        ]
+      },
+      "question": {
+        "title": "Move itertools to 0.10.5?",
+        "why": "it reaches thumbv7em-none-eabihf, which the gates cannot validate",
+        "recommendation": "take-it",
+        "options": [
+          {
+            "answer": "take-it",
+            "means": "apply it now and validate on thumbv7em-none-eabihf",
+            "then": "apply it as a ripe unit"
+          },
+          {
+            "answer": "wait",
+            "means": "not now",
+            "then": "cargo ripe4rust hold compatible:itertools --plan plan.json --because \"<the person's words>\""
+          }
+        ]
+      },
+      "evidence": {
+        "line_in_use": {
+          "line": "0.10.x",
+          "first_release": "2020-12-26",
+          "last_release": "2022-09-20",
+          "releases": 5
+        },
+        "rust_version": null,
+        "advisories": [],
+        "yanked_in_use": false,
+        "footprint": [],
+        "held_back": [],
+        "held": []
+      }
+    },
+    {
+      "id": "breaking:itertools",
+      "kind": "breaking",
+      "crate": "itertools",
+      "members": [
+        "itertools"
+      ],
+      "from": "0.10.0",
+      "to": "0.15.0",
+      "moves": [
+        {
+          "crate": "itertools",
+          "from": "0.10.0",
+          "to": "0.15.0"
+        }
+      ],
+      "outcome": "ask",
+      "urgent": false,
+      "rule": 4,
+      "suggestion": "overripe",
+      "reasons": [
+        "pinned: the iterator chains are rewritten for 0.14",
+        "review 2027-03-01",
+        "overripe: 5 lines behind"
+      ],
+      "summary": "Migrate itertools to 0.15.0",
+      "steps": {
+        "apply": [
+          {
+            "edit": "Cargo.toml:12",
+            "key": "itertools",
+            "value": "0.15.0"
+          },
+          {
+            "run": "cargo update -p itertools"
+          }
+        ],
+        "check": "cargo ripe4rust check breaking:itertools --plan plan.json",
+        "gates": [
+          "cargo test"
+        ],
+        "revert": {
+          "restore": [
+            "Cargo.lock",
+            "Cargo.toml"
+          ],
+          "run": "git restore -- Cargo.lock Cargo.toml"
+        },
+        "split": []
+      },
+      "question": {
+        "title": "Move itertools to 0.15.0?",
+        "why": "it is overripe: 5 lines behind",
+        "recommendation": "unpin",
+        "options": [
+          {
+            "answer": "unpin",
+            "means": "remove the pin and take the upgrade",
+            "then": "remove the pin on `itertools` at Cargo.toml:20, commit it, and plan again"
+          },
+          {
+            "answer": "keep-pinned",
+            "means": "keep it, with a new review date",
+            "then": "set the `review` of the pin on `itertools` at Cargo.toml:20 to the person's date, commit it, and plan again"
+          }
+        ]
+      },
+      "evidence": {
+        "line_in_use": {
+          "line": "0.10.x",
+          "first_release": "2020-12-26",
+          "last_release": "2022-09-20",
+          "releases": 5
+        },
+        "rust_version": "1.63.0",
+        "advisories": [],
+        "yanked_in_use": false,
+        "footprint": [],
+        "held_back": [],
+        "held": []
+      }
+    },
+    {
+      "id": "compatible:itoa",
+      "kind": "compatible",
+      "crate": "itoa",
+      "members": [
+        "itoa"
+      ],
+      "from": "0.4.7",
+      "to": "0.4.8",
+      "moves": [
+        {
+          "crate": "itoa",
+          "from": "0.4.7",
+          "to": "0.4.8"
+        }
+      ],
+      "outcome": "ripe",
+      "urgent": false,
+      "rule": 10,
+      "suggestion": null,
+      "reasons": [
+        "compatible"
+      ],
+      "summary": "Move itoa to 0.4.8",
+      "steps": {
+        "apply": [
+          {
+            "run": "cargo update --recursive -p itoa"
+          }
+        ],
+        "check": "cargo ripe4rust check compatible:itoa --plan plan.json",
+        "gates": [
+          "cargo test"
+        ],
+        "revert": {
+          "restore": [
+            "Cargo.lock"
+          ],
+          "run": "git restore -- Cargo.lock"
+        },
+        "split": []
+      },
+      "question": null,
+      "evidence": {
+        "line_in_use": {
+          "line": "0.4.x",
+          "first_release": "2018-03-18",
+          "last_release": "2021-08-22",
+          "releases": 9
+        },
+        "rust_version": null,
+        "advisories": [],
+        "yanked_in_use": false,
+        "footprint": [],
+        "held_back": [],
+        "held": []
+      }
+    },
+    {
+      "id": "breaking:itoa",
+      "kind": "breaking",
+      "crate": "itoa",
+      "members": [
+        "itoa"
+      ],
+      "from": "0.4.7",
+      "to": "1.0.19",
+      "moves": [
+        {
+          "crate": "itoa",
+          "from": "0.4.7",
+          "to": "1.0.19"
+        }
+      ],
+      "outcome": "ask",
+      "urgent": false,
+      "rule": 8,
+      "suggestion": "breaking-change-of-ours",
+      "reasons": [
+        "exposure in app-core's public API not yet known",
+        "migrate now: 0.4.x is stale while 1.x is active"
+      ],
+      "summary": "Migrate itoa to 1.0.19",
+      "steps": {
+        "apply": [
+          {
+            "edit": "app-core/Cargo.toml:9",
+            "key": "itoa",
+            "value": "1.0.19"
+          },
+          {
+            "run": "cargo update -p itoa"
+          }
+        ],
+        "check": "cargo ripe4rust check breaking:itoa --plan plan.json",
+        "gates": [
+          "cargo test"
+        ],
+        "revert": {
+          "restore": [
+            "Cargo.lock",
+            "app-core/Cargo.toml"
+          ],
+          "run": "git restore -- Cargo.lock app-core/Cargo.toml"
+        },
+        "split": []
+      },
+      "question": {
+        "title": "Move itoa to 1.0.19?",
+        "why": "whether itoa's types are in app-core's public API is not yet known, and if they are, the upgrade is a breaking change of ours too",
+        "recommendation": "migrate-now",
+        "options": [
+          {
+            "answer": "migrate-now",
+            "means": "apply it now",
+            "then": "apply it as a ripe unit; the footprint is not yet known, so the build's errors are the work list"
+          },
+          {
+            "answer": "plan-it",
+            "means": "hold it until a planned migration",
+            "then": "cargo ripe4rust hold breaking:itoa --plan plan.json --because \"<the person's words>\" --review <date>"
+          },
+          {
+            "answer": "wait",
+            "means": "not now",
+            "then": "cargo ripe4rust hold breaking:itoa --plan plan.json --because \"<the person's words>\""
+          }
+        ]
+      },
+      "evidence": {
+        "line_in_use": {
+          "line": "0.4.x",
+          "first_release": "2018-03-18",
+          "last_release": "2021-08-22",
+          "releases": 9
+        },
+        "rust_version": "1.68",
+        "advisories": [],
+        "yanked_in_use": false,
+        "footprint": [],
+        "held_back": [],
+        "held": []
+      }
+    },
+    {
+      "id": "compatible:memchr",
+      "kind": "compatible",
+      "crate": "memchr",
+      "members": [
+        "memchr"
+      ],
+      "from": "2.5.0",
+      "to": "2.8.3",
+      "moves": [
+        {
+          "crate": "memchr",
+          "from": "2.5.0",
+          "to": "2.8.3"
+        }
+      ],
+      "outcome": "ripe",
+      "urgent": false,
+      "rule": 10,
+      "suggestion": null,
+      "reasons": [
+        "compatible"
+      ],
+      "summary": "Move memchr to 2.8.3",
+      "steps": {
+        "apply": [
+          {
+            "run": "cargo update --recursive -p memchr"
+          }
+        ],
+        "check": "cargo ripe4rust check compatible:memchr --plan plan.json",
+        "gates": [
+          "cargo test"
+        ],
+        "revert": {
+          "restore": [
+            "Cargo.lock"
+          ],
+          "run": "git restore -- Cargo.lock"
+        },
+        "split": []
+      },
+      "question": null,
+      "evidence": {
+        "line_in_use": {
+          "line": "2.x",
+          "first_release": "2017-10-21",
+          "last_release": "2026-07-08",
+          "releases": 32
+        },
+        "rust_version": "1.61",
+        "advisories": [],
+        "yanked_in_use": false,
+        "footprint": [],
+        "held_back": [],
+        "held": []
+      }
+    },
+    {
+      "id": "compatible:smallvec",
+      "kind": "compatible",
+      "crate": "smallvec",
+      "members": [
+        "smallvec"
+      ],
+      "from": "1.6.0",
+      "to": "1.16.6",
+      "moves": [
+        {
+          "crate": "smallvec",
+          "from": "1.6.0",
+          "to": "1.16.6"
+        }
+      ],
+      "outcome": "ask",
+      "urgent": true,
+      "rule": 1,
+      "suggestion": "apply-then-validate",
+      "reasons": [
+        "clears RUSTSEC-2021-0003",
+        "reaches thumbv7em-none-eabihf"
+      ],
+      "summary": "Move smallvec to 1.16.6",
+      "steps": {
+        "apply": [
+          {
+            "run": "cargo update --recursive -p smallvec"
+          }
+        ],
+        "check": "cargo ripe4rust check compatible:smallvec --plan plan.json",
+        "gates": [
+          "cargo test"
+        ],
+        "revert": {
+          "restore": [
+            "Cargo.lock"
+          ],
+          "run": "git restore -- Cargo.lock"
+        },
+        "split": []
+      },
+      "question": {
+        "title": "Move smallvec to 1.16.6?",
+        "why": "it clears RUSTSEC-2021-0003 and reaches thumbv7em-none-eabihf, which the gates cannot validate",
+        "recommendation": "take-it",
+        "options": [
+          {
+            "answer": "take-it",
+            "means": "apply it now and validate on thumbv7em-none-eabihf",
+            "then": "apply it as a ripe unit"
+          },
+          {
+            "answer": "accept",
+            "means": "accept it in `deny.toml`, with the person's reason",
+            "then": "add `{ id = \"RUSTSEC-2021-0003\", reason = \"<the person's words>\" }` to `[advisories] ignore` in `deny.toml`, commit it, and plan again"
+          }
+        ]
+      },
+      "evidence": {
+        "line_in_use": {
+          "line": "1.x",
+          "first_release": "2019-11-03",
+          "last_release": "2026-11-18",
+          "releases": 32
+        },
+        "rust_version": null,
+        "advisories": [
+          "RUSTSEC-2021-0003"
+        ],
+        "yanked_in_use": false,
+        "footprint": [],
+        "held_back": [],
+        "held": []
+      }
+    }
+  ]
+}

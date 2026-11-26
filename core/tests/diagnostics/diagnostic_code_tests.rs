@@ -7,7 +7,7 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::diagnostics::severity::Severity;
 use ripe4rust_core::values::location::Location;
 
-const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 24] = [
+const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
     (
         DiagnosticCode::CargoDenyFailed,
         "cargo-deny-failed",
@@ -35,6 +35,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 24] = [
     (
         DiagnosticCode::CargoUpdateUnrecognised,
         "cargo-update-unrecognised",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::CommandUnavailable,
+        "command-unavailable",
         Severity::Error,
         false,
     ),
@@ -144,6 +150,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 24] = [
     (
         DiagnosticCode::WorkspaceUnreadable,
         "workspace-unreadable",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::UsageInvalid,
+        "usage-invalid",
         Severity::Error,
         false,
     ),

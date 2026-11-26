@@ -6,6 +6,7 @@ use crate::render::json::diagnostic_json::DiagnosticJson;
 use crate::render::json::documents::diagnostic_document::DiagnosticDocument;
 use crate::render::json::documents::unit_document::UnitDocument;
 use crate::render::json::unit_json::UnitJson;
+use crate::render::plan_renderer::PlanRenderer;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
@@ -54,7 +55,22 @@ impl JsonRenderer {
         }
     }
 
-    pub fn failure(&self, failure: &PlanFailure) -> String {
+    fn diagnostics(diagnostics: &[Diagnostic]) -> Vec<DiagnosticDocument<'_>> {
+        diagnostics
+            .iter()
+            .map(|diagnostic| DiagnosticJson.document(diagnostic))
+            .collect()
+    }
+
+    fn text(document: &impl Serialize) -> String {
+        let mut text = to_string_pretty(document).unwrap_or_default();
+        text.push('\n');
+        text
+    }
+}
+
+impl PlanRenderer for JsonRenderer {
+    fn failure(&self, failure: &PlanFailure) -> String {
         Self::text(&FailureDocument {
             schema: SCHEMA,
             command: &self.command,
@@ -62,7 +78,7 @@ impl JsonRenderer {
         })
     }
 
-    pub fn plan(&self, plan: &Plan) -> String {
+    fn plan(&self, plan: &Plan) -> String {
         Self::text(&PlanDocument {
             schema: SCHEMA,
             command: &self.command,
@@ -80,18 +96,5 @@ impl JsonRenderer {
                 .map(|planned| UnitJson.document(planned))
                 .collect(),
         })
-    }
-
-    fn diagnostics(diagnostics: &[Diagnostic]) -> Vec<DiagnosticDocument<'_>> {
-        diagnostics
-            .iter()
-            .map(|diagnostic| DiagnosticJson.document(diagnostic))
-            .collect()
-    }
-
-    fn text(document: &impl Serialize) -> String {
-        let mut text = to_string_pretty(document).unwrap_or_default();
-        text.push('\n');
-        text
     }
 }

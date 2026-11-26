@@ -6,6 +6,7 @@ use crate::support::plans::breaking;
 use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use cargo_ripe4rust::render::json::json_renderer::JsonRenderer;
+use cargo_ripe4rust::render::plan_renderer::PlanRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use serde_json::Value;

@@ -60,7 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   diagnostic of its own code (`PortFailure`), with every diagnostic found so far; `Planner` makes the plan from the
   survey. The notices and warnings the survey meets: `toolchain-unpinned`, `target-unknown`,
   `pin-for-absent-crate`, `registry-cache-old` and `source-unparsed`.
-- The renderers, in the cli (`cargo_ripe4rust::render`), a library target beside the command, which still exits 2:
+- The renderers, in the cli (`cargo_ripe4rust::render`), a library target beside the command:
   the JSON document -- `schema`, `command`, `date`, `registry_read`, `workspace`, `gates`, `diagnostics` and
   `units`, each unit with its moves, outcome, rule, suggestion, reasons, summary, steps, question and evidence; on
   failure, `schema`, `command` and `diagnostics` -- and the table for a person, the diagnostics after it in text.
@@ -110,6 +110,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   from the system's clock through the core's new `Date::from_unix_days`, or the day `--date` names; `rustc
   --version` and `--print target-list` in the workspace's directory, `toolchain-unreachable` where they fail, and
   no releases until slice 5; and a source scan that knows nothing until slice 4.
+- `plan`, end to end (`cargo_ripe4rust::command`): `cargo ripe4rust [plan] [--format table|json] [--date
+  YYYY-MM-DD] [--offline]`, every port's adapter set up over the seams `main` passes in -- `main` a thin shim over
+  `Ripe4rust`, the library's entry point -- and the one document on stdout: exit 0 where a plan was produced, 2 where
+  none could be. `--date` stands for today, `--offline` keeps every adapter off the network. A command or an
+  option it does not know is `usage-invalid`; `check`, `hold` and `guide`, until slice 3, `command-unavailable`.
+  Tested through the entry point on a workspace recorded whole -- cargo, cargo-deny, rustc and the registry --
+  against the JSON document and the table, an offline plan from its cache, and the plan's failures; the binary's
+  own tests now run a command line that needs no network.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the
@@ -119,8 +127,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - CI: `.github/workflows/ci.yml` runs both stages on Linux, Windows and macOS, every gate tool installed fresh.
 - Every commit message carries core's grip and braintax: `.githooks/commit-msg` runs `cargo xtask grip-braintax`,
   enabled once a clone by `just hooks`.
-- Tests for what 0.0.1 holds: `Outcome::label`'s three labels, and the command's exit code 2, its one line on stderr
-  and nothing on stdout.
+- Tests for what 0.0.1 holds: `Outcome::label`'s three labels.
 - `CLAUDE.md`: what ripe4rust is -- the design settled, the implementation in slices --, its boundary, its layout,
   the gates and the score hook, the rules every slice keeps, and the owner's strict rules and coding standards.
 - `CODE_OF_CONDUCT.md` and `DONATE.md`, with the two QR images, as the family carries them.

@@ -3,4 +3,5 @@
 // SPDX-License-Identifier: MIT
 
 pub mod json;
+pub mod plan_renderer;
 pub mod table;

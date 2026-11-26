@@ -5,8 +5,6 @@
 use std::process::Command;
 use std::process::Output;
 
-const DESIGN: &str = "https://github.com/umbgtt10/ripe4rust/blob/main/docs/DESIGN.md";
-
 fn run(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_cargo-ripe4rust"))
         .args(args)
@@ -15,34 +13,45 @@ fn run(args: &[&str]) -> Output {
 }
 
 #[test]
-fn main_at_the_design_stage_exits_two() {
+fn main_of_a_command_not_built_yet_exits_two() {
     // Arrange & Act
-    let output = run(&["ripe4rust"]);
+    let output = run(&["ripe4rust", "check"]);
 
     // Assert
     assert_eq!(output.status.code(), Some(2));
 }
 
 #[test]
-fn main_at_the_design_stage_says_so_naming_the_outcomes_and_the_design() {
+fn main_of_a_command_not_built_yet_prints_its_diagnostic_on_stdout() {
     // Arrange & Act
-    let output = run(&["ripe4rust"]);
+    let output = run(&["ripe4rust", "check"]);
 
     // Assert
     assert_eq!(
-        String::from_utf8_lossy(&output.stderr),
-        format!(
-            "cargo-ripe4rust {}: design stage, no plan can be produced yet. Every upgrade will be ripe, ask or ripening; the design is at {DESIGN}\n",
-            env!("CARGO_PKG_VERSION")
-        )
+        String::from_utf8_lossy(&output.stdout),
+        "error[command-unavailable] `check` is not in this release of ripe4rust yet. Do: use `cargo ripe4rust plan`, the one command this release runs; `check`, `hold` and `guide` come with a later release\n"
     );
 }
 
 #[test]
-fn main_at_the_design_stage_writes_nothing_to_stdout() {
+fn main_of_a_command_not_built_yet_writes_nothing_to_stderr() {
     // Arrange & Act
-    let output = run(&["ripe4rust"]);
+    let output = run(&["ripe4rust", "check"]);
 
     // Assert
-    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
+    assert_eq!(String::from_utf8_lossy(&output.stderr), "");
+}
+
+#[test]
+fn main_of_an_unknown_command_in_json_prints_the_failure_document() {
+    // Arrange & Act
+    let output = run(&["ripe4rust", "frobnicate", "--format", "json"]);
+
+    // Assert
+    assert_eq!(output.status.code(), Some(2));
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("\"code\": \"usage-invalid\""),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
 }
