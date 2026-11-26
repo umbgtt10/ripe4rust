@@ -386,7 +386,8 @@ One `syn` parse of the workspace's sources answers both
 - **Exposure** -- whether the crate's items reach a published crate's public
   API: public signatures, public fields, `pub use` re-exports, and the crate's
   traits derived or implemented on public types, counted where the item is
-  reachable from the crate's `lib.rs` through `pub mod` declarations.
+  reachable from the crate's `lib.rs` through `pub mod` declarations or `pub
+  use` re-exports.
 
 A parse can be wrong about exposure (a type alias, a macro that expands to a
 public item). The policy can override it, crate by crate: `public` exposes the
@@ -439,9 +440,10 @@ Where the lines above leave it open, the parse reads a file this way:
   by its name alone reads as a variable's, so one a glob alone brings in is not
   seen.
 - **What exposes a crate.** A library's -- a `lib`, `rlib` or `dylib` target's
-  -- `pub` items, `pub(crate)` and narrower aside, in a module reachable from
-  its root through `pub mod` declarations, inline modules included, show their
-  users: a function's signature, a struct's or a union's `pub` fields, every
+  -- `pub` items, `pub(crate)` and narrower aside, reachable from its root --
+  in a module `pub mod` declarations reach, inline modules included, or
+  through `pub use` re-exports, the facade `mod inner; pub use inner::Thing;`
+  -- show their users: a function's signature, a struct's or a union's `pub` fields, every
   variant of an enum, a trait's bounds and its items' signatures, types and
   bounds, a type alias, a constant's or a static's type, their derives, a `pub
   use` and a `pub extern crate`; never a body or a private field. An
@@ -451,11 +453,19 @@ Where the lines above leave it open, the parse reads a file this way:
   type's own `pub` methods and constants. The library's types and traits are
   told by name, public where any definition of that name is. A proc-macro or C
   library exposes nothing.
+- **What a re-export reaches.** A `pub use` reachable from the root reaches
+  what it names wherever the library defines it, told by name as the
+  library's types are: `inner::Thing` and `inner::Thing as Other` every item
+  named `Thing`, and a `use` binding that name, so a re-export re-exported is
+  followed to the item; `inner::*`, or a module a `pub use` names, every item
+  of each module of that name -- a file's module named as its `mod` item names
+  it, `#[path]` or not --, and of the `pub mod`s in it. What is reached is
+  followed in turn, until nothing more is. A `use` short of `pub` re-exports
+  nothing.
 - **What it cannot see.** What a macro expands to -- generated items, a
-  derive's expansion, `include!` --, as the ADR accepts; an item of a private
-  module re-exported by `pub use`, which `pub mod` declarations do not reach;
-  and a dependency whose library is named otherwise than its package, which
-  the manifest does not say. The policy's `exposure` is the remedy for
+  derive's expansion, `include!` --, as the ADR accepts; and a dependency whose
+  library is named otherwise than its package, which the manifest does not
+  say. The policy's `exposure` is the remedy for
   exposure; the footprint is a floor.
 
 ## Groups

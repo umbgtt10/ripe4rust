@@ -9,11 +9,12 @@ use std::path::PathBuf;
 /// the files a `mod` item can name; whether the file found owns its
 /// directory as `mod.rs` does -- a root, or one a `#[path]` names --;
 /// whether it is reachable through `pub mod` declarations; and the `mod` item
-/// declaring it, `None` for a root.
+/// declaring it and the name it gives the module, both `None` for a root.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ModuleSource {
     pub candidates: Vec<PathBuf>,
     pub owns_directory: bool,
     pub public: bool,
     pub declared_at: Option<Location>,
+    pub name: Option<String>,
 }

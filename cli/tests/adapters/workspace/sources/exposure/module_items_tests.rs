@@ -23,6 +23,39 @@ fn placed(items: &[PlacedItem<'_>]) -> Vec<(String, bool)> {
 }
 
 #[test]
+fn items_of_inline_modules_are_placed_in_the_module_holding_them() {
+    // Arrange
+    let file = parsed(
+        "pub fn a() {}\nmod b {\n    pub fn c() {}\n    mod d {\n        pub fn e() {}\n    }\n}\n",
+    );
+
+    // Act
+    let modules = scoped("", |scope| {
+        ModuleItems::items(&file.items, true, Some("lib"), scope)
+            .into_iter()
+            .filter_map(|placed| {
+                ItemName
+                    .of(placed.item)
+                    .map(|ident| (ident.to_string(), placed.module))
+            })
+            .collect::<Vec<_>>()
+    });
+
+    // Assert
+    assert_eq!(
+        modules,
+        [
+            ("a", Some("lib")),
+            ("b", Some("lib")),
+            ("c", Some("b")),
+            ("d", Some("b")),
+            ("e", Some("d")),
+        ]
+        .map(|(name, module)| (String::from(name), module.map(String::from)))
+    );
+}
+
+#[test]
 fn items_of_inline_modules_are_public_where_every_module_on_the_way_is() {
     // Arrange
     let file = parsed(
@@ -31,7 +64,7 @@ fn items_of_inline_modules_are_public_where_every_module_on_the_way_is() {
 
     // Act
     let items = scoped("", |scope| {
-        placed(&ModuleItems::items(&file.items, true, scope))
+        placed(&ModuleItems::items(&file.items, true, None, scope))
     });
 
     // Assert
@@ -60,6 +93,7 @@ fn of_files_is_every_item_of_each_public_as_its_file() {
             name: String::from("app/src/lib.rs"),
             syntax: parsed(text),
             public,
+            module: None,
         });
 
     // Act
@@ -76,4 +110,35 @@ fn of_files_is_every_item_of_each_public_as_its_file() {
         items,
         [("a", true), ("b", false)].map(|(name, public)| (String::from(name), public))
     );
+}
+
+#[test]
+fn of_files_places_every_item_in_its_file_s_module() {
+    // Arrange
+    let files =
+        [(None, "pub fn a() {}\n"), (Some("b"), "pub fn c() {}\n")].map(|(module, text)| {
+            ParsedFile {
+                path: PathBuf::from("/work/ws/app/src/lib.rs"),
+                name: String::from("app/src/lib.rs"),
+                syntax: parsed(text),
+                public: true,
+                module: module.map(String::from),
+            }
+        });
+
+    // Act
+    let modules = scoped("", |scope| {
+        let scoped_files = files
+            .iter()
+            .map(|file| ScopedFile { file, scope })
+            .collect::<Vec<ScopedFile<'_>>>();
+        ModuleItems
+            .of(&scoped_files)
+            .into_iter()
+            .map(|placed| placed.module)
+            .collect::<Vec<_>>()
+    });
+
+    // Assert
+    assert_eq!(modules, vec![None, Some(String::from("b"))]);
 }

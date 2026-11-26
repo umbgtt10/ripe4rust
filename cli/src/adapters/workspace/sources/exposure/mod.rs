@@ -9,5 +9,7 @@ pub mod local_types;
 pub mod module_items;
 pub mod placed_item;
 pub mod public_surface;
+pub mod re_export_reach;
+pub mod re_exports;
 pub mod scoped_file;
 pub mod surface_names;

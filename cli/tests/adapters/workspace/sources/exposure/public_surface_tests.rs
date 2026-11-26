@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::sources::exposed;
+use crate::support::sources::exposed_in;
 
 fn names(names: &[&str]) -> Vec<String> {
     names.iter().map(|name| String::from(*name)).collect()
@@ -117,6 +118,38 @@ fn packages_of_an_impl_in_a_private_file_on_a_public_type_are_its_trait_s() {
 
     // Assert
     assert_eq!(packages, names(&["serde"]));
+}
+
+#[test]
+fn packages_of_items_a_glob_re_exports_from_a_private_module_are_its_public_items() {
+    // Arrange & Act
+    let packages = exposed_in(&[
+        ("mod inner;\npub use inner::*;\n", true, None),
+        (
+            "pub fn a(b: itoa::Buffer) {}\nfn c(d: url::Url) {}\n",
+            false,
+            Some("inner"),
+        ),
+    ]);
+
+    // Assert
+    assert_eq!(packages, names(&["itoa"]));
+}
+
+#[test]
+fn packages_of_items_re_exported_from_a_private_module_are_theirs_and_their_methods() {
+    // Arrange & Act
+    let packages = exposed_in(&[
+        ("mod inner;\npub use inner::Thing;\n", true, None),
+        (
+            "pub struct Thing {\n    pub a: itoa::Buffer,\n}\nimpl Thing {\n    pub fn b(&self) -> url::Url {\n        todo!()\n    }\n}\nimpl serde::Serialize for Thing {}\npub fn c(d: log::Level) {}\n",
+            false,
+            Some("inner"),
+        ),
+    ]);
+
+    // Assert
+    assert_eq!(packages, names(&["itoa", "serde", "url"]));
 }
 
 #[test]

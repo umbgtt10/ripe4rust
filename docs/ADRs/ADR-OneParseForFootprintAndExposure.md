@@ -20,7 +20,8 @@ One `syn` parse of the workspace's sources answers both.
 - **Exposure:** whether the crate's items reach a published crate's public
   API -- public signatures, public fields, `pub use` re-exports, the crate's
   traits derived or implemented on public types -- counted where the item is
-  reachable from the crate's `lib.rs` through `pub mod` declarations.
+  reachable from the crate's `lib.rs` through `pub mod` declarations or `pub
+  use` re-exports, the facade `mod inner; pub use inner::Thing;` included.
 
 The footprint keeps every location as `file:line`: an asked breaking unit's
 evidence carries them, the work list of its migration. A source file the parse

@@ -198,6 +198,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   cannot see. ripe4rust's own policy names its two crates on crates.io as `published`.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
+- Exposure follows `pub use` re-exports (`cargo_ripe4rust::adapters::workspace::sources::exposure::re_export_reach`):
+  the facade, `mod inner; pub use inner::Thing;`, puts `Thing` in the library's public API wherever it is defined.
+  A reachable `pub use` reaches what it names, told by name as the library's types are -- `Thing` and `Thing as
+  Other` every item named `Thing`, a `use` binding that name so a re-export re-exported is followed --, and a glob,
+  or a module it names, every item of that module and of the `pub mod`s in it, followed until nothing more is
+  reached. The walk names each file's module as its `mod` item does, `#[path]` or not. `docs/DESIGN.md` drops the
+  limit, and it and `ADR-OneParseForFootprintAndExposure` count what `pub mod` declarations or `pub use` re-exports
+  reach.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

@@ -53,6 +53,7 @@ fn named_of_a_file_is_each_line_naming_a_dependency_in_that_file() {
         name: String::from("app/src/lib.rs"),
         syntax: parsed("use itoa::Buffer;\n"),
         public: true,
+        module: None,
     };
 
     // Act
