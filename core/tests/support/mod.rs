@@ -3,3 +3,4 @@
 // SPDX-License-Identifier: MIT
 
 pub mod policy_trees;
+pub mod releases;

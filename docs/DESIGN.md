@@ -149,7 +149,10 @@ published crate that is rule 8's question.
 A line is **young** while either holds: its first release is under
 `young-days` old, or it has fewer than `young-releases` releases. It has
 **settled** otherwise. A line is **active** while it has had a release within
-`stale-months`, and **stale** otherwise.
+`stale-months`, and **stale** otherwise. A line's releases are those neither
+yanked nor pre-releases, whether or not the toolchain can build them. A
+release the index gives no date for is older than any it does: it makes no
+line young and no line active.
 
 ## What each unit moves
 

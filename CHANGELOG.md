@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- The version choice (`ripe4rust_core::planning::choice`), over a crate's or the toolchain's releases as the index
+  will hand them over (`ripe4rust_core::inputs::release`): candidates -- neither yanked nor pre-releases, and
+  buildable by the toolchain in use --, the versions it holds back that the next toolchain would release, a line's
+  releases and their first and last dates, young or settled and active or stale as of the injected date, and a
+  breaking unit's target, the newest release of the newest settled line with the younger lines beyond it named.
 - Diagnostics (`ripe4rust_core::diagnostics`): `Diagnostic` -- severity, code, where, what, do, needs a person --
   and `DiagnosticCode`, every code `docs/DESIGN.md` names with its stable label, its severity and whether only the
   owner can fix it, five added to the table for failures it left without one: `policy-invalid-value`,
