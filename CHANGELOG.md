@@ -156,6 +156,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   when `check` exits 2.
 - ripe4rust plans itself: the workspace's `Cargo.toml` declares its gates, `just stage1` and `just stage2`, in
   `[workspace.metadata.ripe4rust]`, so its own plan no longer warns `gates-undeclared`.
+- The workspace's layout carries each member's sources, read from the same `cargo metadata --no-deps`: every target
+  with its kinds and its root file, and every dependency its manifest declares, with its `package` rename and its
+  source, which the parse of slice 4 reads. Naming a file from the workspace's root is `RootNames`, shared.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from

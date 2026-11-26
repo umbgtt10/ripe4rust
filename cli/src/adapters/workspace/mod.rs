@@ -10,6 +10,7 @@ pub mod manifest_files;
 pub mod plan;
 pub mod policy_section;
 pub mod requirement_finder;
+pub mod root_names;
 pub mod rust_version_finder;
 pub mod toml_file;
 pub mod toml_values;
