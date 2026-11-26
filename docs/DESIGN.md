@@ -130,6 +130,24 @@ plan blind to advisories would call ripe what it should call urgent.
 strictly: a line it does not recognise stops the plan with a diagnostic,
 rather than leave a move out of it (ADR-CargoComputesTheLockMoves).
 
+### How the cli reads them
+
+Every adapter is a process or a file behind a seam of the cli's own -- a
+`CommandRunner`, a `FileSystem`, a `Pause` -- so each is tested on output
+recorded from the pinned toolchain, and none of the tests reaches the network.
+Where the sections above are silent, the adapters read the inputs this way:
+
+- **`cargo metadata`** runs with `--format-version 1 --locked`, so it never
+  writes the lock file, and with `--offline` in an offline plan. A member's
+  dependencies and a locked package's are the crates.io packages its resolve
+  node names, each with the requirement that asked for it: the first declared
+  for that crate, from crates.io, that the resolved version meets, or `*` where
+  none does. A crate reaches a `validate-beyond-gates` target where `cargo
+  metadata --filter-platform <target>` resolves it at all, through any member
+  and any kind of dependency: the conservative reading, so a crate only a host
+  tool uses still asks. A failure is `cargo-metadata-failed`, with cargo's
+  error on one line; output it cannot read is `internal`.
+
 ## Which version a unit moves to
 
 A version is never a candidate if it is yanked, a pre-release, or needs a

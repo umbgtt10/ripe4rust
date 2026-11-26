@@ -78,6 +78,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   whole, and `Pause`, a wait between requests; their real implementations (`cargo_ripe4rust::system`) run a child
   process without colour, write a file beside its place and rename it, and sleep the thread. A program not
   installed is `LaunchFailure::Missing`, a file not there `FileFailure::Missing`.
+- `cargo metadata`, read (`cargo_ripe4rust::cargo::cargo_metadata`): the members, each with its crates.io
+  dependencies and the requirement that asked for each, and the lock's crates.io packages, from
+  `cargo metadata --format-version 1 --locked`; the crates a `validate-beyond-gates` target reaches, from the same
+  with `--filter-platform`. `--locked` leaves the lock file alone; `--offline` follows an offline plan. A failure is
+  `cargo-metadata-failed` with cargo's error on one line, output that does not read `internal`.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

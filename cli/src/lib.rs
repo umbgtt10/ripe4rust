@@ -6,6 +6,7 @@
 //! the core's ports, the seams they reach the system through, and the
 //! renderers.
 
+pub mod cargo;
 pub mod render;
 pub mod seams;
 pub mod system;

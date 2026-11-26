@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+mod cargo;
 mod main_tests;
 mod render;
 mod support;
