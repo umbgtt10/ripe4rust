@@ -16,4 +16,3 @@ pub mod sources;
 pub mod toml_file_tests;
 pub mod toml_values_tests;
 pub mod toolchain_reader_tests;
-pub mod unscanned_sources_tests;

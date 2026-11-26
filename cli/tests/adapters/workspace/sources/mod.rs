@@ -3,5 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod exposure;
+pub mod member_scanner_tests;
 pub mod naming;
+pub mod source_scanner_tests;
 pub mod walking;

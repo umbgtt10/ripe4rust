@@ -8,7 +8,8 @@ use crate::support::replay_runner::ReplayRunner;
 
 pub const LAYOUT: [&str; 5] = ["cargo", "metadata", "--format-version", "1", "--no-deps"];
 
-/// The recorded workspace's files, at the paths cargo reported them.
+/// The recorded workspace's files, at the paths cargo reported them: the
+/// manifests, the lock, the toolchain file and the two members' sources.
 pub fn files() -> MemoryFiles {
     MemoryFiles::new()
         .with(
@@ -30,6 +31,14 @@ pub fn files() -> MemoryFiles {
         .with(
             "/work/ws/app-core/Cargo.toml",
             include_str!("../fixtures/workspace/files/app-core/Cargo.toml.txt"),
+        )
+        .with(
+            "/work/ws/app/src/main.rs",
+            include_str!("../fixtures/workspace/files/app/src/main.rs.txt"),
+        )
+        .with(
+            "/work/ws/app-core/src/lib.rs",
+            include_str!("../fixtures/workspace/files/app-core/src/lib.rs.txt"),
         )
 }
 

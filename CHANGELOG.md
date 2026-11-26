@@ -64,11 +64,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the JSON document -- `schema`, `command`, `date`, `registry_read`, `workspace`, `gates`, `diagnostics` and
   `units`, each unit with its moves, outcome, rule, suggestion, reasons, summary, steps, question and evidence; on
   failure, `schema`, `command` and `diagnostics` -- and the table for a person, the diagnostics after it in text.
-- What a plan does not know yet, said rather than guessed: the source scan's port answers `None` while the sources
-  are not parsed, and the toolchain's releases `None` while the channel manifests are not read. A footprint not
-  known is never small -- rule 11 calls nothing ripe, the verdict waits -- and a breaking unit a published member
-  uses asks under rule 8, its exposure not yet known; with no releases no toolchain unit is offered. The plan says
-  so in two notices, `source-unscanned` and `toolchain-releases-unknown`.
+- What a plan does not know, said rather than guessed: the source scan's port answers `None` where the scan failed
+  as a whole, and the toolchain's releases `None` while the channel manifests are not read. A footprint not known
+  is never small -- rule 11 calls nothing ripe, the verdict waits -- and a breaking unit a published member uses
+  asks under rule 8, its exposure not known; with no releases no toolchain unit is offered. The plan says so, in the
+  warning `source-unscanned` and the notice `toolchain-releases-unknown`.
 - Every object of the JSON document written in the design's order, at every depth -- a record of its own each
   (`cargo_ripe4rust::render::json::documents`), serialized as declared -- where the nested objects were written
   with their keys sorted. serde_json's `preserve_order` stays off: it would bring a crate under a licence
@@ -186,6 +186,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   and wherever in the library they are written, a trait's implementation where neither the trait nor the type is
   the library's own and private, and a public type's `pub` methods and constants. Bodies, private fields and
   private items are not seen.
+- The parse, slice 4 of `docs/DESIGN.md`'s "Delivery": `SourceScanner`
+  (`cargo_ripe4rust::adapters::workspace::sources`) replaces the scan that knew nothing. Every member's targets as
+  `cargo metadata --no-deps` lists them -- library, binaries, tests, benches, examples, build script -- are walked
+  with the modules they declare, and give every crates.io dependency named its footprint, every `file:line` naming
+  it, and the members whose public API it reaches, the library's alone. A file the parse cannot read is
+  `source-unparsed` where it broke, and a library holding one has its API unread; where not one file of all it
+  tried could be parsed, the scan failed as a whole and knows nothing. With footprint and exposure known, rules 8
+  and 11, the verdict and a migration's work list read them: on the recorded workspace, `itoa` is asked as in
+  `app-core`'s public API, its three locations the work list. `guide`'s entry for the footprint says what the parse
+  cannot see. ripe4rust's own policy names its two crates on crates.io as `published`.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
@@ -204,6 +214,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - This changelog.
 
 ### Changed
+- `source-unscanned` is a warning, and means a scan that failed as a whole -- not one source file could be parsed --,
+  its remedy to run `cargo check` and report syntax the parser does not read; no plan carries it any more for sources
+  not yet parsed.
 - `ripe4rust-core`'s root carries `#![forbid(unsafe_code)]` beside `#![no_std]`, as the technology-free gate asks;
   the workspace's lints add clippy's `all`, denied, and `pedantic`, warned.
 - `docs/DESIGN.md`'s "Delivery" puts slice 1's table and JSON renderers in the cli, where "Architecture" has them.

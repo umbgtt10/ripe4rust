@@ -1,9 +1,9 @@
 # ripe4rust -- design
 
 Status: settled 2026-11-26; the agent's contract added the same day. Slices
-0, 1 and 2 of "Delivery" are implemented: the scaffolding, the core with the
-renderers, the adapters with `plan` end to end, and the round's commands,
-`check`, `hold` and `guide`. The decisions that were not
+0 to 4 of "Delivery" are implemented: the scaffolding, the core with the
+renderers, the adapters with `plan` end to end, the round's commands, `check`,
+`hold` and `guide`, and the parse of the sources. The decisions that were not
 obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
@@ -222,8 +222,23 @@ Where the sections above are silent, the adapters read the inputs this way:
   in the workspace's directory so `rust-toolchain.toml` chooses the compiler;
   a failure is `toolchain-unreachable`. Its releases are slice 5's: until then
   it answers that it knows none.
-- **The source scan** is slice 4's: until then it answers that it knows
-  nothing, and the plan reads that as "Footprint and exposure" says.
+- **The sources** are parsed with `syn` 2 (MIT OR Apache-2.0, with `full` and
+  `visit`), `proc-macro2`'s span locations giving every name its line: each
+  member's targets as the same `cargo metadata --no-deps` lists them --
+  library, binaries, tests, benches, examples, build script --, and the
+  modules each declares, followed from its root as the compiler finds them:
+  `name.rs`, then `name/mod.rs`, beside a file that owns its directory -- a
+  root, a `mod.rs`, a file a `#[path]` names -- or under a directory of the
+  file's own name otherwise, inline modules adding theirs; a `#[path]` beside
+  the declaring file, `..` resolved. `cfg` is not evaluated: every module
+  declared is read, once a target, and named from the root. A dependency is
+  known by the name its code calls it, read from what `cargo metadata` says
+  of the manifest: the name `package = "..."` renames it to, or the package's,
+  hyphens as underscores. A crates.io one's name stands for its package; a
+  path or git dependency's, and the member's own library's, are known but out
+  of scope. Where not one file of all it tried could be parsed, the scan
+  failed as a whole and answers that it knows nothing, which the plan reads as
+  "Footprint and exposure" says.
 
 ## Which version a unit moves to
 
@@ -385,13 +400,63 @@ read: the exposure of every crate the member uses is not known there, and a
 breaking unit of one the policy is silent on asks under rule 8, "exposure in
 <member>'s public API not known", as for a scan that failed as a whole.
 
-Until the parse is built (slice 4 of "Delivery"), the scan answers that it
-knows neither, and the plan reads that conservatively. A footprint not known
-is never small, so rule 11 calls no unit ripe, and the verdict is "wait:
-footprint not yet known". A crate the policy is silent on may be in the public
-API of any published member that uses it, so its breaking unit asks under rule
-8, "exposure in <member>'s public API not known". The plan carries the
-notice `source-unscanned`, and an override in the policy still decides.
+Where the scan fails as a whole -- not one source file of the workspace could
+be parsed --, it answers that it knows neither, and the plan reads that
+conservatively. A footprint not known is never small, so rule 11 calls no unit
+ripe, and the verdict is "wait: footprint not known". A crate the policy is
+silent on may be in the public API of any published member that uses it, so
+its breaking unit asks under rule 8, "exposure in <member>'s public API not
+known". The plan carries the warning `source-unscanned`, and an override in the
+policy still decides.
+
+Where the lines above leave it open, the parse reads a file this way:
+
+- **What a name stands for.** A file's names resolve through its `use` and
+  `extern crate` items -- renames, groups, `self`, `as _`, and one another,
+  `use a::b; use b::C;` --, its own items, variants and generic parameters,
+  the standard library's prelude and crates, and its member's dependencies. A
+  binding or an item of the file's own shadows a dependency of the same name.
+  A name declared anywhere in a file is taken as in scope throughout it: the
+  inline modules of one file are not told apart.
+- **What counts toward the footprint.** A path whose first name is a
+  dependency's, starting a longer path -- `itoa::Buffer` -- or from the root,
+  `::itoa`, or a name bound to one; a dependency's own name alone, in an
+  expression or a type, is a variable's or a parameter's, and does not count.
+  A `use` item counts at its first name's line and at each name it brings; an
+  `extern crate` item at its own. A macro counts by its path, by a name bound
+  to one, and -- called by its name alone, where neither the standard library
+  nor the target defines one of that name -- for every crate the file
+  glob-imports and the target's `#[macro_use]` crates. The tokens a macro or an
+  attribute is given, which `syn` leaves unparsed, count where a dependency
+  starts a path in them or a name bound to one appears. A derive counts by its
+  path, by a name bound to the crate or through a glob; an attribute by its
+  path, `#[tokio::main]`, or by the crate's own name, `#[serde(...)]`. A doc
+  comment never counts.
+- **Globs.** A name nothing declares that a glob may have brought -- starting a
+  longer path, or written in capitals as a type, a variant or a constant is --
+  counts for every crate the file glob-imports; the standard library's names
+  and the built-in attributes, derives and macros never do. A function called
+  by its name alone reads as a variable's, so one a glob alone brings in is not
+  seen.
+- **What exposes a crate.** A library's -- a `lib`, `rlib` or `dylib` target's
+  -- `pub` items, `pub(crate)` and narrower aside, in a module reachable from
+  its root through `pub mod` declarations, inline modules included, show their
+  users: a function's signature, a struct's or a union's `pub` fields, every
+  variant of an enum, a trait's bounds and its items' signatures, types and
+  bounds, a type alias, a constant's or a static's type, their derives, a `pub
+  use` and a `pub extern crate`; never a body or a private field. An
+  implementation is public wherever in the library it is written: a trait's --
+  its generics, the trait's path, the type, its associated types -- where
+  neither the trait nor the type is the library's own and private, and a public
+  type's own `pub` methods and constants. The library's types and traits are
+  told by name, public where any definition of that name is. A proc-macro or C
+  library exposes nothing.
+- **What it cannot see.** What a macro expands to -- generated items, a
+  derive's expansion, `include!` --, as the ADR accepts; an item of a private
+  module re-exported by `pub use`, which `pub mod` declarations do not reach;
+  and a dependency whose library is named otherwise than its package, which
+  the manifest does not say. The policy's `exposure` is the remedy for
+  exposure; the footprint is a floor.
 
 ## Groups
 
@@ -536,7 +601,7 @@ The problems the design already names, at least:
 | `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
 | `curl-missing` | error | curl is not on the PATH, and the registry is read through it |
 | `registry-cache-unusable` | error | the day cache cannot be read or written, or there is no directory for it |
-| `source-unscanned` | notice | the sources are not parsed yet: no footprint or exposure is known |
+| `source-unscanned` | warning | not one source file of the workspace could be parsed, so the scan failed as a whole: no footprint or exposure is known |
 | `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
 | `usage-invalid` | error | a command or an option ripe4rust does not know, or an option's value of the wrong kind |
 | `plan-unreadable` | error | the plan file `--plan` names is not there, or is no plan `plan` wrote |

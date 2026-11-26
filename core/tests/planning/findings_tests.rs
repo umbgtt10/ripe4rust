@@ -83,22 +83,22 @@ fn source_unparsed_names_the_file_and_why() {
 }
 
 #[test]
-fn source_unscanned_is_a_notice_of_what_is_not_known() {
+fn source_unscanned_is_a_warning_that_nothing_of_the_sources_is_known() {
     // Arrange & Act
     let diagnostic = Findings.source_unscanned();
 
     // Assert
     assert_eq!(
         (diagnostic.code, diagnostic.severity, diagnostic.at),
-        (DiagnosticCode::SourceUnscanned, Severity::Notice, None)
+        (DiagnosticCode::SourceUnscanned, Severity::Warning, None)
     );
     assert_eq!(
         diagnostic.what,
-        "the workspace's sources are not parsed yet, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8)"
+        "not one of the workspace's source files could be parsed, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8)"
     );
     assert_eq!(
         diagnostic.action,
-        "nothing is needed; until a release of ripe4rust parses the sources, size each breaking unit's migration by hand"
+        "run `cargo check`: where it fails, fix what it names and plan again; where it builds, the sources use syntax ripe4rust's parser does not read -- report it at https://github.com/umbgtt10/ripe4rust/issues --, and size each breaking unit's migration by hand meanwhile"
     );
 }
 

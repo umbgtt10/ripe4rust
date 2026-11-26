@@ -133,7 +133,7 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 30] = [
     (
         DiagnosticCode::SourceUnscanned,
         "source-unscanned",
-        Severity::Notice,
+        Severity::Warning,
         false,
     ),
     (

@@ -96,6 +96,46 @@ fn seams<'a>(
 }
 
 #[test]
+fn run_of_a_library_that_does_not_parse_warns_where_and_asks_its_exposure() {
+    // Arrange
+    let runner = recorded(false);
+    let files = files().with(
+        "/work/ws/app-core/src/lib.rs",
+        "pub fn digits(value: u64) -> String {\n    let buffer = ;\n}\n",
+    );
+    let (pause, clock) = (CountingPause::new(), clock());
+
+    // Act
+    let ran =
+        Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&plan_json("2026-11-26", false));
+
+    // Assert
+    let document = parsed(&ran.output);
+    let itoa = document["units"]
+        .as_array()
+        .and_then(|units| units.iter().find(|unit| unit["id"] == "breaking:itoa"))
+        .expect("the breaking unit");
+    assert_eq!(
+        (ran.code, &document["diagnostics"][1]),
+        (
+            0,
+            &json!({
+                "severity": "warning",
+                "code": "source-unparsed",
+                "where": "app-core/src/lib.rs:2",
+                "what": "`app-core/src/lib.rs` could not be parsed (expected an expression): the footprint of the crates it names may be low",
+                "do": "fix the file so it parses, then plan again; or take the footprint as a floor",
+                "needs_person": false
+            })
+        )
+    );
+    assert_eq!(
+        itoa["reasons"][0],
+        json!("exposure in app-core's public API not known")
+    );
+}
+
+#[test]
 fn run_of_a_policy_in_error_reads_nothing_beyond_it() {
     // Arrange
     let runner = recorded(false);

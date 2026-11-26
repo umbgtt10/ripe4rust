@@ -213,6 +213,23 @@ fn survey_of_a_policy_in_error_stops_before_any_other_port() {
 }
 
 #[test]
+fn survey_of_a_scan_that_failed_as_a_whole_carries_its_warning() {
+    // Arrange
+    let mut fakes = FakePorts::new();
+    fakes.scan.scan = None;
+
+    // Act
+    let survey = Survey::new(fakes.ports()).survey().expect("a survey");
+
+    // Assert
+    assert_eq!(survey.scan, None);
+    assert_eq!(
+        codes(&survey.diagnostics),
+        vec![DiagnosticCode::SourceUnscanned]
+    );
+}
+
+#[test]
 fn survey_of_an_unknown_target_stops_the_plan() {
     // Arrange
     let mut fakes = FakePorts::new();
@@ -251,23 +268,6 @@ fn survey_of_an_unreadable_policy_stops_at_once() {
     assert_eq!(
         survey.map_err(|failure| codes(&failure.diagnostics)),
         Err(vec![DiagnosticCode::WorkspaceUnreadable])
-    );
-}
-
-#[test]
-fn survey_of_sources_not_yet_scanned_carries_a_notice() {
-    // Arrange
-    let mut fakes = FakePorts::new();
-    fakes.scan.scan = None;
-
-    // Act
-    let survey = Survey::new(fakes.ports()).survey().expect("a survey");
-
-    // Assert
-    assert_eq!(survey.scan, None);
-    assert_eq!(
-        codes(&survey.diagnostics),
-        vec![DiagnosticCode::SourceUnscanned]
     );
 }
 
