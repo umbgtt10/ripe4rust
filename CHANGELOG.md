@@ -184,6 +184,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A compatible unit whose own move a pin holds (`hold = "all"`) no longer reads as a move to the version in use,
   `memchr 2.5.0 -> 2.5.0`: its `to` is null in the JSON, `held` in the table, and `evidence.held` names the move;
   its summary counts the crates it pulls in, and its question asks to move the crate, naming no version.
+- A diagnostic, a `check` difference or a guide entry whose text ends in a full stop -- a cargo error quoted at its
+  end, often -- no longer prints `.. Do:`: the full stop closes it only where it has no ending of its own.
 
 ## [0.0.1] — 2026-10-30
 

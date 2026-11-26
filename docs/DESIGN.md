@@ -483,6 +483,12 @@ Every problem found on the way is a diagnostic (ADR-EveryProblemSaysWhatToDo):
 - **needs_person** -- true when only the workspace's owner can supply the fix:
   a pin's reason, a decision. The agent asks; it does not invent.
 
+In text a diagnostic reads `error[<code>] <where>: <what>. Do: <do>`, and a
+`check` difference `<where>: <what>. Do: <do>`. The full stop closes `what`
+only where it has no ending of its own: a tool's error quoted at the end of it
+often ends in a full stop, a question mark or an exclamation mark, and the text
+never doubles one.
+
 ripe4rust does not panic at its caller. A failure of its own is the
 diagnostic `internal`, with what it was doing and where to report it.
 

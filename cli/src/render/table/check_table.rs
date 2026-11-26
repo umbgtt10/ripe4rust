@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::render::table::diagnostic_line::DiagnosticLine;
+use crate::render::table::sentence::Sentence;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::planning::round::checking::check_report::CheckReport;
 
@@ -31,8 +32,10 @@ impl CheckTable {
         }
         lines.extend(report.differences.iter().map(|difference| {
             format!(
-                "{}: {}. Do: {}",
-                difference.at, difference.what, difference.action
+                "{}: {} Do: {}",
+                difference.at,
+                Sentence.ended(&difference.what),
+                difference.action
             )
         }));
         for (label, ids) in [("applied", &report.applied), ("to go", &report.to_go)] {

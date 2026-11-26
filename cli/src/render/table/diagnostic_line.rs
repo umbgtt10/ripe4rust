@@ -2,9 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::render::table::sentence::Sentence;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 
-/// A diagnostic in text: `error[<code>] <where>: <what>. Do: <do>`.
+/// A diagnostic in text: `error[<code>] <where>: <what>. Do: <do>`, the
+/// full stop after `what` never doubled.
 pub struct DiagnosticLine;
 
 impl DiagnosticLine {
@@ -15,10 +17,10 @@ impl DiagnosticLine {
             .map(|at| format!("{at}: "))
             .unwrap_or_default();
         format!(
-            "{}[{}] {place}{}. Do: {}",
+            "{}[{}] {place}{} Do: {}",
             diagnostic.severity.label(),
             diagnostic.code.label(),
-            diagnostic.what,
+            Sentence.ended(&diagnostic.what),
             diagnostic.action
         )
     }
