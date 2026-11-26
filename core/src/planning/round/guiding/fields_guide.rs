@@ -112,7 +112,11 @@ const FIELDS: [(&str, &str, &str); 115] = [
         "the crates it moves directly: a group's members, `rust` for the toolchain",
     ),
     ("plan", "units[].from", "the version it leaves"),
-    ("plan", "units[].to", "the version it takes"),
+    (
+        "plan",
+        "units[].to",
+        "the version it takes; null for the rest, and for a compatible unit whose own move a pin holds -- `evidence.held` names that move, and the table writes `held`",
+    ),
     (
         "plan",
         "units[].moves",
@@ -290,7 +294,7 @@ const FIELDS: [(&str, &str, &str); 115] = [
     (
         "plan",
         "units[].evidence.footprint",
-        "every `file:line` naming the crate: a migration's work list",
+        "every `file:line` naming the crate, read from the sources with `syn`: a migration's work list. What a macro expands to is not seen, nor a function a glob import alone brings in; where a file could not be parsed, a `source-unparsed` warning says so, and the list is a floor",
     ),
     (
         "plan",

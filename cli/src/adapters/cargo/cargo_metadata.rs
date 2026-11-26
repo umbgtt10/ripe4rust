@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::adapters::cargo::cargo_command::CargoCommand;
+use crate::adapters::cargo::metadata_failure::MetadataFailure;
 use crate::adapters::cargo::metadata_reader::MetadataReader;
 use crate::system::traits::command_runner::CommandRunner;
 use ripe4rust_core::inputs::port_failure::PortFailure;
@@ -12,8 +13,8 @@ use std::path::PathBuf;
 
 /// `cargo metadata --format-version 1 --locked`: the members and the lock,
 /// and with `--filter-platform` which crates a target's build resolves.
-/// `--locked` keeps the lock file as it is, and `--offline` the network out
-/// of an offline plan.
+/// `--locked` keeps the lock file as it is -- one it would have to write is
+/// `lock-outdated` --, and `--offline` the network out of an offline plan.
 pub struct CargoMetadata<'a> {
     runner: &'a dyn CommandRunner,
     dir: PathBuf,
@@ -38,7 +39,7 @@ impl<'a> CargoMetadata<'a> {
         }
         args.extend(filter.iter().map(|word| String::from(*word)));
         let output = CargoCommand::new(self.runner, self.dir.clone())
-            .run(args, |detail| PortFailure::CargoMetadataFailed { detail })?;
+            .run(args, |detail| MetadataFailure.of(detail))?;
         Ok(output.stdout)
     }
 }

@@ -31,9 +31,11 @@ name = "all_tests"
 path = "tests/all_tests.rs"
 
 [dependencies]
+proc-macro2 = { workspace = true }
 ripe4rust-core.workspace = true
 serde = { workspace = true }
 serde_json = { workspace = true }
+syn = { workspace = true }
 toml = { workspace = true }
 
 [dev-dependencies]

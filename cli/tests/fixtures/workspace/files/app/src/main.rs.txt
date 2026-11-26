@@ -1,0 +1,8 @@
+use itertools::Itertools;
+use smallvec::SmallVec;
+
+fn main() {
+    let words: SmallVec<[&str; 4]> = SmallVec::from_slice(&["ripe", "ask"]);
+    println!("{}", words.iter().join(", "));
+    println!("{}", app_core::digits(42));
+}

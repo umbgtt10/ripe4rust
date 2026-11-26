@@ -8,7 +8,7 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::diagnostics::severity::Severity;
 use ripe4rust_core::values::location::Location;
 
-const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 29] = [
+const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 30] = [
     (
         DiagnosticCode::CargoDenyFailed,
         "cargo-deny-failed",
@@ -52,6 +52,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 29] = [
         true,
     ),
     (DiagnosticCode::Internal, "internal", Severity::Error, false),
+    (
+        DiagnosticCode::LockOutdated,
+        "lock-outdated",
+        Severity::Error,
+        false,
+    ),
     (
         DiagnosticCode::PinForAbsentCrate,
         "pin-for-absent-crate",
@@ -127,7 +133,7 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 29] = [
     (
         DiagnosticCode::SourceUnscanned,
         "source-unscanned",
-        Severity::Notice,
+        Severity::Warning,
         false,
     ),
     (

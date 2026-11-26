@@ -6,6 +6,7 @@ use crate::adapters::workspace::fingerprint::Fingerprint;
 use crate::adapters::workspace::lock_reader::LockReader;
 use crate::adapters::workspace::policy_section::PolicySection;
 use crate::adapters::workspace::requirement_finder::RequirementFinder;
+use crate::adapters::workspace::root_names::RootNames;
 use crate::adapters::workspace::rust_version_finder::RustVersionFinder;
 use crate::adapters::workspace::toolchain_reader::ToolchainReader;
 use crate::system::model::file_failure::FileFailure;
@@ -55,12 +56,7 @@ impl<'a> ManifestFiles<'a> {
     }
 
     fn named(layout: &Layout, path: &Path) -> String {
-        path.strip_prefix(&layout.root)
-            .unwrap_or(path)
-            .components()
-            .map(|part| part.as_os_str().to_string_lossy().into_owned())
-            .collect::<Vec<String>>()
-            .join("/")
+        RootNames::new(&layout.root).name(path)
     }
 
     fn read(&self, layout: &Layout, path: &Path) -> Result<Option<String>, PortFailure> {

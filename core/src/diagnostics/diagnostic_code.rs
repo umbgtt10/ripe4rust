@@ -12,7 +12,7 @@ const UNLISTED: CodeEntry = CodeEntry {
     means: "",
     remedy: "",
 };
-const ENTRIES: [(DiagnosticCode, CodeEntry); 29] = [
+const ENTRIES: [(DiagnosticCode, CodeEntry); 30] = [
     (
         DiagnosticCode::CargoDenyFailed,
         CodeEntry {
@@ -67,6 +67,13 @@ const ENTRIES: [(DiagnosticCode, CodeEntry); 29] = [
         CodeEntry {
             means: "ripe4rust failed in a way of its own, saying what it was doing",
             remedy: "report it at https://github.com/umbgtt10/ripe4rust/issues with the diagnostic",
+        },
+    ),
+    (
+        DiagnosticCode::LockOutdated,
+        CodeEntry {
+            means: "`Cargo.lock` is not there, or no longer matches the workspace's manifests, and ripe4rust writes no lock: `cargo metadata --locked` refuses to bring it in step",
+            remedy: "bring the lock in step with the manifests -- `cargo update --workspace` writes it and moves no locked version they still allow --, commit it, then plan again",
         },
     ),
     (
@@ -156,8 +163,8 @@ const ENTRIES: [(DiagnosticCode, CodeEntry); 29] = [
     (
         DiagnosticCode::SourceUnscanned,
         CodeEntry {
-            means: "the sources are not parsed yet: no breaking unit's footprint or exposure is known",
-            remedy: "nothing is needed; size each breaking unit's migration by hand",
+            means: "not one of the workspace's source files could be parsed, so the scan failed as a whole: no breaking unit's footprint or exposure is known, and the plan reads both conservatively",
+            remedy: "run `cargo check`: where it fails, fix what it names and plan again; where it builds, the sources use syntax ripe4rust's parser does not read -- report it at https://github.com/umbgtt10/ripe4rust/issues --, and size each breaking unit's migration by hand meanwhile",
         },
     ),
     (
@@ -233,6 +240,7 @@ pub enum DiagnosticCode {
     CurlMissing,
     GatesUndeclared,
     Internal,
+    LockOutdated,
     PinForAbsentCrate,
     PinWithoutReason,
     PinWithoutRelease,
@@ -257,7 +265,7 @@ pub enum DiagnosticCode {
 }
 
 impl DiagnosticCode {
-    pub const ALL: [Self; 29] = [
+    pub const ALL: [Self; 30] = [
         Self::CargoDenyFailed,
         Self::CargoDenyMissing,
         Self::CargoMetadataFailed,
@@ -266,6 +274,7 @@ impl DiagnosticCode {
         Self::CurlMissing,
         Self::GatesUndeclared,
         Self::Internal,
+        Self::LockOutdated,
         Self::PinForAbsentCrate,
         Self::PinWithoutReason,
         Self::PinWithoutRelease,
@@ -317,6 +326,7 @@ impl DiagnosticCode {
             Self::CurlMissing => "curl-missing",
             Self::GatesUndeclared => "gates-undeclared",
             Self::Internal => "internal",
+            Self::LockOutdated => "lock-outdated",
             Self::PinForAbsentCrate => "pin-for-absent-crate",
             Self::PinWithoutReason => "pin-without-reason",
             Self::PinWithoutRelease => "pin-without-release",
@@ -359,10 +369,9 @@ impl DiagnosticCode {
             Self::GatesUndeclared
             | Self::PinForAbsentCrate
             | Self::RegistryCacheOld
-            | Self::SourceUnparsed => Severity::Warning,
-            Self::SourceUnscanned | Self::ToolchainReleasesUnknown | Self::ToolchainUnpinned => {
-                Severity::Notice
-            }
+            | Self::SourceUnparsed
+            | Self::SourceUnscanned => Severity::Warning,
+            Self::ToolchainReleasesUnknown | Self::ToolchainUnpinned => Severity::Notice,
             _ => Severity::Error,
         }
     }

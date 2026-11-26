@@ -134,7 +134,7 @@ fn option_of_migrate_now_with_an_unknown_footprint_says_the_build_is_the_work_li
     // Assert
     assert_eq!(
         then,
-        "apply it as a ripe unit; the footprint is not yet known, so the build's errors are the work list"
+        "apply it as a ripe unit; the footprint is not known, so the build's errors are the work list"
     );
 }
 

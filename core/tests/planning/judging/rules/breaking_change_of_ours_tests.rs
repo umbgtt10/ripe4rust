@@ -57,11 +57,11 @@ fn decide_of_a_crate_a_published_member_uses_unscanned_asks_it() {
             rule: Some(8),
             suggestion: Some(Suggestion::BreakingChangeOfOurs),
             reasons: vec![
-                String::from("exposure in widget-core's public API not yet known"),
-                String::from("wait: footprint not yet known"),
+                String::from("exposure in widget-core's public API not known"),
+                String::from("wait: footprint not known"),
             ],
             why: Some(String::from(
-                "whether widget's types are in widget-core's public API is not yet known, and if they are, the upgrade is a breaking change of ours too"
+                "whether widget's types are in widget-core's public API is not known, and if they are, the upgrade is a breaking change of ours too"
             )),
         })
     );
@@ -83,7 +83,7 @@ fn decide_of_a_crate_both_exposed_and_unscanned_says_it_is_ours() {
     assert_eq!(
         decision.and_then(|decision| decision.why),
         Some(String::from(
-            "widget's types are in widget-core's public API; whether widget's types are in widget-tools's public API is not yet known: the upgrade is a breaking change of ours too"
+            "widget's types are in widget-core's public API; whether widget's types are in widget-tools's public API is not known: the upgrade is a breaking change of ours too"
         ))
     );
 }

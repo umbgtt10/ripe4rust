@@ -44,3 +44,20 @@ fn fields_of_every_document_are_its_schema_command_and_diagnostics() {
         ]
     );
 }
+
+#[test]
+fn fields_of_the_footprint_say_what_the_parse_cannot_see() {
+    // Arrange & Act
+    let fields = FieldsGuide.fields();
+
+    // Assert
+    assert_eq!(
+        fields
+            .iter()
+            .find(|field| field.field == "units[].evidence.footprint")
+            .map(|field| field.means.as_str()),
+        Some(
+            "every `file:line` naming the crate, read from the sources with `syn`: a migration's work list. What a macro expands to is not seen, nor a function a glob import alone brings in; where a file could not be parsed, a `source-unparsed` warning says so, and the list is a floor"
+        )
+    );
+}

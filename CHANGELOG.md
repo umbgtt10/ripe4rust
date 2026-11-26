@@ -64,11 +64,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the JSON document -- `schema`, `command`, `date`, `registry_read`, `workspace`, `gates`, `diagnostics` and
   `units`, each unit with its moves, outcome, rule, suggestion, reasons, summary, steps, question and evidence; on
   failure, `schema`, `command` and `diagnostics` -- and the table for a person, the diagnostics after it in text.
-- What a plan does not know yet, said rather than guessed: the source scan's port answers `None` while the sources
-  are not parsed, and the toolchain's releases `None` while the channel manifests are not read. A footprint not
-  known is never small -- rule 11 calls nothing ripe, the verdict waits -- and a breaking unit a published member
-  uses asks under rule 8, its exposure not yet known; with no releases no toolchain unit is offered. The plan says
-  so in two notices, `source-unscanned` and `toolchain-releases-unknown`.
+- What a plan does not know, said rather than guessed: the source scan's port answers `None` where the scan failed
+  as a whole, and the toolchain's releases `None` while the channel manifests are not read. A footprint not known
+  is never small -- rule 11 calls nothing ripe, the verdict waits -- and a breaking unit a published member uses
+  asks under rule 8, its exposure not known; with no releases no toolchain unit is offered. The plan says so, in the
+  warning `source-unscanned` and the notice `toolchain-releases-unknown`.
 - Every object of the JSON document written in the design's order, at every depth -- a record of its own each
   (`cargo_ripe4rust::render::json::documents`), serialized as declared -- where the nested objects were written
   with their keys sorted. serde_json's `preserve_order` stays off: it would bring a crate under a licence
@@ -156,6 +156,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   when `check` exits 2.
 - ripe4rust plans itself: the workspace's `Cargo.toml` declares its gates, `just stage1` and `just stage2`, in
   `[workspace.metadata.ripe4rust]`, so its own plan no longer warns `gates-undeclared`.
+- The workspace's layout carries each member's sources, read from the same `cargo metadata --no-deps`: every target
+  with its kinds and its root file, and every dependency its manifest declares, with its `package` rename and its
+  source, which the parse of slice 4 reads. Naming a file from the workspace's root is `RootNames`, shared.
+- The source scan's answer says more (`ripe4rust_core::inputs`): an `UnparsedFile` names where to look -- the line
+  its parse stopped at, its first line, or the `mod` item declaring it --, and `source-unparsed` stands there; and a
+  `Scan` names the members whose public API it could not read in full, a file of their library among those it could
+  not read. A breaking unit a published one of them uses asks under rule 8, its exposure there not known, as for a
+  scan that failed as a whole. The reasons and the question say "not known" where they said "not yet known".
+- What a file's names stand for (`cargo_ripe4rust::adapters::workspace::sources::naming`), the first part of slice
+  4's parse, read with `syn` 2 and `proc-macro2`'s span locations: a member's dependencies by the names its code
+  calls them -- a `package = ...` rename, hyphens as underscores --; every name a file's `use` and `extern crate`
+  items bind, through renames, groups and one another, and the dependencies it glob-imports; and `NameFinder`, every
+  line naming a dependency -- a path rooted at it, a `use` item and every name it binds, a macro by path, by
+  `#[macro_use]` or through a glob, the tokens a macro or an attribute is given, a derive, an attribute the crate
+  owns. A name nothing declares that a glob may have brought -- starting a longer path, or in capitals -- is put down
+  to the file's globs; the standard library's names, built-in attributes, derives and macros never are. A
+  dependency's own name alone in code is a variable's, and an item of the file's own shadows it.
+- A target's modules walked (`cargo_ripe4rust::adapters::workspace::sources::walking`), the parse's second part: from
+  the target's root through every `mod` item it and its modules declare, at the top or in inline modules -- `name.rs`
+  then `name/mod.rs`, beside a file owning its directory or under its own name, a `#[path]` resolved beside the
+  declaring file --, each file read once and parsed with `syn`, and marked reachable where every module on the way is
+  `pub`. A file that does not parse is unparsed at the line its parse stopped at, one that cannot be read at its first
+  line, one a `mod` item names but is not there at that item.
+- A library's public API read (`cargo_ripe4rust::adapters::workspace::sources::exposure`), the parse's third part:
+  the dependencies its users see, by package -- in a `pub` item of a module reachable from its root through `pub mod`
+  declarations, a function's signature, a struct's or a union's public fields, every variant of an enum, a trait's
+  bounds and items, a type alias, a constant's or a static's type, a derive, a `pub use` or `pub extern crate` --,
+  and wherever in the library they are written, a trait's implementation where neither the trait nor the type is
+  the library's own and private, and a public type's `pub` methods and constants. Bodies, private fields and
+  private items are not seen.
+- The parse, slice 4 of `docs/DESIGN.md`'s "Delivery": `SourceScanner`
+  (`cargo_ripe4rust::adapters::workspace::sources`) replaces the scan that knew nothing. Every member's targets as
+  `cargo metadata --no-deps` lists them -- library, binaries, tests, benches, examples, build script -- are walked
+  with the modules they declare, and give every crates.io dependency named its footprint, every `file:line` naming
+  it, and the members whose public API it reaches, the library's alone. A file the parse cannot read is
+  `source-unparsed` where it broke, and a library holding one has its API unread; where not one file of all it
+  tried could be parsed, the scan failed as a whole and knows nothing. With footprint and exposure known, rules 8
+  and 11, the verdict and a migration's work list read them: on the recorded workspace, `itoa` is asked as in
+  `app-core`'s public API, its three locations the work list. `guide`'s entry for the footprint says what the parse
+  cannot see. ripe4rust's own policy names its two crates on crates.io as `published`.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
@@ -174,11 +214,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - This changelog.
 
 ### Changed
+- `source-unscanned` is a warning, and means a scan that failed as a whole -- not one source file could be parsed --,
+  its remedy to run `cargo check` and report syntax the parser does not read; no plan carries it any more for sources
+  not yet parsed.
 - `ripe4rust-core`'s root carries `#![forbid(unsafe_code)]` beside `#![no_std]`, as the technology-free gate asks;
   the workspace's lints add clippy's `all`, denied, and `pedantic`, warned.
 - `docs/DESIGN.md`'s "Delivery" puts slice 1's table and JSON renderers in the cli, where "Architecture" has them.
 - `xtask` states its own `rust-version`, 1.88, which its let-chain needs, instead of inheriting the workspace's 1.85.
 - `CLAUDE.md`, the README and `docs/DESIGN.md`'s status say slice 1 is in place, and where its code lives.
+
+### Fixed
+- A compatible unit whose own move a pin holds (`hold = "all"`) no longer reads as a move to the version in use,
+  `memchr 2.5.0 -> 2.5.0`: its `to` is null in the JSON, `held` in the table, and `evidence.held` names the move;
+  its summary counts the crates it pulls in, and its question asks to move the crate, naming no version.
+- A diagnostic, a `check` difference or a guide entry whose text ends in a full stop -- a cargo error quoted at its
+  end, often -- no longer prints `.. Do:`: the full stop closes it only where it has no ending of its own.
+- Planning a workspace whose `Cargo.lock` no longer matches its manifests, or that has none, is no longer
+  `cargo-metadata-failed` quoting cargo's advice to drop `--locked`: it is a code of its own, `lock-outdated`, in the
+  catalogue `guide` lists, whose remedy says to bring the lock in step with `cargo update --workspace`, commit it,
+  and plan again.
 
 ## [0.0.1] — 2026-10-30
 

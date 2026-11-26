@@ -26,7 +26,7 @@ use alloc::vec::Vec;
 /// more than the gates reaches; the lines are where each direct
 /// dependency's requirement and each member's `rust-version` are written,
 /// and `written` every line a unit can edit with what it says; `scan` is
-/// `None` while the sources are not parsed.
+/// `None` where the scan failed as a whole.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Surveyed {
     pub today: Date,

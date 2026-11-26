@@ -122,7 +122,7 @@ impl<'a> OptionWriter<'a> {
                 Wording.count(footprint.lines, "location")
             ),
             None => String::from(
-                "apply it as a ripe unit; the footprint is not yet known, so the build's errors are the work list",
+                "apply it as a ripe unit; the footprint is not known, so the build's errors are the work list",
             ),
         }
     }

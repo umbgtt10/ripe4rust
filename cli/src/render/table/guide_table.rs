@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::render::table::sentence::Sentence;
 use ripe4rust_core::planning::round::guiding::guide_text::GuideText;
 
 /// The guide, for a person: the release, the round, each command with what
@@ -42,10 +43,10 @@ impl GuideTable {
                 ""
             };
             format!(
-                "{} ({}{person}): {}. Do: {}",
+                "{} ({}{person}): {} Do: {}",
                 code.label(),
                 code.severity().label(),
-                code.entry().means,
+                Sentence.ended(code.entry().means),
                 code.entry().remedy
             )
         }));

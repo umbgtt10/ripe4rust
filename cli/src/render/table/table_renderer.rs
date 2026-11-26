@@ -9,13 +9,13 @@ use crate::render::table::diagnostic_line::DiagnosticLine;
 use crate::render::table::guide_table::GuideTable;
 use crate::render::table::hold_table::HoldTable;
 use crate::render::table::row_label::RowLabel;
+use crate::render::table::target_cell::TargetCell;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use ripe4rust_core::planning::round::checking::check_report::CheckReport;
 use ripe4rust_core::planning::round::guiding::guide_text::GuideText;
 use ripe4rust_core::planning::round::holding::hold_report::HoldReport;
-use ripe4rust_core::values::version::Version;
 
 const FINGERPRINT_SHOWN: usize = 8;
 const NONE: &str = "--";
@@ -59,16 +59,18 @@ impl DocumentRenderer for TableRenderer {
             .collect::<String>();
         let mut rows = vec![["unit", "kind", "from", "to", "outcome", "reasons"].map(String::from)];
         rows.extend(plan.units.iter().map(|planned| {
-            let version = |version: Option<&Version>| {
-                version.map_or_else(|| String::from(NONE), ToString::to_string)
-            };
+            let from = planned
+                .unit
+                .from
+                .as_ref()
+                .map_or_else(|| String::from(NONE), ToString::to_string);
             let decision = &planned.decision;
             let urgency = if decision.urgent { ", urgent" } else { "" };
             [
                 RowLabel.unit(planned),
                 String::from(planned.unit.kind.label()),
-                version(planned.unit.from.as_ref()),
-                version(planned.unit.to.as_ref()),
+                from,
+                TargetCell.text(&planned.unit),
                 format!("{}{urgency}", decision.outcome.label()),
                 decision.reasons.join("; "),
             ]

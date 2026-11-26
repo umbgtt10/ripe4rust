@@ -13,7 +13,7 @@ use crate::adapters::registry::sparse_index::SparseIndex;
 use crate::adapters::toolchain::rustc_toolchain::RustcToolchain;
 use crate::adapters::workspace::cargo_layout::CargoLayout;
 use crate::adapters::workspace::manifest_files::ManifestFiles;
-use crate::adapters::workspace::unscanned_sources::UnscannedSources;
+use crate::adapters::workspace::sources::source_scanner::SourceScanner;
 use crate::command::request::Request;
 use crate::command::seams::Seams;
 use ripe4rust_core::planning::plan::Plan;
@@ -51,7 +51,7 @@ impl<'a> PlanCommand<'a> {
             files: &ManifestFiles::new(&layout, seams.files),
             advisories: &CargoDeny::new(seams.runner, dir.clone(), offline),
             toolchain: &RustcToolchain::new(seams.runner, dir),
-            scan: &UnscannedSources,
+            scan: &SourceScanner::new(&layout, seams.files),
         })
         .plan()
     }

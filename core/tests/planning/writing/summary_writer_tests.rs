@@ -87,6 +87,20 @@ fn summary_of_a_group_names_its_members() {
 }
 
 #[test]
+fn summary_of_a_unit_whose_own_move_is_held_counts_what_it_pulls_in() {
+    // Arrange
+    let mut unit = compatible("memchr", vec![moved("libc", "0.2.177", "0.2.178")]);
+    unit.from = Some(version("2.5.0"));
+    unit.held = vec![moved("memchr", "2.5.0", "2.7.6")];
+
+    // Act
+    let summary = SummaryWriter.summary(&unit, &[]);
+
+    // Assert
+    assert_eq!(summary, "Move 1 crate memchr pulls in");
+}
+
+#[test]
 fn summary_of_an_advisory_row_resolves_it() {
     // Arrange
     let concern = Concern::Yanked {

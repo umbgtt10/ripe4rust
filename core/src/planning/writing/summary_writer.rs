@@ -45,7 +45,7 @@ impl SummaryWriter {
             UnitKind::Breaking => format!("Migrate {lead} to {to}"),
             UnitKind::Toolchain => format!("Move the toolchain to {to}"),
             UnitKind::Compatible if unit.name.is_none() => format!("Move {pulled} no unit reaches"),
-            UnitKind::Compatible if unit.from == unit.to => {
+            UnitKind::Compatible if unit.to.is_none() || unit.from == unit.to => {
                 format!("Move {pulled} {lead} pulls in")
             }
             UnitKind::Compatible if pulled_in == 0 => format!("Move {lead} to {to}"),

@@ -8,6 +8,22 @@ use cargo_ripe4rust::render::table::check_table::CheckTable;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 
 #[test]
+fn text_of_a_difference_ending_in_a_full_stop_does_not_double_it() {
+    // Arrange
+    let mut report = not_as_planned();
+    report.differences[0].what = String::from("`libc` moved 0.2.177 -> 0.2.180.");
+
+    // Act
+    let text = CheckTable.text(&report);
+
+    // Assert
+    assert!(
+        text.contains("Cargo.lock: `libc` moved 0.2.177 -> 0.2.180. Do: carry out"),
+        "{text}"
+    );
+}
+
+#[test]
 fn text_of_a_report_as_planned_names_the_moves_its_edit_made() {
     // Arrange
     let report = as_planned();

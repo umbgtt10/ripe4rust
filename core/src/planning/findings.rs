@@ -13,6 +13,8 @@ use crate::values::version::Version;
 use alloc::format;
 use alloc::string::String;
 
+const ISSUES: &str = "https://github.com/umbgtt10/ripe4rust/issues";
+
 /// The problems the survey itself meets, each a diagnostic saying what to do.
 pub struct Findings;
 
@@ -40,7 +42,7 @@ impl Findings {
 
     pub fn source_unparsed(&self, file: &UnparsedFile) -> Diagnostic {
         DiagnosticCode::SourceUnparsed.diagnose(
-            None,
+            Some(file.at.clone()),
             format!(
                 "`{}` could not be parsed ({}): the footprint of the crates it names may be low",
                 file.file, file.detail
@@ -55,10 +57,10 @@ impl Findings {
         DiagnosticCode::SourceUnscanned.diagnose(
             None,
             String::from(
-                "the workspace's sources are not parsed yet, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8)",
+                "not one of the workspace's source files could be parsed, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8)",
             ),
-            String::from(
-                "nothing is needed; until a release of ripe4rust parses the sources, size each breaking unit's migration by hand",
+            format!(
+                "run `cargo check`: where it fails, fix what it names and plan again; where it builds, the sources use syntax ripe4rust's parser does not read -- report it at {ISSUES} --, and size each breaking unit's migration by hand meanwhile"
             ),
         )
     }

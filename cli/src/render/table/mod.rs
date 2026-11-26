@@ -8,4 +8,6 @@ pub mod diagnostic_line;
 pub mod guide_table;
 pub mod hold_table;
 pub mod row_label;
+pub mod sentence;
 pub mod table_renderer;
+pub mod target_cell;

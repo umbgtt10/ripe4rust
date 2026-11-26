@@ -16,7 +16,9 @@ use alloc::vec::Vec;
 /// The compatible units, taken by crate name: a move several share belongs
 /// to the first, the moves no unit reaches form the rest, and a move of a
 /// crate pinned with `hold = "all"` is held out of every unit -- unless it
-/// clears an advisory or a yanked release, which no pin holds.
+/// clears an advisory or a yanked release, which no pin holds. A unit whose
+/// own move is held takes its crate to no version; one whose crate does not
+/// move keeps its version.
 pub struct CompatibleUnits {
     held: Vec<String>,
     concerns: Vec<Concern>,
@@ -82,20 +84,27 @@ impl CompatibleUnits {
 
     fn unit(&self, dependency: DirectDependency, moves: &[LockMove]) -> Unit {
         let kept = self.kept(moves, false);
-        let to = kept
-            .iter()
-            .find(|lock_move| lock_move.name == dependency.name)
-            .and_then(|lock_move| lock_move.to.clone())
-            .unwrap_or_else(|| dependency.version.clone());
+        let held = self.kept(moves, true);
+        let own = |moves: &[LockMove]| {
+            moves
+                .iter()
+                .find(|lock_move| lock_move.name == dependency.name)
+                .map(|lock_move| lock_move.to.clone())
+        };
+        let to = match (own(&kept), own(&held)) {
+            (Some(to), _) => to,
+            (None, Some(_)) => None,
+            (None, None) => Some(dependency.version.clone()),
+        };
         Unit {
             id: UnitId::of(UnitKind::Compatible, &dependency.name),
             kind: UnitKind::Compatible,
             name: Some(dependency.name.clone()),
             members: vec![dependency.name],
             from: Some(dependency.version),
-            to: Some(to),
+            to,
             moves: kept,
-            held: self.kept(moves, true),
+            held,
         }
     }
 }

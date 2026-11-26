@@ -168,6 +168,29 @@ fn build_of_a_dependency_that_does_not_move_itself_keeps_its_version() {
 }
 
 #[test]
+fn build_of_a_dependency_whose_own_move_is_held_takes_no_version() {
+    // Arrange
+    let dependencies = vec![moves_of(
+        "memchr",
+        "2.5.0",
+        vec![
+            moved("memchr", "2.5.0", "2.7.6"),
+            moved("libc", "0.2.177", "0.2.178"),
+        ],
+    )];
+
+    // Act
+    let units = CompatibleUnits::new(vec![String::from("memchr")], Vec::new())
+        .build(dependencies, Vec::new());
+
+    // Assert
+    assert_eq!(units[0].from, Some(version("2.5.0")));
+    assert_eq!(units[0].to, None);
+    assert_eq!(units[0].moves, vec![moved("libc", "0.2.177", "0.2.178")]);
+    assert_eq!(units[0].held, vec![moved("memchr", "2.5.0", "2.7.6")]);
+}
+
+#[test]
 fn build_of_nothing_left_for_the_rest_forms_none() {
     // Arrange
     let dependencies = vec![moves_of(

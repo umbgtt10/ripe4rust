@@ -61,14 +61,6 @@
       "what": "the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named",
       "do": "nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand",
       "needs_person": false
-    },
-    {
-      "severity": "notice",
-      "code": "source-unscanned",
-      "where": null,
-      "what": "the workspace's sources are not parsed yet, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8)",
-      "do": "nothing is needed; until a release of ripe4rust parses the sources, size each breaking unit's migration by hand",
-      "needs_person": false
     }
   ],
   "units": [
@@ -245,7 +237,9 @@
         "rust_version": "1.63.0",
         "advisories": [],
         "yanked_in_use": false,
-        "footprint": [],
+        "footprint": [
+          "app/src/main.rs:1"
+        ],
         "held_back": [],
         "held": []
       }
@@ -329,7 +323,7 @@
       "rule": 8,
       "suggestion": "breaking-change-of-ours",
       "reasons": [
-        "exposure in app-core's public API not yet known",
+        "in app-core's public API",
         "migrate now: 0.4.x is stale while 1.x is active"
       ],
       "summary": "Migrate itoa to 1.0.19",
@@ -359,13 +353,13 @@
       },
       "question": {
         "title": "Move itoa to 1.0.19?",
-        "why": "whether itoa's types are in app-core's public API is not yet known, and if they are, the upgrade is a breaking change of ours too",
+        "why": "itoa's types are in app-core's public API: the upgrade is a breaking change of ours too",
         "recommendation": "migrate-now",
         "options": [
           {
             "answer": "migrate-now",
             "means": "apply it now",
-            "then": "apply it as a ripe unit; the footprint is not yet known, so the build's errors are the work list"
+            "then": "apply it as a ripe unit; the footprint's 3 locations are the work list"
           },
           {
             "answer": "plan-it",
@@ -389,7 +383,11 @@
         "rust_version": "1.68",
         "advisories": [],
         "yanked_in_use": false,
-        "footprint": [],
+        "footprint": [
+          "app-core/src/lib.rs:3",
+          "app-core/src/lib.rs:6",
+          "app-core/src/lib.rs:7"
+        ],
         "held_back": [],
         "held": []
       }

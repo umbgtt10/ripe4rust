@@ -6,7 +6,8 @@ use crate::inputs::port_failure::PortFailure;
 use crate::inputs::scan::Scan;
 
 /// The parse of the workspace's sources: footprint and exposure per crate,
-/// or `None` where the sources are not parsed yet, so neither is known.
+/// or `None` where the scan failed as a whole -- not one source file could
+/// be parsed --, so neither is known.
 pub trait SourceScan {
     fn scan(&self) -> Result<Option<Scan>, PortFailure>;
 }

@@ -1,0 +1,13 @@
+//! Formats numbers for the app.
+
+use itoa::Buffer;
+
+/// A buffer the app formats its numbers into.
+pub fn buffer() -> Buffer {
+    Buffer::new()
+}
+
+/// The digits of a number.
+pub fn digits(value: u64) -> String {
+    String::from(buffer().format(value))
+}
