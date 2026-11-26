@@ -16,9 +16,15 @@ categories = [
     "command-line-utilities",
 ]
 
+autotests = false
+
 [[bin]]
 name = "cargo-ripe4rust"
 path = "src/main.rs"
+
+[[test]]
+name = "all_tests"
+path = "tests/all_tests.rs"
 
 [dependencies]
 ripe4rust-core.workspace = true

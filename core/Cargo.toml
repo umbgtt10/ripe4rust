@@ -12,5 +12,11 @@ documentation = "https://docs.rs/ripe4rust-core"
 keywords = ["cargo", "dependencies", "upgrade", "semver"]
 categories = ["development-tools"]
 
+autotests = false
+
+[[test]]
+name = "all_tests"
+path = "tests/all_tests.rs"
+
 [lints]
 workspace = true

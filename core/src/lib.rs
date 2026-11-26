@@ -7,6 +7,7 @@
 //! <https://github.com/umbgtt10/ripe4rust/blob/main/docs/DESIGN.md>.
 
 #![no_std]
+#![forbid(unsafe_code)]
 
 pub mod outcome;
 pub mod unit_kind;
