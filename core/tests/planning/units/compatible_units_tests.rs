@@ -151,7 +151,7 @@ fn build_leaves_a_move_pinned_all_out_of_the_unit_and_holds_it() {
 }
 
 #[test]
-fn build_of_a_dependency_that_does_not_move_itself_keeps_its_version() {
+fn build_of_a_dependency_that_does_not_move_itself_takes_it_to_no_version() {
     // Arrange
     let dependencies = vec![moves_of(
         "tokio",
@@ -164,7 +164,8 @@ fn build_of_a_dependency_that_does_not_move_itself_keeps_its_version() {
 
     // Assert
     assert_eq!(units[0].from, Some(version("1.48.0")));
-    assert_eq!(units[0].to, Some(version("1.48.0")));
+    assert_eq!(units[0].to, None);
+    assert_eq!(units[0].held, Vec::new());
 }
 
 #[test]

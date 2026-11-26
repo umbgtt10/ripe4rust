@@ -7,6 +7,7 @@ use crate::planning::judging::facts::held_back::HeldBack;
 use crate::planning::judging::facts::line_review::LineReview;
 use crate::planning::judging::facts::plan_context::PlanContext;
 use crate::planning::units::concern::Concern;
+use crate::planning::units::own_move::OwnMove;
 use crate::planning::units::unit::Unit;
 use crate::planning::writing::evidence::Evidence;
 use crate::unit_kind::UnitKind;
@@ -26,7 +27,7 @@ impl<'a> EvidenceWriter<'a> {
         let rust_version = unit
             .members
             .first()
-            .zip(unit.to.as_ref())
+            .zip(OwnMove.lands_on(unit))
             .filter(|_| unit.kind != UnitKind::Toolchain)
             .and_then(|(name, to)| self.context.histories().get(name)?.rust_version_of(to));
         let footprint = if unit.kind == UnitKind::Breaking {

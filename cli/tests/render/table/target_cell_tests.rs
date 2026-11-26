@@ -17,6 +17,20 @@ fn text_of_a_unit_moving_its_crate_is_the_version_it_takes() {
 }
 
 #[test]
+fn text_of_a_unit_whose_crate_stays_says_so() {
+    // Arrange
+    let mut unit = compatible().unit;
+    unit.to = None;
+    unit.moves = vec![moved("widget_builder", Some("4.6.6"), Some("4.6.7"))];
+
+    // Act
+    let text = TargetCell.text(&unit);
+
+    // Assert
+    assert_eq!(text, "stays");
+}
+
+#[test]
 fn text_of_a_unit_whose_own_move_is_held_says_so() {
     // Arrange
     let mut unit = compatible().unit;

@@ -16,6 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   person: whether to commit a lock is the owner's call, and with their word `cargo generate-lockfile` writes it, to
   commit before planning again. It was `lock-outdated`, which needs none and told the agent to write and commit one;
   `lock-outdated` is now only a lock that exists and no longer matches the manifests. `guide` lists the new code.
+- A compatible unit whose own crate does not move, only the crates it pulls in, read `serde 1.0.229 -> 1.0.229`
+  and asked "Move tokio to 1.48.0?" of a crate already there. Its `to` is now null, the table writes `stays`, and
+  its question asks "Move the N crates <crate> pulls in?", as its summary already said; one whose own move a pin
+  holds still writes `held`. Nothing else about the unit changes: it groups, and its evidence names the
+  `rust-version`, by the version in use (`ripe4rust_core::planning::units::own_move::OwnMove`).
 
 ## [0.1.0] — 2026-11-26
 

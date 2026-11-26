@@ -156,6 +156,48 @@ fn question_of_a_ripe_unit_is_none() {
 }
 
 #[test]
+fn question_of_a_unit_whose_crate_stays_moves_what_it_pulls_in() {
+    // Arrange
+    let mut staying = compatible(
+        "widget",
+        vec![
+            moved("gizmo", "2.7.5", "2.7.6"),
+            moved("libc", "0.2.177", "0.2.178"),
+        ],
+    );
+    staying.from = Some(version("1.0.0"));
+    let ungated = UnitFacts {
+        gates: 0,
+        ..facts(UnitKind::Compatible)
+    };
+
+    // Act
+    let question = asked(&staying, &ungated, &[]).expect("a question");
+
+    // Assert
+    assert_eq!(question.title, "Move the 2 crates widget pulls in?");
+}
+
+#[test]
+fn question_of_a_unit_whose_own_move_is_held_moves_it_without_a_version() {
+    // Arrange
+    let mut held = widget();
+    held.to = None;
+    held.held = held.moves.clone();
+    held.moves = vec![moved("libc", "0.2.177", "0.2.178")];
+    let ungated = UnitFacts {
+        gates: 0,
+        ..facts(UnitKind::Compatible)
+    };
+
+    // Act
+    let question = asked(&held, &ungated, &[]).expect("a question");
+
+    // Assert
+    assert_eq!(question.title, "Move widget?");
+}
+
+#[test]
 fn question_of_a_young_breaking_line_overripe_recommends_migrating() {
     // Arrange
     let overripe = UnitFacts {

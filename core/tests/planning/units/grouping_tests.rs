@@ -157,6 +157,24 @@ fn related_of_crates_released_together_from_one_repository_is_true() {
 }
 
 #[test]
+fn related_of_crates_staying_on_a_release_made_together_is_true() {
+    // Arrange
+    let (repositories, lock, histories) = (repositories(), lock(), histories());
+    let grouping = Grouping::new(&repositories, &lock, &histories);
+    let staying = |name: &str, pulled: &str| {
+        let mut unit = compatible(name, vec![moved(pulled, "1.0.0", "1.0.1")]);
+        unit.from = Some(version("2.0.0"));
+        unit
+    };
+
+    // Act
+    let related = grouping.related(&staying("frame", "mio"), &staying("frame-macros", "syn"));
+
+    // Assert
+    assert!(related);
+}
+
+#[test]
 fn related_of_the_same_release_from_unknown_repositories_is_false() {
     // Arrange
     let (repositories, lock, histories) = (repositories(), lock(), histories());

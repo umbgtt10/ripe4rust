@@ -89,3 +89,22 @@ fn evidence_of_a_compatible_unit_names_what_it_clears_and_holds() {
     assert_eq!(evidence.held, vec![moved("gizmo", "2.7.5", "2.7.6")]);
     assert_eq!(evidence.footprint, Vec::new());
 }
+
+#[test]
+fn evidence_of_a_unit_whose_crate_stays_names_the_rust_version_in_use() {
+    // Arrange
+    let surveyed = surveyed();
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+    let mut unit = compatible("widget", vec![moved("gizmo", "2.7.5", "2.7.6")]);
+    unit.from = Some(version("2.1.0"));
+
+    // Act
+    let evidence = EvidenceWriter::new(&context).evidence(&unit, &[]);
+
+    // Assert
+    assert_eq!(
+        evidence.rust_version,
+        Some(PartialVersion::parse("1.88").expect("a rust-version"))
+    );
+}

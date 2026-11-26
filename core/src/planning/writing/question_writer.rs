@@ -9,6 +9,7 @@ use crate::planning::judging::unit_facts::UnitFacts;
 use crate::planning::judging::verdict::Verdict;
 use crate::planning::judging::wording::Wording;
 use crate::planning::units::concern::Concern;
+use crate::planning::units::own_move::OwnMove;
 use crate::planning::units::unit::Unit;
 use crate::planning::writing::answer::Answer;
 use crate::planning::writing::option_writer::OptionWriter;
@@ -18,7 +19,8 @@ use alloc::format;
 use alloc::vec;
 use alloc::vec::Vec;
 
-/// The question of a unit that asks: an advisory row offers to replace the
+/// The question of a unit that asks, titled with the move it makes -- the
+/// crates it pulls in where its own crate stays: an advisory row offers to replace the
 /// crate or accept it; an urgent unit is never held, so it offers to take it
 /// or accept it; a due or overripe pin offers to unpin or keep it; no gates
 /// offers to declare them; a breaking unit offers migrate now, plan it or
@@ -45,6 +47,18 @@ impl QuestionWriter {
                 facts.name
             ),
             (_, Some(to)) => format!("Move {} to {to}?", facts.name),
+            (_, None) if OwnMove.stays(unit) => {
+                let pulled = unit
+                    .moves
+                    .iter()
+                    .filter(|lock_move| !unit.members.contains(&lock_move.name))
+                    .count();
+                format!(
+                    "Move the {} {} pulls in?",
+                    Wording.count(u32::try_from(pulled).unwrap_or(u32::MAX), "crate"),
+                    facts.name
+                )
+            }
             (_, None) => format!("Move {}?", facts.name),
         };
         Some(Question {

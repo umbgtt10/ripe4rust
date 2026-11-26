@@ -17,8 +17,8 @@ use alloc::vec::Vec;
 /// to the first, the moves no unit reaches form the rest, and a move of a
 /// crate pinned with `hold = "all"` is held out of every unit -- unless it
 /// clears an advisory or a yanked release, which no pin holds. A unit whose
-/// own move is held takes its crate to no version; one whose crate does not
-/// move keeps its version.
+/// own move is held, or whose crate does not move, only what it pulls in,
+/// takes its crate to no version.
 pub struct CompatibleUnits {
     held: Vec<String>,
     concerns: Vec<Concern>,
@@ -91,11 +91,7 @@ impl CompatibleUnits {
                 .find(|lock_move| lock_move.name == dependency.name)
                 .map(|lock_move| lock_move.to.clone())
         };
-        let to = match (own(&kept), own(&held)) {
-            (Some(to), _) => to,
-            (None, Some(_)) => None,
-            (None, None) => Some(dependency.version.clone()),
-        };
+        let to = own(&kept).flatten();
         Unit {
             id: UnitId::of(UnitKind::Compatible, &dependency.name),
             kind: UnitKind::Compatible,

@@ -12,6 +12,7 @@ pub mod dependency_moves;
 pub mod direct_dependencies;
 pub mod direct_dependency;
 pub mod grouping;
+pub mod own_move;
 pub mod plan_order;
 pub mod toolchain_unit;
 pub mod unit;

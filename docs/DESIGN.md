@@ -745,8 +745,12 @@ A compatible unit whose own move a pin holds -- its crate pinned with `hold =
 "all"` -- takes that crate to no version: its `to` is null, the table writes
 `held` in its place, and `evidence.held` names the move, so it never reads as a
 move to the version in use. It still applies the moves it pulls in, one by one.
-One whose crate does not move, only what it pulls in, keeps the version in use
-as its `to`.
+One whose crate does not move, only what it pulls in, takes it to no version
+either: its `to` is null and the table writes `stays`, so it never reads as
+`serde 1.0.229 -> 1.0.229`, and its question is "Move the N crates <crate>
+pulls in?", as its summary says. Neither changes how the unit is judged,
+grouped or applied: grouping and the evidence's `rust_version` read the
+version in use as the one it lands on.
 
 A breaking unit's `apply` names every manifest line that states the
 dependency's requirement, as `file:line`, the requirement to write there, and
