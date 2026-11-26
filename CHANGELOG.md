@@ -206,6 +206,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   reached. The walk names each file's module as its `mod` item does, `#[path]` or not. `docs/DESIGN.md` drops the
   limit, and it and `ADR-OneParseForFootprintAndExposure` count what `pub mod` declarations or `pub use` re-exports
   reach.
+- The toolchain's stable releases, read (`cargo_ripe4rust::adapters::toolchain`), the first part of slice 5:
+  `ManifestList` reads the list of every channel manifest the Rust distribution published,
+  `https://static.rust-lang.org/manifests.txt`, a stable release a line with the day it was published -- dated by
+  its last listing, a release listed earlier too having been promoted ahead of its day --, passing over the
+  nightlies, the betas, a line's alias and `stable`. `ChannelManifests`, behind a new seam, `ReleaseSource`, fetches
+  it through `curl` and keeps it in the day cache, `<date>/toolchain/manifests.txt`, once it reads. Any status but
+  200, curl failing, or nothing cached `--offline`, is `toolchain-unreachable`; a list naming no stable release is
+  not kept. Tested on the list as the server answered it on 2026-11-26.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the
