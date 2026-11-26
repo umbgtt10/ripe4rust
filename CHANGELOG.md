@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   and nothing on stdout.
 - `CLAUDE.md`: what ripe4rust is -- the design settled, the implementation in slices --, its boundary, its layout,
   the gates and the score hook, the rules every slice keeps, and the owner's strict rules and coding standards.
+- `CODE_OF_CONDUCT.md` and `DONATE.md`, with the two QR images, as the family carries them.
 - This changelog.
 
 ### Changed
