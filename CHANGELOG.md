@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-11-26
+
+The first release that decides: `plan`, `check`, `hold` and `guide`, every slice of `docs/DESIGN.md`'s
+"Delivery" in place.
+
 ### Added
 - `ripe4rust_core::values`, the arithmetic the rules are written in, by hand since the core takes no crate: `Version`
   with semver's order and its line (the major, or the minor for `0.x` and the toolchain); `PartialVersion`, a version
@@ -240,6 +245,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the gates and the score hook, the rules every slice keeps, and the owner's strict rules and coding standards.
 - `CODE_OF_CONDUCT.md` and `DONATE.md`, with the two QR images, as the family carries them.
 - This changelog.
+- `.cargo/mutants.toml`, which onboards ripe4rust on sentinel4rust: `ripe4rust-core` is mutated, against its own
+  tests only; the cli and the xtask are not.
 
 ### Changed
 - `source-unscanned` is a warning, and means a scan that failed as a whole -- not one source file could be parsed --,

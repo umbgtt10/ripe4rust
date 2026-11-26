@@ -24,8 +24,8 @@ fields; the sources are parsed with `syn`, every member's targets and the module
 unit's footprint -- every `file:line` naming its crate, a migration's work list -- and its exposure in a published
 member's public API, `pub use` re-exports followed; and a channel pinning an older stable release is a toolchain
 unit, its evidence the versions the newer one would release. The next step is the first dry round across real
-workspaces: plans only, nothing applied, to tune the thresholds and the grouping. Version 0.0.1, on crates.io,
-holds the design's vocabulary -- `Outcome`, `UnitKind` -- and nothing that decides.
+workspaces: plans only, nothing applied, to tune the thresholds and the grouping. Version 0.1.0, on crates.io,
+is all of it.
 
 It is self-contained.
 
