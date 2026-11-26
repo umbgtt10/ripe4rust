@@ -20,7 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   and asked "Move tokio to 1.48.0?" of a crate already there. Its `to` is now null, the table writes `stays`, and
   its question asks "Move the N crates <crate> pulls in?", as its summary already said; one whose own move a pin
   holds still writes `held`. Nothing else about the unit changes: it groups, and its evidence names the
-  `rust-version`, by the version in use (`ripe4rust_core::planning::units::own_move::OwnMove`).
+  `rust-version`, by the version in use (`ripe4rust_core::planning::units::own_move::OwnMove`); `guide`'s
+  description of `units[].to` says when it is null.
 
 ## [0.1.0] — 2026-11-26
 

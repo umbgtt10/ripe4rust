@@ -115,7 +115,7 @@ const FIELDS: [(&str, &str, &str); 115] = [
     (
         "plan",
         "units[].to",
-        "the version it takes; null for the rest, and for a compatible unit whose own move a pin holds -- `evidence.held` names that move, and the table writes `held`",
+        "the version it takes its own crate to; null for the rest, for a compatible unit whose own move a pin holds -- `evidence.held` names that move, and the table writes `held` --, and for one whose crate does not move, only what it pulls in -- the table writes `stays`",
     ),
     (
         "plan",
