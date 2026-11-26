@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod facts;
+pub mod fakes;
 pub mod policy_trees;
 pub mod releases;
 pub mod surveyed;

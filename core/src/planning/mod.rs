@@ -3,13 +3,18 @@
 // SPDX-License-Identifier: MIT
 
 pub mod choice;
+pub mod findings;
 pub mod judging;
 pub mod pins_and_policy;
 pub mod plan;
 pub mod plan_failure;
 pub mod plan_writer;
 pub mod planned_unit;
+pub mod planner;
+pub mod ports;
+pub mod survey;
 pub mod surveyed;
+pub mod toolchain_survey;
 pub mod unit_writer;
 pub mod units;
 pub mod workspace_state;

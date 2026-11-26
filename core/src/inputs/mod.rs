@@ -10,6 +10,7 @@ pub mod member;
 pub mod policy_entry;
 pub mod policy_tree;
 pub mod policy_value;
+pub mod port_failure;
 pub mod release;
 pub mod resolved_dependency;
 pub mod scan;

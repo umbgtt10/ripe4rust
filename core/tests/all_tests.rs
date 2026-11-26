@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 mod diagnostics;
+mod inputs;
 mod outcome_tests;
 mod planning;
 mod support;

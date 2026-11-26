@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `plan` in the core, against its ports (`ripe4rust_core::traits`): the index, the repositories, the lock moves,
+  the workspace's metadata and files, the advisories, the toolchain, the source scan and the clock, each a trait
+  the cli will implement in slice 2, faked in the tests. `Survey` reads every port once -- the policy first, its
+  errors stopping the plan before any other port is read -- and a port that cannot answer stops it as the
+  diagnostic of its own code (`PortFailure`), with every diagnostic found so far; `Planner` makes the plan from the
+  survey. The notices and warnings the survey meets: `toolchain-unpinned`, `target-unknown`,
+  `pin-for-absent-crate`, `registry-cache-old` and `source-unparsed`.
 - The plan made from a survey of the workspace (`ripe4rust_core::planning`): `Surveyed`, everything the ports will
   answer, read once; `PlanWriter`, which builds, groups and orders the units, lands every advisory and yanked
   release, and writes every row; the facts each unit is judged on (`planning::judging::facts`) -- its lines, its

@@ -34,6 +34,20 @@ pub fn at(file: &str, line: u32) -> Location {
     }
 }
 
+pub fn direct() -> Vec<DirectDependency> {
+    let users = |members: &[&str]| members.iter().map(|member| String::from(*member)).collect();
+    vec![
+        DirectDependency {
+            members: users(&["app"]),
+            ..dependency("gadget", "0.13.1")
+        },
+        DirectDependency {
+            members: users(&["app", "app-core"]),
+            ..dependency("widget", "1.4.0")
+        },
+    ]
+}
+
 pub fn histories(surveyed: &Surveyed) -> Histories {
     Histories::new(
         surveyed
@@ -155,23 +169,13 @@ fn scan() -> Scan {
 }
 
 pub fn surveyed() -> Surveyed {
-    let users = |members: &[&str]| members.iter().map(|member| String::from(*member)).collect();
     Surveyed {
         today: date("2026-11-26"),
         registry_read: date("2026-11-26"),
         fingerprint: String::from("9f2c41d0"),
         policy: policy(),
         workspace: workspace(),
-        direct: vec![
-            DirectDependency {
-                members: users(&["app"]),
-                ..dependency("gadget", "0.13.1")
-            },
-            DirectDependency {
-                members: users(&["app", "app-core"]),
-                ..dependency("widget", "1.4.0")
-            },
-        ],
+        direct: direct(),
         pinned: Some(version("1.99.1")),
         channel_at: Some(at("rust-toolchain.toml", 9)),
         toolchain: version("1.99.1"),
@@ -184,11 +188,11 @@ pub fn surveyed() -> Surveyed {
         advisories: Vec::new(),
         dependency_moves: vec![
             DependencyMoves {
-                dependency: dependency("gadget", "0.13.1"),
+                dependency: direct()[0].clone(),
                 moves: Vec::new(),
             },
             DependencyMoves {
-                dependency: dependency("widget", "1.4.0"),
+                dependency: direct()[1].clone(),
                 moves: vec![
                     moved("widget", "1.4.0", "1.4.1"),
                     moved("gizmo", "2.7.5", "2.7.6"),

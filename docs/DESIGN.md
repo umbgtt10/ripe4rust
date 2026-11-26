@@ -104,7 +104,7 @@ the workspace's owner has. Everything else it carries out on its own.
 
 | signal | from |
 |---|---|
-| available versions, yanked flags, `rust-version`, release dates | the crates.io sparse index (`pubtime`), for every crate in the lock |
+| available versions, yanked flags, `rust-version`, release dates | the crates.io sparse index (`pubtime`), for every crate in the lock and every crate a pin's condition names |
 | a direct dependency's repository, for grouping | the crates.io API, for direct dependencies only |
 | what a compatible unit moves | `cargo update --dry-run --recursive -p <crate>` |
 | the dependency graph, which targets reach a crate | `cargo metadata` |
@@ -379,6 +379,11 @@ Every problem found on the way is a diagnostic (ADR-EveryProblemSaysWhatToDo):
 
 ripe4rust does not panic at its caller. A failure of its own is the
 diagnostic `internal`, with what it was doing and where to report it.
+
+The policy is read first, and its errors stop the command before any other
+input is read; then the toolchain, whose unknown targets stop it too; then the
+rest. An input that cannot be read stops the command at once, with every
+diagnostic found up to it.
 
 The problems the design already names, at least:
 
