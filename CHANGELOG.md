@@ -118,6 +118,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   Tested through the entry point on a workspace recorded whole -- cargo, cargo-deny, rustc and the registry --
   against the JSON document and the table, an offline plan from its cache, and the plan's failures; the binary's
   own tests now run a command line that needs no network.
+- `.gitattributes`: the recorded fixtures kept byte for byte on every system, so a Windows checkout reads what
+  Linux recorded.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the
