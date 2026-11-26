@@ -24,6 +24,11 @@ always asked. Its evidence lists the dependency versions it would release.
 Its releases and their dates come from the Rust distribution's stable channel
 manifests.
 
+A workspace that pins no release -- no `rust-toolchain.toml`, or a channel of
+`stable` or a nightly -- has no toolchain unit; the plan says so with the
+notice `toolchain-unpinned`, and the toolchain in use, for choosing
+candidates, is what `rustc --version` reports.
+
 ## Rejected alternatives
 
 - **Leave the toolchain out.** The judgement would still be made, by hand, and
