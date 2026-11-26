@@ -21,6 +21,11 @@ syn = { version = "2.0.117", features = ["full", "visit"] }
 tempfile = "3"
 toml = { version = "1.2", default-features = false, features = ["parse", "std"] }
 
+# ripe4rust plans this workspace too: the gates that validate a change, the
+# same two every commit passes.
+[workspace.metadata.ripe4rust]
+gates = ["just stage1", "just stage2"]
+
 [workspace.lints.rust]
 unsafe_code = "forbid"
 
