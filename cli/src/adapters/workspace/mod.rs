@@ -12,3 +12,4 @@ pub mod rust_version_finder;
 pub mod toml_file;
 pub mod toml_values;
 pub mod toolchain_reader;
+pub mod unscanned_sources;

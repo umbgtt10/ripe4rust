@@ -106,6 +106,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `[workspace.dependencies]`; a member's `rust-version` line, its own or the workspace's it inherits;
   `rust-toolchain.toml`'s channel; and the fingerprint of the lock, the manifests and the toolchain file, FNV-1a
   by hand. A file that cannot be read or parsed is `workspace-unreadable`, at the line where it breaks.
+- The clock, the toolchain and the scan, for now (`cargo_ripe4rust::adapters::{clock, toolchain}`): today in UTC
+  from the system's clock through the core's new `Date::from_unix_days`, or the day `--date` names; `rustc
+  --version` and `--print target-list` in the workspace's directory, `toolchain-unreachable` where they fail, and
+  no releases until slice 5; and a source scan that knows nothing until slice 4.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

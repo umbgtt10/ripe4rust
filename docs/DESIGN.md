@@ -206,6 +206,15 @@ Where the sections above are silent, the adapters read the inputs this way:
   its name from the root, then its length and bytes, or a mark where it is
   absent, as sixteen hex digits. It tells `check` that the workspace changed;
   it seals nothing, so a cryptographic hash would buy no more.
+- **The clock** is today in UTC, the system's time counted from the epoch with
+  the core's date arithmetic. `--date` stands for today everywhere: in the
+  rules, and as the day of the cache read and written.
+- **The toolchain** is `rustc --version` and `rustc --print target-list`, run
+  in the workspace's directory so `rust-toolchain.toml` chooses the compiler;
+  a failure is `toolchain-unreachable`. Its releases are slice 5's: until then
+  it answers that it knows none.
+- **The source scan** is slice 4's: until then it answers that it knows
+  nothing, and the plan reads that as "Footprint and exposure" says.
 
 ## Which version a unit moves to
 
