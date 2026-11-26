@@ -26,11 +26,36 @@ fn diagnostic_of_a_lock_out_of_date_says_to_bring_it_in_step_and_commit_it() {
         (diagnostic.what, diagnostic.action),
         (
             String::from(
-                "`Cargo.lock` is not there, or no longer matches the workspace's manifests, and ripe4rust writes no lock: cannot update the lock file /work/ws/Cargo.lock because --locked was passed to prevent this"
+                "`Cargo.lock` no longer matches the workspace's manifests, and ripe4rust writes no lock: cannot update the lock file /work/ws/Cargo.lock because --locked was passed to prevent this"
             ),
             String::from(
                 "bring the lock in step with the manifests -- `cargo update --workspace` writes it and moves no locked version they still allow --, commit it, then plan again"
             ),
+        )
+    );
+}
+
+#[test]
+fn diagnostic_of_a_missing_lock_asks_the_owner_whether_to_commit_one() {
+    // Arrange & Act
+    let diagnostic = PortFailure::LockMissing {
+        detail: String::from(
+            "cannot create the lock file /work/ws/Cargo.lock because --locked was passed to prevent this",
+        ),
+    }
+    .diagnostic();
+
+    // Assert
+    assert_eq!(
+        (diagnostic.what, diagnostic.action, diagnostic.needs_person),
+        (
+            String::from(
+                "the workspace has no `Cargo.lock`, and ripe4rust writes no lock: cannot create the lock file /work/ws/Cargo.lock because --locked was passed to prevent this"
+            ),
+            String::from(
+                "ask the owner whether to commit a lock -- a library may leave it out on purpose --; with their word, `cargo generate-lockfile` writes it: commit it, then plan again"
+            ),
+            true
         )
     );
 }
@@ -176,6 +201,10 @@ fn diagnostic_of_every_failure_is_an_error_of_its_own_code() {
                 detail: detail(),
             },
             DiagnosticCode::Internal,
+        ),
+        (
+            PortFailure::LockMissing { detail: detail() },
+            DiagnosticCode::LockMissing,
         ),
         (
             PortFailure::LockOutdated { detail: detail() },

@@ -150,13 +150,17 @@ Where the sections above are silent, the adapters read the inputs this way:
   none does. A crate reaches a `validate-beyond-gates` target where `cargo
   metadata --filter-platform <target>` resolves it at all, through any member
   and any kind of dependency: the conservative reading, so a crate only a host
-  tool uses still asks. A lock `--locked` would have to write -- none at all,
-  or one no longer in step with the manifests -- is `lock-outdated`, cargo's
-  refusal quoted without its advice to drop `--locked`: the remedy is to bring
-  the lock in step with `cargo update --workspace`, which moves no locked
-  version the manifests still allow, commit it and plan again, since ripe4rust
-  writes no lock. Any other failure is `cargo-metadata-failed`, with cargo's
-  error on one line; output it cannot read is `internal`.
+  tool uses still asks. A lock `--locked` would have to write is refused with
+  cargo's refusal quoted, without its advice to drop `--locked`, since
+  ripe4rust writes no lock. One it would have to create, the workspace having
+  none, is `lock-missing`, which needs a person: a library may leave its lock
+  out on purpose, so whether to commit one is the owner's call, and with their
+  word `cargo generate-lockfile` writes it, to commit before planning again.
+  One no longer in step with the manifests, which it would have to update, is
+  `lock-outdated`: the remedy is to bring the lock in step with `cargo update
+  --workspace`, which moves no locked version the manifests still allow,
+  commit it and plan again. Any other failure is `cargo-metadata-failed`, with
+  cargo's error on one line; output it cannot read is `internal`.
 - **`cargo update --dry-run`** runs as `--recursive -p <crate>@<version>` for
   a direct dependency, the version naming the copy in use, and with
   `--offline` in an offline plan. Every line of what it prints must be a move
@@ -631,7 +635,8 @@ The problems the design already names, at least:
 | `policy-invalid-value` | error | a key in `[workspace.metadata.ripe4rust]` whose value is not the kind it must be |
 | `cargo-update-failed` | error | `cargo update --dry-run` could not run |
 | `cargo-metadata-failed` | error | `cargo metadata` could not run |
-| `lock-outdated` | error | `Cargo.lock` is not there, or no longer matches the manifests, and `cargo metadata --locked` will not write it |
+| `lock-outdated` | error | `Cargo.lock` no longer matches the manifests, and `cargo metadata --locked` will not update it |
+| `lock-missing` | error | the workspace has no `Cargo.lock`, and `cargo metadata --locked` will not create it: whether to commit one is the owner's call |
 | `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
 | `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
 | `curl-missing` | error | curl is not on the PATH, and the registry and the toolchain's releases are read through it |
@@ -643,9 +648,9 @@ The problems the design already names, at least:
 | `unit-unknown` | error | `check` or `hold` names an id that is no unit of the plan nor a move of a unit's split, or an advisory row, which applies nothing |
 | `unit-urgent` | error | `hold` names an urgent unit, which is never held: it becomes an urgent ask |
 
-Of these, the policy's own codes, `target-unknown`, `gates-undeclared` and
-`unit-urgent` need a person: each asks for a fact or a decision only the owner
-has.
+Of these, the policy's own codes, `target-unknown`, `gates-undeclared`,
+`lock-missing` and `unit-urgent` need a person: each asks for a fact or a
+decision only the owner has.
 
 ### The plan
 

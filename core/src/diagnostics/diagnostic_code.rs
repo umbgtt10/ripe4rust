@@ -12,7 +12,7 @@ const UNLISTED: CodeEntry = CodeEntry {
     means: "",
     remedy: "",
 };
-const ENTRIES: [(DiagnosticCode, CodeEntry); 29] = [
+const ENTRIES: [(DiagnosticCode, CodeEntry); 30] = [
     (
         DiagnosticCode::CargoDenyFailed,
         CodeEntry {
@@ -70,9 +70,16 @@ const ENTRIES: [(DiagnosticCode, CodeEntry); 29] = [
         },
     ),
     (
+        DiagnosticCode::LockMissing,
+        CodeEntry {
+            means: "the workspace has no `Cargo.lock`, and ripe4rust writes no lock: `cargo metadata --locked` refuses to create one, and whether to commit one is the owner's call",
+            remedy: "ask the owner whether to commit a lock -- a library may leave it out on purpose --; with their word, `cargo generate-lockfile` writes it: commit it, then plan again",
+        },
+    ),
+    (
         DiagnosticCode::LockOutdated,
         CodeEntry {
-            means: "`Cargo.lock` is not there, or no longer matches the workspace's manifests, and ripe4rust writes no lock: `cargo metadata --locked` refuses to bring it in step",
+            means: "`Cargo.lock` no longer matches the workspace's manifests, and ripe4rust writes no lock: `cargo metadata --locked` refuses to bring it in step",
             remedy: "bring the lock in step with the manifests -- `cargo update --workspace` writes it and moves no locked version they still allow --, commit it, then plan again",
         },
     ),
@@ -233,6 +240,7 @@ pub enum DiagnosticCode {
     CurlMissing,
     GatesUndeclared,
     Internal,
+    LockMissing,
     LockOutdated,
     PinForAbsentCrate,
     PinWithoutReason,
@@ -257,7 +265,7 @@ pub enum DiagnosticCode {
 }
 
 impl DiagnosticCode {
-    pub const ALL: [Self; 29] = [
+    pub const ALL: [Self; 30] = [
         Self::CargoDenyFailed,
         Self::CargoDenyMissing,
         Self::CargoMetadataFailed,
@@ -266,6 +274,7 @@ impl DiagnosticCode {
         Self::CurlMissing,
         Self::GatesUndeclared,
         Self::Internal,
+        Self::LockMissing,
         Self::LockOutdated,
         Self::PinForAbsentCrate,
         Self::PinWithoutReason,
@@ -317,6 +326,7 @@ impl DiagnosticCode {
             Self::CurlMissing => "curl-missing",
             Self::GatesUndeclared => "gates-undeclared",
             Self::Internal => "internal",
+            Self::LockMissing => "lock-missing",
             Self::LockOutdated => "lock-outdated",
             Self::PinForAbsentCrate => "pin-for-absent-crate",
             Self::PinWithoutReason => "pin-without-reason",
@@ -345,6 +355,7 @@ impl DiagnosticCode {
         matches!(
             self,
             Self::GatesUndeclared
+                | Self::LockMissing
                 | Self::PinWithoutReason
                 | Self::PinWithoutRelease
                 | Self::PolicyInvalidValue

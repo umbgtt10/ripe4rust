@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The table's unit column counts a group's other members and the crates a compatible unit pulls in within one
   parenthesis, `tonic (+1 released with it, +16 transitive)`, where it wrote `tonic (+1) (+16 transitive)`; the JSON
   is unchanged.
+- A workspace with no `Cargo.lock` -- a library that leaves it out -- is the new error `lock-missing`, which needs a
+  person: whether to commit a lock is the owner's call, and with their word `cargo generate-lockfile` writes it, to
+  commit before planning again. It was `lock-outdated`, which needs none and told the agent to write and commit one;
+  `lock-outdated` is now only a lock that exists and no longer matches the manifests. `guide` lists the new code.
 
 ## [0.1.0] — 2026-11-26
 

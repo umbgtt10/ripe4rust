@@ -77,7 +77,7 @@ fn reached_by_a_target_is_every_registry_crate_its_build_resolves() {
 }
 
 #[test]
-fn reached_by_a_target_without_a_lock_is_lock_outdated() {
+fn reached_by_a_target_without_a_lock_is_lock_missing() {
     // Arrange
     let runner = ReplayRunner::new().reply(
         &[
@@ -101,7 +101,7 @@ fn reached_by_a_target_without_a_lock_is_lock_outdated() {
     // Assert
     assert_eq!(
         reached,
-        Err(PortFailure::LockOutdated {
+        Err(PortFailure::LockMissing {
             detail: String::from(
                 "cannot create the lock file /work/ws/Cargo.lock because --locked was passed to prevent this"
             ),
