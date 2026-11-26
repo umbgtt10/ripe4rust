@@ -2,13 +2,34 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::json::text;
+use crate::support::json::value;
 use crate::support::plans::at;
 use cargo_ripe4rust::render::json::diagnostic_json::DiagnosticJson;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use serde_json::json;
 
 #[test]
-fn value_of_a_diagnostic_names_where_what_and_do() {
+fn document_of_a_diagnostic_is_written_in_the_design_s_order() {
+    // Arrange
+    let diagnostic = DiagnosticCode::ToolchainUnpinned.diagnose(
+        Some(at("rust-toolchain.toml", 2)),
+        String::from("x"),
+        String::from("y"),
+    );
+
+    // Act
+    let written = text(&DiagnosticJson.document(&diagnostic));
+
+    // Assert
+    assert_eq!(
+        written,
+        r#"{"severity":"notice","code":"toolchain-unpinned","where":"rust-toolchain.toml:2","what":"x","do":"y","needs_person":false}"#
+    );
+}
+
+#[test]
+fn document_of_a_diagnostic_names_where_what_and_do() {
     // Arrange
     let diagnostic = DiagnosticCode::PinWithoutReason.diagnose(
         Some(at("Cargo.toml", 41)),
@@ -17,7 +38,7 @@ fn value_of_a_diagnostic_names_where_what_and_do() {
     );
 
     // Act
-    let value = DiagnosticJson.value(&diagnostic);
+    let value = value(&DiagnosticJson.document(&diagnostic));
 
     // Assert
     assert_eq!(
@@ -34,13 +55,13 @@ fn value_of_a_diagnostic_names_where_what_and_do() {
 }
 
 #[test]
-fn value_of_a_diagnostic_nowhere_has_a_null_where() {
+fn document_of_a_diagnostic_nowhere_has_a_null_where() {
     // Arrange
     let diagnostic =
         DiagnosticCode::ToolchainUnpinned.diagnose(None, String::from("x"), String::from("y"));
 
     // Act
-    let value = DiagnosticJson.value(&diagnostic);
+    let value = value(&DiagnosticJson.document(&diagnostic));
 
     // Assert
     assert_eq!(value["where"], json!(null));

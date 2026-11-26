@@ -2,15 +2,16 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::json::value;
 use crate::support::plans::compatible;
 use crate::support::plans::rest;
 use cargo_ripe4rust::render::json::unit_json::UnitJson;
 use serde_json::json;
 
 #[test]
-fn value_of_a_compatible_unit_is_the_design_s_shape() {
+fn document_of_a_compatible_unit_is_the_design_s_shape() {
     // Arrange & Act
-    let value = UnitJson.value(&compatible());
+    let value = value(&UnitJson.document(&compatible()));
 
     // Assert
     assert_eq!(
@@ -56,9 +57,9 @@ fn value_of_a_compatible_unit_is_the_design_s_shape() {
 }
 
 #[test]
-fn value_of_the_rest_has_no_crate() {
+fn document_of_the_rest_has_no_crate() {
     // Arrange & Act
-    let value = UnitJson.value(&rest());
+    let value = value(&UnitJson.document(&rest()));
 
     // Assert
     assert_eq!(value["id"], json!("rest"));

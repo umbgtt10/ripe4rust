@@ -497,9 +497,12 @@ for the toolchain -- and its `reasons`, the table's last column; an `apply`
 step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
-release and the moves a pin holds out of the unit. The document's own keys
-come in the order shown; the objects within it, with their keys sorted. A
-document for a failure carries `schema`, `command` and `diagnostics` alone.
+release and the moves a pin holds out of the unit. Every object's keys come
+in the order shown, at every depth: a unit's `members` after `crate` and its
+`reasons` after `suggestion`; the evidence's `footprint`, `held_back` and
+`held` after `yanked_in_use`; the line in use as `line`, `first_release`,
+`last_release`, `releases`. A document for a failure carries `schema`,
+`command` and `diagnostics` alone.
 
 In the table, `(+N)` counts a group's other members and `(+N transitive)` the
 crates a compatible unit pulls in; the workspace is named by its fingerprint's

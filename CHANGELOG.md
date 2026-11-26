@@ -69,6 +69,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   known is never small -- rule 11 calls nothing ripe, the verdict waits -- and a breaking unit a published member
   uses asks under rule 8, its exposure not yet known; with no releases no toolchain unit is offered. The plan says
   so in two notices, `source-unscanned` and `toolchain-releases-unknown`.
+- Every object of the JSON document written in the design's order, at every depth -- a record of its own each
+  (`cargo_ripe4rust::render::json::documents`), serialized as declared -- where the nested objects were written
+  with their keys sorted. serde_json's `preserve_order` stays off: it would bring a crate under a licence
+  `deny.toml` refuses.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the
