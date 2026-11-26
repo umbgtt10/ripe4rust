@@ -20,6 +20,7 @@ pub enum PortFailure {
     CargoUpdateUnrecognised { line: String },
     CurlMissing,
     Internal { doing: String, detail: String },
+    LockOutdated { detail: String },
     PlanSchemaUnknown { file: String, schema: String },
     PlanUnreadable { file: String, detail: String },
     RegistryCacheUnusable { detail: String },
@@ -43,9 +44,7 @@ impl PortFailure {
                 String::from(
                     "cargo-deny is not installed, and a plan blind to advisories would call ripe what is urgent",
                 ),
-                String::from(
-                    "install it with `cargo install --locked cargo-deny`, then plan again",
-                ),
+                String::from(DiagnosticCode::CargoDenyMissing.entry().remedy),
             ),
             Self::CargoMetadataFailed { detail } => (
                 DiagnosticCode::CargoMetadataFailed,
@@ -80,6 +79,13 @@ impl PortFailure {
                 format!("ripe4rust failed while {doing}: {detail}"),
                 format!("report it at {ISSUES} with this diagnostic"),
             ),
+            Self::LockOutdated { detail } => (
+                DiagnosticCode::LockOutdated,
+                format!(
+                    "`Cargo.lock` is not there, or no longer matches the workspace's manifests, and ripe4rust writes no lock: {detail}"
+                ),
+                String::from(DiagnosticCode::LockOutdated.entry().remedy),
+            ),
             Self::PlanSchemaUnknown { file, schema } => (
                 DiagnosticCode::PlanSchemaUnknown,
                 format!(
@@ -99,18 +105,14 @@ impl PortFailure {
             Self::RegistryCacheUnusable { detail } => (
                 DiagnosticCode::RegistryCacheUnusable,
                 format!("the registry's answers could not be cached: {detail}"),
-                String::from(
-                    "make the cache directory readable and writable, or set `XDG_CACHE_HOME` (`LOCALAPPDATA` on Windows) to one that is, then plan again",
-                ),
+                String::from(DiagnosticCode::RegistryCacheUnusable.entry().remedy),
             ),
             Self::RegistryUnreachable { detail } => (
                 DiagnosticCode::RegistryUnreachable,
                 format!(
                     "the registry could not be reached, and nothing is cached for the day: {detail}"
                 ),
-                String::from(
-                    "check the network and plan again, or plan with `--offline` to read an earlier day's cache",
-                ),
+                String::from(DiagnosticCode::RegistryUnreachable.entry().remedy),
             ),
             Self::ToolchainUnreachable { detail } => (
                 DiagnosticCode::ToolchainUnreachable,

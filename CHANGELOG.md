@@ -186,6 +186,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   its summary counts the crates it pulls in, and its question asks to move the crate, naming no version.
 - A diagnostic, a `check` difference or a guide entry whose text ends in a full stop -- a cargo error quoted at its
   end, often -- no longer prints `.. Do:`: the full stop closes it only where it has no ending of its own.
+- Planning a workspace whose `Cargo.lock` no longer matches its manifests, or that has none, is no longer
+  `cargo-metadata-failed` quoting cargo's advice to drop `--locked`: it is a code of its own, `lock-outdated`, in the
+  catalogue `guide` lists, whose remedy says to bring the lock in step with `cargo update --workspace`, commit it,
+  and plan again.
 
 ## [0.0.1] — 2026-10-30
 

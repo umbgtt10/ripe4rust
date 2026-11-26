@@ -12,6 +12,30 @@ fn detail() -> String {
 }
 
 #[test]
+fn diagnostic_of_a_lock_out_of_date_says_to_bring_it_in_step_and_commit_it() {
+    // Arrange & Act
+    let diagnostic = PortFailure::LockOutdated {
+        detail: String::from(
+            "cannot update the lock file /work/ws/Cargo.lock because --locked was passed to prevent this",
+        ),
+    }
+    .diagnostic();
+
+    // Assert
+    assert_eq!(
+        (diagnostic.what, diagnostic.action),
+        (
+            String::from(
+                "`Cargo.lock` is not there, or no longer matches the workspace's manifests, and ripe4rust writes no lock: cannot update the lock file /work/ws/Cargo.lock because --locked was passed to prevent this"
+            ),
+            String::from(
+                "bring the lock in step with the manifests -- `cargo update --workspace` writes it and moves no locked version they still allow --, commit it, then plan again"
+            ),
+        )
+    );
+}
+
+#[test]
 fn diagnostic_of_a_plan_of_another_schema_says_to_plan_again() {
     // Arrange & Act
     let diagnostic = PortFailure::PlanSchemaUnknown {
@@ -150,6 +174,10 @@ fn diagnostic_of_every_failure_is_an_error_of_its_own_code() {
                 detail: detail(),
             },
             DiagnosticCode::Internal,
+        ),
+        (
+            PortFailure::LockOutdated { detail: detail() },
+            DiagnosticCode::LockOutdated,
         ),
         (
             PortFailure::PlanSchemaUnknown {

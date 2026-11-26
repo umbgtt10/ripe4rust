@@ -77,6 +77,39 @@ fn reached_by_a_target_is_every_registry_crate_its_build_resolves() {
 }
 
 #[test]
+fn reached_by_a_target_without_a_lock_is_lock_outdated() {
+    // Arrange
+    let runner = ReplayRunner::new().reply(
+        &[
+            "cargo",
+            "metadata",
+            "--format-version",
+            "1",
+            "--locked",
+            "--filter-platform",
+            "thumbv7em-none-eabihf",
+        ],
+        failed(
+            101,
+            include_str!("../../fixtures/cargo/metadata-lock-missing.txt"),
+        ),
+    );
+
+    // Act
+    let reached = CargoMetadata::new(&runner, root(), false).reached_by("thumbv7em-none-eabihf");
+
+    // Assert
+    assert_eq!(
+        reached,
+        Err(PortFailure::LockOutdated {
+            detail: String::from(
+                "cannot create the lock file /work/ws/Cargo.lock because --locked was passed to prevent this"
+            ),
+        })
+    );
+}
+
+#[test]
 fn read_asks_cargo_for_the_locked_graph() {
     // Arrange
     let runner = recorded();
@@ -112,6 +145,31 @@ fn read_of_a_failing_cargo_metadata_says_what_cargo_said() {
         Err(PortFailure::CargoMetadataFailed {
             detail: String::from(
                 "could not find `Cargo.toml` in `/work/nowhere` or any parent directory"
+            ),
+        })
+    );
+}
+
+#[test]
+fn read_of_a_lock_out_of_step_with_the_manifests_is_lock_outdated() {
+    // Arrange
+    let runner = ReplayRunner::new().reply(
+        &METADATA,
+        failed(
+            101,
+            include_str!("../../fixtures/cargo/metadata-lock-outdated.txt"),
+        ),
+    );
+
+    // Act
+    let read = CargoMetadata::new(&runner, root(), false).read();
+
+    // Assert
+    assert_eq!(
+        read,
+        Err(PortFailure::LockOutdated {
+            detail: String::from(
+                "cannot update the lock file /work/ws/Cargo.lock because --locked was passed to prevent this"
             ),
         })
     );

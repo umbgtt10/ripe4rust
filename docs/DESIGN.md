@@ -148,7 +148,12 @@ Where the sections above are silent, the adapters read the inputs this way:
   none does. A crate reaches a `validate-beyond-gates` target where `cargo
   metadata --filter-platform <target>` resolves it at all, through any member
   and any kind of dependency: the conservative reading, so a crate only a host
-  tool uses still asks. A failure is `cargo-metadata-failed`, with cargo's
+  tool uses still asks. A lock `--locked` would have to write -- none at all,
+  or one no longer in step with the manifests -- is `lock-outdated`, cargo's
+  refusal quoted without its advice to drop `--locked`: the remedy is to bring
+  the lock in step with `cargo update --workspace`, which moves no locked
+  version the manifests still allow, commit it and plan again, since ripe4rust
+  writes no lock. Any other failure is `cargo-metadata-failed`, with cargo's
   error on one line; output it cannot read is `internal`.
 - **`cargo update --dry-run`** runs as `--recursive -p <crate>@<version>` for
   a direct dependency, the version naming the copy in use, and with
@@ -519,6 +524,7 @@ The problems the design already names, at least:
 | `policy-invalid-value` | error | a key in `[workspace.metadata.ripe4rust]` whose value is not the kind it must be |
 | `cargo-update-failed` | error | `cargo update --dry-run` could not run |
 | `cargo-metadata-failed` | error | `cargo metadata` could not run |
+| `lock-outdated` | error | `Cargo.lock` is not there, or no longer matches the manifests, and `cargo metadata --locked` will not write it |
 | `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
 | `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
 | `curl-missing` | error | curl is not on the PATH, and the registry is read through it |
