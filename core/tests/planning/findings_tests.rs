@@ -63,6 +63,7 @@ fn source_unparsed_names_the_file_and_why() {
     // Arrange
     let file = UnparsedFile {
         file: String::from("src/broken.rs"),
+        at: at("src/broken.rs", 12),
         detail: String::from("expected `;`"),
     };
 
@@ -71,6 +72,10 @@ fn source_unparsed_names_the_file_and_why() {
 
     // Assert
     assert_eq!(diagnostic.code, DiagnosticCode::SourceUnparsed);
+    assert_eq!(
+        diagnostic.at.map(|at| at.to_string()),
+        Some(String::from("src/broken.rs:12"))
+    );
     assert_eq!(
         diagnostic.what,
         "`src/broken.rs` could not be parsed (expected `;`): the footprint of the crates it names may be low"

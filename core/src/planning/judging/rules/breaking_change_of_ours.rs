@@ -14,7 +14,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 /// Rule 8: a breaking unit whose crate's types are in a published crate's
-/// public API, or may be there while the sources are not parsed, or that
+/// public API, or may be there while that API is not known, or that
 /// raises a published crate's `rust-version` -- ask; the upgrade is a
 /// breaking change of ours too.
 pub struct BreakingChangeOfOurs;
@@ -43,9 +43,9 @@ impl Rule for BreakingChangeOfOurs {
         });
         let unknown = facts.exposure_unknown_in.iter().map(|member| {
             (
-                format!("exposure in {member}'s public API not yet known"),
+                format!("exposure in {member}'s public API not known"),
                 format!(
-                    "whether {}'s types are in {member}'s public API is not yet known",
+                    "whether {}'s types are in {member}'s public API is not known",
                     facts.name
                 ),
             )

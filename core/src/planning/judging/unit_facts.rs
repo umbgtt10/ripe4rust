@@ -17,8 +17,8 @@ use alloc::vec::Vec;
 /// more than the gates it reaches; `pins` the pins holding what it moves,
 /// `fully_held` whether they hold all of it; `freeze` the end of an open
 /// freeze; `exposure_unknown_in` the published members using it whose public
-/// API is not parsed yet; `footprint` `None` while the sources are not
-/// parsed; `gates` how many are declared.
+/// API is not known; `footprint` `None` where the scan failed as a whole;
+/// `gates` how many are declared.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UnitFacts {
     pub kind: UnitKind,

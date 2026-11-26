@@ -14,7 +14,8 @@ use alloc::vec::Vec;
 /// What a breaking unit means for the workspace's own users: the published
 /// members whose public API its crates reach -- by the parse, or where the
 /// policy overrides it, by the policy --, those using a crate the policy is
-/// silent on while the sources are not parsed, and the members'
+/// silent on whose public API is not known -- the scan failed as a whole, or
+/// could not read that member's in full --, and the members'
 /// `rust-version`s its targets need raised.
 pub struct Exposure<'a> {
     context: &'a PlanContext<'a>,
@@ -94,9 +95,15 @@ impl<'a> Exposure<'a> {
 
     pub fn unknown_in(&self, unit: &Unit) -> Vec<String> {
         let surveyed = self.context.surveyed();
-        if unit.kind != UnitKind::Breaking || surveyed.scan.is_some() {
+        if unit.kind != UnitKind::Breaking {
             return Vec::new();
         }
+        let unread = |member: &String| {
+            surveyed
+                .scan
+                .as_ref()
+                .is_none_or(|scan| scan.unread_apis.contains(member))
+        };
         let mut unknown = unit
             .members
             .iter()
@@ -109,6 +116,7 @@ impl<'a> Exposure<'a> {
             })
             .flat_map(|member| self.users(member))
             .filter(|member| surveyed.policy.published.contains(member))
+            .filter(unread)
             .collect::<Vec<String>>();
         unknown.sort();
         unknown.dedup();

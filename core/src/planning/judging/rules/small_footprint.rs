@@ -12,7 +12,7 @@ use alloc::format;
 use alloc::vec;
 
 /// Rule 11: a breaking unit whose footprint is under `small-footprint` --
-/// ripe; a red gate turns it into ask. A footprint not yet known is never
+/// ripe; a red gate turns it into ask. A footprint not known is never
 /// small.
 pub struct SmallFootprint;
 

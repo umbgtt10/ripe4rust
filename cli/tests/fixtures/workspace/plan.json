@@ -329,7 +329,7 @@
       "rule": 8,
       "suggestion": "breaking-change-of-ours",
       "reasons": [
-        "exposure in app-core's public API not yet known",
+        "exposure in app-core's public API not known",
         "migrate now: 0.4.x is stale while 1.x is active"
       ],
       "summary": "Migrate itoa to 1.0.19",
@@ -359,13 +359,13 @@
       },
       "question": {
         "title": "Move itoa to 1.0.19?",
-        "why": "whether itoa's types are in app-core's public API is not yet known, and if they are, the upgrade is a breaking change of ours too",
+        "why": "whether itoa's types are in app-core's public API is not known, and if they are, the upgrade is a breaking change of ours too",
         "recommendation": "migrate-now",
         "options": [
           {
             "answer": "migrate-now",
             "means": "apply it now",
-            "then": "apply it as a ripe unit; the footprint is not yet known, so the build's errors are the work list"
+            "then": "apply it as a ripe unit; the footprint is not known, so the build's errors are the work list"
           },
           {
             "answer": "plan-it",

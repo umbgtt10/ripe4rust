@@ -40,7 +40,7 @@ impl Findings {
 
     pub fn source_unparsed(&self, file: &UnparsedFile) -> Diagnostic {
         DiagnosticCode::SourceUnparsed.diagnose(
-            None,
+            Some(file.at.clone()),
             format!(
                 "`{}` could not be parsed ({}): the footprint of the crates it names may be low",
                 file.file, file.detail

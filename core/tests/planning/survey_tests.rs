@@ -361,6 +361,7 @@ fn warnings_name_absent_pins_an_old_cache_and_unparsed_files() {
     let mut scan = surveyed.scan.clone().expect("a scan");
     scan.unparsed = vec![UnparsedFile {
         file: String::from("src/broken.rs"),
+        at: at("src/broken.rs", 12),
         detail: String::from("expected `;`"),
     }];
 

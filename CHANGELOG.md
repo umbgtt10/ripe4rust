@@ -159,6 +159,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The workspace's layout carries each member's sources, read from the same `cargo metadata --no-deps`: every target
   with its kinds and its root file, and every dependency its manifest declares, with its `package` rename and its
   source, which the parse of slice 4 reads. Naming a file from the workspace's root is `RootNames`, shared.
+- The source scan's answer says more (`ripe4rust_core::inputs`): an `UnparsedFile` names where to look -- the line
+  its parse stopped at, its first line, or the `mod` item declaring it --, and `source-unparsed` stands there; and a
+  `Scan` names the members whose public API it could not read in full, a file of their library among those it could
+  not read. A breaking unit a published one of them uses asks under rule 8, its exposure there not known, as for a
+  scan that failed as a whole. The reasons and the question say "not known" where they said "not yet known".
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from

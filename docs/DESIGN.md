@@ -376,14 +376,21 @@ One `syn` parse of the workspace's sources answers both
 A parse can be wrong about exposure (a type alias, a macro that expands to a
 public item). The policy can override it, crate by crate: `public` exposes the
 crate in every published member that uses it, `private` in none. A source file
-the parse cannot read is a warning: the footprint may be low.
+the parse cannot read is a warning, `source-unparsed`, at the line its parse
+stopped at -- its first line where it could not be read at all, the `mod` item
+declaring it where it is not there: the footprint may be low. Where the file
+belongs to a member's library, that member's public API is not read in full,
+and the parse cannot say that no item reaches it through the file it could not
+read: the exposure of every crate the member uses is not known there, and a
+breaking unit of one the policy is silent on asks under rule 8, "exposure in
+<member>'s public API not known", as for a scan that failed as a whole.
 
 Until the parse is built (slice 4 of "Delivery"), the scan answers that it
 knows neither, and the plan reads that conservatively. A footprint not known
 is never small, so rule 11 calls no unit ripe, and the verdict is "wait:
 footprint not yet known". A crate the policy is silent on may be in the public
 API of any published member that uses it, so its breaking unit asks under rule
-8, "exposure in <member>'s public API not yet known". The plan carries the
+8, "exposure in <member>'s public API not known". The plan carries the
 notice `source-unscanned`, and an override in the policy still decides.
 
 ## Groups

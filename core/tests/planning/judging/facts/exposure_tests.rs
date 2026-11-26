@@ -178,6 +178,40 @@ fn unknown_in_of_a_crate_the_policy_overrides_is_empty() {
 }
 
 #[test]
+fn unknown_in_of_a_published_member_whose_api_was_not_read_in_full_is_that_member() {
+    // Arrange
+    let mut surveyed = surveyed();
+    if let Some(scan) = surveyed.scan.as_mut() {
+        scan.unread_apis = vec![String::from("app-core")];
+    }
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let unknown = Exposure::new(&context).unknown_in(&breaking("widget", "1.4.0", "2.1.0"));
+
+    // Assert
+    assert_eq!(unknown, vec![String::from("app-core")]);
+}
+
+#[test]
+fn unknown_in_of_an_unpublished_member_whose_api_was_not_read_in_full_is_empty() {
+    // Arrange
+    let mut surveyed = surveyed();
+    if let Some(scan) = surveyed.scan.as_mut() {
+        scan.unread_apis = vec![String::from("app")];
+    }
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let unknown = Exposure::new(&context).unknown_in(&breaking("widget", "1.4.0", "2.1.0"));
+
+    // Assert
+    assert_eq!(unknown, Vec::<String>::new());
+}
+
+#[test]
 fn unknown_in_of_scanned_sources_is_empty() {
     // Arrange
     let surveyed = surveyed();

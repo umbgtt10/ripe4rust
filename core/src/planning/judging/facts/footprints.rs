@@ -9,7 +9,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 /// Where the workspace names some crates, together: every `file:line` once;
-/// nothing is known of it while the sources are not parsed.
+/// nothing is known of it where the scan failed as a whole.
 pub struct Footprints<'a> {
     scan: Option<&'a Scan>,
 }

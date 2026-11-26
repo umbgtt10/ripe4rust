@@ -129,7 +129,7 @@ fn call_of_an_unknown_footprint_is_wait() {
         call,
         VerdictCall {
             suggestion: Suggestion::Wait,
-            reason: String::from("footprint not yet known"),
+            reason: String::from("footprint not known"),
         }
     );
 }
