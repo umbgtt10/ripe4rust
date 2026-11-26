@@ -69,7 +69,9 @@ impl PortFailure {
             ),
             Self::CurlMissing => (
                 DiagnosticCode::CurlMissing,
-                String::from("curl is not installed, and ripe4rust reads the registry through it"),
+                String::from(
+                    "curl is not installed, and ripe4rust reads the registry and the toolchain's releases through it",
+                ),
                 String::from(
                     "install curl -- Windows 10 and later, macOS and most Linux distributions ship it -- or put it on the PATH, then plan again; or plan with `--offline` to read the cache alone",
                 ),

@@ -203,13 +203,7 @@ impl<'a> Survey<'a> {
             .filter(|version| !version.is_pre_release());
         let mut diagnostics = Vec::new();
         let (in_use, releases) = if let Some(version) = &pinned {
-            let releases = self.ports.toolchain.releases()?;
-            diagnostics.extend(
-                file.as_ref()
-                    .filter(|_| releases.is_none())
-                    .map(|file| Findings.toolchain_releases_unknown(file.at.clone())),
-            );
-            (version.clone(), releases.unwrap_or_default())
+            (version.clone(), self.ports.toolchain.releases()?)
         } else {
             let rustc = self.ports.toolchain.rustc()?;
             diagnostics.push(Findings.toolchain_unpinned(file.as_ref(), &rustc));

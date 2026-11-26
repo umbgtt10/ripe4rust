@@ -21,8 +21,15 @@ stable release on its day. A pin named `rust` holds it. It reaches every
 target, so in a workspace that names a target needing more than the gates it is
 always asked. Its evidence lists the dependency versions it would release.
 
-Its releases and their dates come from the Rust distribution's stable channel
-manifests.
+Its releases and their dates come from the Rust distribution's channel
+manifests, read from the one file that lists them all,
+`https://static.rust-lang.org/manifests.txt`: every manifest the distribution
+published, one a line under the day it went out, so every stable release with
+its day in one request, cached for the day like the registry's answers. A
+release listed on several days is dated by the last listing, the earlier ones
+being promotions ahead of its day. The list is read only where the channel
+pins a release; unreachable with nothing cached, it stops the plan
+(`toolchain-unreachable`), as the registry does.
 
 A workspace that pins no release -- no `rust-toolchain.toml`, or a channel of
 `stable`, a nightly, or anything but a full stable release such as `1.99.1` --
@@ -36,6 +43,12 @@ candidates, is what `rustc --version` reports.
   the held-back versions would be reported with nothing to release them.
 - **Move `rust-version` with it.** `rust-version` is a promise to a crate's
   users; raising it is a change of its own, made when a dependency needs it.
+- **Read the stable channel's manifest.** It names one release, the newest,
+  in about 900 KB, and the youth and the drift of a line need every release's
+  day. The server honours a ranged request for a manifest's head, which gives
+  its date, but `channel-rust-stable.toml` names its release deep in the file,
+  and a manifest per release, `channel-rust-1.99.0.toml`, is a request per
+  release, each found by trying names. The list is about 330 KB, once a day.
 
 ## Consequences
 

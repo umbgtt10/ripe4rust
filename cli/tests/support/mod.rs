@@ -4,6 +4,7 @@
 
 pub mod counting_pause;
 pub mod json;
+pub mod listed_releases;
 pub mod memory_files;
 pub mod moves;
 pub mod outputs;

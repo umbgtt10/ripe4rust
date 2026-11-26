@@ -5,6 +5,5 @@ itertools                  breaking    0.10.0    0.15.0    ask              pinn
 itoa                       compatible  0.4.7     0.4.8     ripe             compatible
 itoa                       breaking    0.4.7     1.0.19    ask              in app-core's public API; migrate now: 0.4.x is stale while 1.x is active
 memchr                     compatible  2.5.0     2.8.3     ripe             compatible
+rust                       toolchain   1.99.1    1.100.0   ask              reaches thumbv7em-none-eabihf
 smallvec                   compatible  1.6.0     1.16.6    ask, urgent      clears RUSTSEC-2021-0003; reaches thumbv7em-none-eabihf
-
-notice[toolchain-releases-unknown] rust-toolchain.toml:2: the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named. Do: nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand

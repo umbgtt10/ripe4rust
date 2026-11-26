@@ -66,7 +66,7 @@ fn index(name: &str) -> &'static str {
 
 /// Every command a plan of the recorded workspace runs, answered as it was
 /// recorded; offline, the cargo commands carry `--offline` and no request
-/// reaches the registry.
+/// reaches the registry or the Rust distribution.
 pub fn recorded(offline: bool) -> ReplayRunner {
     let mut runner = ReplayRunner::new()
         .reply(
@@ -117,6 +117,13 @@ pub fn recorded(offline: bool) -> ReplayRunner {
         .reply(
             &cargo(offline, &["update", "--dry-run"]),
             printed("", include_str!("../fixtures/workspace/cargo/update.txt")),
+        )
+        .reply(
+            &curl("https://static.rust-lang.org/manifests.txt"),
+            printed(
+                include_str!("../fixtures/workspace/toolchain/manifests.txt"),
+                "",
+            ),
         );
     for (name, version) in CRATES {
         let spec = format!("{name}@{version}");

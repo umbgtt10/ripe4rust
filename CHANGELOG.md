@@ -65,10 +65,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `units`, each unit with its moves, outcome, rule, suggestion, reasons, summary, steps, question and evidence; on
   failure, `schema`, `command` and `diagnostics` -- and the table for a person, the diagnostics after it in text.
 - What a plan does not know, said rather than guessed: the source scan's port answers `None` where the scan failed
-  as a whole, and the toolchain's releases `None` while the channel manifests are not read. A footprint not known
+  as a whole, and the toolchain's releases `None` while the channel manifests were not read. A footprint not known
   is never small -- rule 11 calls nothing ripe, the verdict waits -- and a breaking unit a published member uses
   asks under rule 8, its exposure not known; with no releases no toolchain unit is offered. The plan says so, in the
-  warning `source-unscanned` and the notice `toolchain-releases-unknown`.
+  warning `source-unscanned` and the notice `toolchain-releases-unknown`, retired with slice 5, which reads the
+  releases.
 - Every object of the JSON document written in the design's order, at every depth -- a record of its own each
   (`cargo_ripe4rust::render::json::documents`), serialized as declared -- where the nested objects were written
   with their keys sorted. serde_json's `preserve_order` stays off: it would bring a crate under a licence
@@ -109,7 +110,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The clock, the toolchain and the scan, for now (`cargo_ripe4rust::adapters::{clock, toolchain}`): today in UTC
   from the system's clock through the core's new `Date::from_unix_days`, or the day `--date` names; `rustc
   --version` and `--print target-list` in the workspace's directory, `toolchain-unreachable` where they fail, and
-  no releases until slice 5; and a source scan that knows nothing until slice 4.
+  no releases until slice 5, which reads them; and a source scan that knows nothing until slice 4.
 - `plan`, end to end (`cargo_ripe4rust::command`): `cargo ripe4rust [plan] [--format table|json] [--date
   YYYY-MM-DD] [--offline]`, every port's adapter set up over the seams `main` passes in -- `main` a thin shim over
   `Ripe4rust`, the library's entry point -- and the one document on stdout: exit 0 where a plan was produced, 2 where
@@ -214,6 +215,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   it through `curl` and keeps it in the day cache, `<date>/toolchain/manifests.txt`, once it reads. Any status but
   200, curl failing, or nothing cached `--offline`, is `toolchain-unreachable`; a list naming no stable release is
   not kept. Tested on the list as the server answered it on 2026-11-26.
+- The toolchain unit, end to end, slice 5 of `docs/DESIGN.md`'s "Delivery" and the last: the toolchain port answers
+  the stable releases, or why it could not (`ripe4rust_core::traits::toolchain`), read only where the channel pins
+  a release; `RustcToolchain` takes the release source through its constructor, and `plan` reads the
+  distribution's list through the run's `curl` and day cache. A channel pinning an older stable release is a
+  toolchain unit to the newest, judged as the design says, its evidence naming the versions it would release; on
+  the recorded workspace, 1.99.1 to 1.100.0, asked as it reaches the firmware target, and pinned at 1.62.1 it
+  releases `itertools 0.15.0` and `itoa 1.0.19`. The releases unreachable with nothing cached stop the plan,
+  `toolchain-unreachable`, as the registry's do. `toolchain-releases-unknown` names no case any more and is gone
+  from the catalogue, `guide` and the design; its tests ask for the failure that takes its place, and
+  `toolchain-unpinned`'s remedy. `ADR-TheToolchainIsAUnit` names the list, and why not a manifest. Every slice is in
+  place; next is the first dry round across real workspaces.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the
@@ -238,6 +250,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `docs/DESIGN.md`'s "Delivery" puts slice 1's table and JSON renderers in the cli, where "Architecture" has them.
 - `xtask` states its own `rust-version`, 1.88, which its let-chain needs, instead of inheriting the workspace's 1.85.
 - `CLAUDE.md`, the README and `docs/DESIGN.md`'s status say slice 1 is in place, and where its code lives.
+- `curl-missing` says curl reads the toolchain's releases as well as the registry.
 - ripe4rust's own `published` names `ripe4rust-core` alone: `cargo-ripe4rust` is installed as a subcommand, and its
   library is there for its own tests, so its plan no longer asks `breaking:syn` under rule 8. `docs/DESIGN.md`'s
   policy says so: `published` names the crates others depend on as libraries.

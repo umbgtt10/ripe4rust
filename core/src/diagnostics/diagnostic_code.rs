@@ -12,7 +12,7 @@ const UNLISTED: CodeEntry = CodeEntry {
     means: "",
     remedy: "",
 };
-const ENTRIES: [(DiagnosticCode, CodeEntry); 30] = [
+const ENTRIES: [(DiagnosticCode, CodeEntry); 29] = [
     (
         DiagnosticCode::CargoDenyFailed,
         CodeEntry {
@@ -51,7 +51,7 @@ const ENTRIES: [(DiagnosticCode, CodeEntry); 30] = [
     (
         DiagnosticCode::CurlMissing,
         CodeEntry {
-            means: "curl is not on the PATH, and ripe4rust reads the registry through it",
+            means: "curl is not on the PATH, and ripe4rust reads the registry and the toolchain's releases through it",
             remedy: "install curl -- Windows 10 and later, macOS and most Linux distributions ship it -- or put it on the PATH; or plan with `--offline` to read the cache alone",
         },
     ),
@@ -175,13 +175,6 @@ const ENTRIES: [(DiagnosticCode, CodeEntry); 30] = [
         },
     ),
     (
-        DiagnosticCode::ToolchainReleasesUnknown,
-        CodeEntry {
-            means: "the toolchain's releases are not read yet: no toolchain unit is offered",
-            remedy: "nothing is needed; compare `rust-toolchain.toml`'s channel with the stable releases by hand",
-        },
-    ),
-    (
         DiagnosticCode::ToolchainUnpinned,
         CodeEntry {
             means: "`rust-toolchain.toml` pins no stable release, or is not there: there is no toolchain unit",
@@ -255,7 +248,6 @@ pub enum DiagnosticCode {
     SourceUnparsed,
     SourceUnscanned,
     TargetUnknown,
-    ToolchainReleasesUnknown,
     ToolchainUnpinned,
     ToolchainUnreachable,
     UnitUnknown,
@@ -265,7 +257,7 @@ pub enum DiagnosticCode {
 }
 
 impl DiagnosticCode {
-    pub const ALL: [Self; 30] = [
+    pub const ALL: [Self; 29] = [
         Self::CargoDenyFailed,
         Self::CargoDenyMissing,
         Self::CargoMetadataFailed,
@@ -289,7 +281,6 @@ impl DiagnosticCode {
         Self::SourceUnparsed,
         Self::SourceUnscanned,
         Self::TargetUnknown,
-        Self::ToolchainReleasesUnknown,
         Self::ToolchainUnpinned,
         Self::ToolchainUnreachable,
         Self::UnitUnknown,
@@ -341,7 +332,6 @@ impl DiagnosticCode {
             Self::SourceUnparsed => "source-unparsed",
             Self::SourceUnscanned => "source-unscanned",
             Self::TargetUnknown => "target-unknown",
-            Self::ToolchainReleasesUnknown => "toolchain-releases-unknown",
             Self::ToolchainUnpinned => "toolchain-unpinned",
             Self::ToolchainUnreachable => "toolchain-unreachable",
             Self::UnitUnknown => "unit-unknown",
@@ -371,7 +361,7 @@ impl DiagnosticCode {
             | Self::RegistryCacheOld
             | Self::SourceUnparsed
             | Self::SourceUnscanned => Severity::Warning,
-            Self::ToolchainReleasesUnknown | Self::ToolchainUnpinned => Severity::Notice,
+            Self::ToolchainUnpinned => Severity::Notice,
             _ => Severity::Error,
         }
     }

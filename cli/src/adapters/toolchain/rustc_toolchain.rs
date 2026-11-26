@@ -7,6 +7,7 @@ use crate::adapters::unreadable::Unreadable;
 use crate::system::model::command_output::CommandOutput;
 use crate::system::model::invocation::Invocation;
 use crate::system::traits::command_runner::CommandRunner;
+use crate::system::traits::release_source::ReleaseSource;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::release::Release;
 use ripe4rust_core::traits::toolchain::Toolchain;
@@ -17,16 +18,24 @@ const RUSTC: &str = "rustc";
 
 /// The toolchain as `rustc` in the workspace's directory knows it --
 /// `rust-toolchain.toml` choosing it there --: its version and the targets
-/// it knows. Its releases, the channel manifests, are slice 5's to read:
-/// until then it knows none, and the plan says so.
+/// it knows; and its stable releases, as the release source reads them.
 pub struct RustcToolchain<'a> {
     runner: &'a dyn CommandRunner,
     dir: PathBuf,
+    releases: &'a dyn ReleaseSource,
 }
 
 impl<'a> RustcToolchain<'a> {
-    pub fn new(runner: &'a dyn CommandRunner, dir: PathBuf) -> Self {
-        Self { runner, dir }
+    pub fn new(
+        runner: &'a dyn CommandRunner,
+        dir: PathBuf,
+        releases: &'a dyn ReleaseSource,
+    ) -> Self {
+        Self {
+            runner,
+            dir,
+            releases,
+        }
     }
 
     fn run(&self, args: &[&str]) -> Result<CommandOutput, PortFailure> {
@@ -51,8 +60,8 @@ impl<'a> RustcToolchain<'a> {
 }
 
 impl Toolchain for RustcToolchain<'_> {
-    fn releases(&self) -> Result<Option<Vec<Release>>, PortFailure> {
-        Ok(None)
+    fn releases(&self) -> Result<Vec<Release>, PortFailure> {
+        self.releases.releases()
     }
 
     fn rustc(&self) -> Result<Version, PortFailure> {

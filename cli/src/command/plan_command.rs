@@ -10,6 +10,7 @@ use crate::adapters::registry::crates_api::CratesApi;
 use crate::adapters::registry::curl::Curl;
 use crate::adapters::registry::day_cache::DayCache;
 use crate::adapters::registry::sparse_index::SparseIndex;
+use crate::adapters::toolchain::channel_manifests::ChannelManifests;
 use crate::adapters::toolchain::rustc_toolchain::RustcToolchain;
 use crate::adapters::workspace::cargo_layout::CargoLayout;
 use crate::adapters::workspace::manifest_files::ManifestFiles;
@@ -41,6 +42,7 @@ impl<'a> PlanCommand<'a> {
         let clock: &dyn Clock = asked.as_ref().map_or(seams.clock, |asked| asked);
         let cache = DayCache::new(seams.files, seams.cache.clone(), clock.today(), offline);
         let curl = Curl::new(seams.runner, dir.clone());
+        let manifests = ChannelManifests::new(&curl, &cache);
         let layout = CargoLayout::new(seams.runner, dir.clone());
         Planner::new(Ports {
             clock,
@@ -50,7 +52,7 @@ impl<'a> PlanCommand<'a> {
             metadata: &CargoMetadata::new(seams.runner, dir.clone(), offline),
             files: &ManifestFiles::new(&layout, seams.files),
             advisories: &CargoDeny::new(seams.runner, dir.clone(), offline),
-            toolchain: &RustcToolchain::new(seams.runner, dir),
+            toolchain: &RustcToolchain::new(seams.runner, dir, &manifests),
             scan: &SourceScanner::new(&layout, seams.files),
         })
         .plan()

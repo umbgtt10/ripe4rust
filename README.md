@@ -20,19 +20,22 @@ it is safe and asked where it is not.
 
 **In development.** `cargo ripe4rust plan [--format table|json] [--date
 YYYY-MM-DD] [--offline]` reads a real workspace -- cargo, cargo-deny, rustc,
-and the crates.io registry through `curl`, cached for the day -- and prints the
-plan. `cargo ripe4rust check <unit> --plan <file>` reads the plan back and the
-workspace again, and says whether the unit applied is as planned -- exit 0, or
-1 with every difference and what to do -- or the plan is stale, 3. `cargo
-ripe4rust hold <unit> --plan <file> --because <text>` prints the pin that holds
-a unit whose gates went red, or that a person said to wait on, and where it
-goes; ripe4rust still writes no file. `cargo ripe4rust guide` prints the round,
-every command, every diagnostic code with its remedy and the documents' fields.
-The sources are parsed with `syn`, so a breaking upgrade's footprint -- every
-line naming the crate, the work list of its migration -- and whether the crate
-is in a published member's public API are known. The toolchain's releases are
-still to come: until then the plan reads them conservatively and says so. Version 0.0.1, on crates.io, holds the vocabulary only. The
-design is in [`docs/DESIGN.md`](docs/DESIGN.md).
+the crates.io registry and the Rust distribution's list of releases, through
+`curl` and cached for the day -- and prints the plan. `cargo ripe4rust check
+<unit> --plan <file>` reads the plan back and the workspace again, and says
+whether the unit applied is as planned -- exit 0, or 1 with every difference
+and what to do -- or the plan is stale, 3. `cargo ripe4rust hold <unit> --plan
+<file> --because <text>` prints the pin that holds a unit whose gates went red,
+or that a person said to wait on, and where it goes; ripe4rust still writes no
+file. `cargo ripe4rust guide` prints the round, every command, every diagnostic
+code with its remedy and the documents' fields. The sources are parsed with
+`syn`, so a breaking upgrade's footprint -- every line naming the crate, the
+work list of its migration -- and whether the crate is in a published member's
+public API are known. A `rust-toolchain.toml` pinning an older stable release
+is judged as a unit of its own, with the dependency versions the newer one
+would release. Every slice of the design is in place; next is a first dry
+round across real workspaces, plans only. Version 0.0.1, on crates.io, holds
+the vocabulary only. The design is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License
 
