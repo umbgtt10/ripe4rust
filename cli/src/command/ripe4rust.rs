@@ -2,20 +2,25 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::command::answer::Answer;
+use crate::command::check_command::CheckCommand;
 use crate::command::command_line::CommandLine;
-use crate::command::document::Document;
+use crate::command::hold_command::HoldCommand;
 use crate::command::plan_command::PlanCommand;
 use crate::command::ran::Ran;
 use crate::command::seams::Seams;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::guiding::guide::Guide;
 
-const PLANNED: u8 = 0;
-const NO_PLAN: u8 = 2;
+const CHECK: &str = "check";
+const GUIDE: &str = "guide";
+const HOLD: &str = "hold";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// The library's entry point, which `main` is a thin shim over: the
-/// command line read, the command run over the seams it was given, and the
-/// one document it prints -- 0 where a plan was produced, whatever it says,
-/// 2 where none could be.
+/// command line read, the command it names run over the seams it was given,
+/// and the one document that command prints with the code it exits with; a
+/// command line refused is its diagnostic, exit 2.
 pub struct Ripe4rust<'a> {
     seams: Seams<'a>,
 }
@@ -29,24 +34,18 @@ impl<'a> Ripe4rust<'a> {
         let request = match CommandLine.read(args) {
             Ok(request) => request,
             Err(refusal) => {
-                return Ran {
-                    output: Document::new(refusal.format, &refusal.command).failure(&PlanFailure {
-                        diagnostics: vec![refusal.diagnostic],
-                    }),
-                    code: NO_PLAN,
-                };
+                return Answer::new(refusal.format, &refusal.command).failed(&PlanFailure {
+                    diagnostics: vec![refusal.diagnostic],
+                });
             }
         };
-        let document = Document::new(request.format, &request.command);
-        match PlanCommand::new(self.seams.clone()).plan(&request) {
-            Ok(plan) => Ran {
-                output: document.plan(&plan),
-                code: PLANNED,
-            },
-            Err(failure) => Ran {
-                output: document.failure(&failure),
-                code: NO_PLAN,
-            },
+        let answer = Answer::new(request.format, &request.command);
+        let seams = self.seams.clone();
+        match request.command.as_str() {
+            CHECK => answer.checked(CheckCommand::new(seams).check(&request)),
+            GUIDE => answer.guided(&Guide::new(VERSION).text()),
+            HOLD => answer.held(HoldCommand::new(seams).hold(&request)),
+            _ => answer.planned(PlanCommand::new(seams).plan(&request)),
         }
     }
 }

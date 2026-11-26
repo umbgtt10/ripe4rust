@@ -13,13 +13,15 @@ a workspace being behind is information, not a defect in the change being gated.
 
 The design is settled: `docs/DESIGN.md` holds it, and `docs/ADRs/` the decisions that were not obvious. The
 implementation comes in slices, each held to stages 1 and 2 from its first commit, as `docs/DESIGN.md`'s "Delivery"
-lists them: 0 the scaffolding, 1 the core, 2 the adapters and `plan`, 3 `check`, `hold` and `guide`, 4 the parse,
-5 the toolchain unit. Slices 0 to 2 are in place: the core decides, against fakes of every port, and `cargo ripe4rust
+lists them: 0 the scaffolding, 1 the core, 2 the adapters and `plan`, 3 `check`, `hold` and `guide`, 4 the parse, 5
+the toolchain unit. Slices 0 to 3 are in place: the core decides, against fakes of every port, and `cargo ripe4rust
 plan` reads a real workspace through the adapters -- cargo, cargo-deny, rustc, and the registry through `curl` with
-its day cache -- and prints the plan as a table or JSON. Footprint and exposure (slice 4) and the toolchain's
-releases (slice 5) are not read yet: the plan treats them conservatively and says so in notices; `check`, `hold` and
-`guide` answer `command-unavailable` until slice 3. Version 0.0.1, on crates.io, holds the design's vocabulary --
-`Outcome`, `UnitKind` -- and nothing that decides.
+its day cache -- and prints the plan as a table or JSON; `cargo ripe4rust check <unit> --plan <file>` reads the plan
+back and the workspace again, and sorts every difference into the units that explain it; `hold` prints the pin that
+holds a unit, and where it goes; `guide` prints the round, every command, every diagnostic code with its remedy and
+the documents' fields. Footprint and exposure (slice 4) and the toolchain's releases (slice 5) are not read yet: the
+plan treats them conservatively and says so in notices. Version 0.0.1, on crates.io, holds the design's vocabulary
+-- `Outcome`, `UnitKind` -- and nothing that decides.
 
 It is self-contained.
 
@@ -42,8 +44,8 @@ A workspace of three members, with a virtual root that holds no package:
 
 | member | what it is |
 |---|---|
-| `core/` | package `ripe4rust-core`, library `ripe4rust_core`: the units, the version choice, the rules, the verdicts, the questions, the steps, the diagnostics and the plan. `#![no_std]`, no dependency, no technology. The ports in `traits/`, the data they hand over in `inputs/`, the hand-written arithmetic -- versions, requirements, dates -- in `values/`, the codes in `diagnostics/`, and the plan, from the policy to the questions, in `planning/`. |
-| `cli/` | package `cargo-ripe4rust`: the `cargo-ripe4rust` binary, `main.rs` a thin shim over the library `cargo_ripe4rust`'s entry point, `command::ripe4rust::Ripe4rust`. `src/command/` the command line and `plan`; `src/adapters/` the real implementations of the core's ports -- `cargo/` (`cargo metadata`, `cargo update --dry-run`, `cargo deny`), `registry/` (the index and the API through `curl`, with the day cache), `workspace/` (the workspace's files, the fingerprint, the scan still to come), `toolchain/` (`rustc`), `clock/`; `src/system/` the seams they reach the system through -- `traits/`, the records in `model/`, the real implementations in `real/`; `src/render/` the renderers. Its tests replay output recorded from the pinned toolchain, under `tests/fixtures/`, scrubbed of local paths; none reaches the network. The channel manifests (slice 5) and the `syn` parse (slice 4) are to come. |
+| `core/` | package `ripe4rust-core`, library `ripe4rust_core`: the units, the version choice, the rules, the verdicts, the questions, the steps, the diagnostics and the plan. `#![no_std]`, no dependency, no technology. The ports in `traits/`, the data they hand over in `inputs/`, the hand-written arithmetic -- versions, requirements, dates -- in `values/`, the codes in `diagnostics/`, and the plan, from the policy to the questions, in `planning/` -- the version choice in `planning/units/choice/`, and the round's commands in `planning/round/`: `check`'s sorting of differences, `hold`'s pin and `guide`'s text. |
+| `cli/` | package `cargo-ripe4rust`: the `cargo-ripe4rust` binary, `main.rs` a thin shim over the library `cargo_ripe4rust`'s entry point, `command::ripe4rust::Ripe4rust`. `src/command/` the command line and the four commands; `src/adapters/` the real implementations of the core's ports -- `cargo/` (`cargo metadata`, `cargo update --dry-run`, `cargo deny`), `registry/` (the index and the API through `curl`, with the day cache), `workspace/` (the workspace's files, `Cargo.lock`, the fingerprint, the plan document read back in `plan/`, the scan still to come), `toolchain/` (`rustc`), `clock/`; `src/system/` the seams they reach the system through -- `traits/`, the records in `model/`, the real implementations in `real/`; `src/render/` the renderers. Its tests replay output recorded from the pinned toolchain, under `tests/fixtures/`, scrubbed of local paths; none reaches the network. The channel manifests (slice 5) and the `syn` parse (slice 4) are to come. |
 | `xtask/` | gate orchestration, run as `cargo xtask`. `publish = false`. |
 
 Each `tests/` mirrors its `src/`, one registry, `all_tests.rs`, per package.

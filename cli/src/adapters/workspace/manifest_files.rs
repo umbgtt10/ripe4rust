@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::adapters::workspace::fingerprint::Fingerprint;
+use crate::adapters::workspace::lock_reader::LockReader;
 use crate::adapters::workspace::policy_section::PolicySection;
 use crate::adapters::workspace::requirement_finder::RequirementFinder;
 use crate::adapters::workspace::rust_version_finder::RustVersionFinder;
@@ -11,14 +12,17 @@ use crate::system::model::file_failure::FileFailure;
 use crate::system::model::layout::Layout;
 use crate::system::traits::file_system::FileSystem;
 use crate::system::traits::layout_source::LayoutSource;
+use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
+use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::traits::workspace_files::WorkspaceFiles;
 use ripe4rust_core::values::location::Location;
 use std::path::Path;
 use std::path::PathBuf;
 
+const CHANNEL: &str = "channel";
 const LOCK: &str = "Cargo.lock";
 const MANIFEST: &str = "Cargo.toml";
 const TOOLCHAIN: &str = "rust-toolchain.toml";
@@ -33,6 +37,11 @@ pub struct ManifestFiles<'a> {
 impl<'a> ManifestFiles<'a> {
     pub fn new(source: &'a dyn LayoutSource, files: &'a dyn FileSystem) -> Self {
         Self { source, files }
+    }
+
+    fn at_root(&self, file: &str) -> Result<String, PortFailure> {
+        let layout = self.source.layout()?;
+        self.required(&layout, &layout.root.join(file))
     }
 
     fn manifests(layout: &Layout) -> Vec<PathBuf> {
@@ -86,9 +95,12 @@ impl WorkspaceFiles for ManifestFiles<'_> {
         Ok(Fingerprint.of(&files))
     }
 
+    fn lock(&self) -> Result<Vec<LockEntry>, PortFailure> {
+        LockReader.entries(&self.at_root(LOCK)?)
+    }
+
     fn policy(&self) -> Result<PolicyTree, PortFailure> {
-        let layout = self.source.layout()?;
-        PolicySection.tree(&self.required(&layout, &layout.root.join(MANIFEST))?)
+        PolicySection.tree(&self.at_root(MANIFEST)?)
     }
 
     fn requirement_lines(&self, name: &str) -> Result<Vec<Location>, PortFailure> {
@@ -117,5 +129,31 @@ impl WorkspaceFiles for ManifestFiles<'_> {
         self.read(&layout, &layout.root.join(TOOLCHAIN))?
             .map(|text| ToolchainReader.file(&text))
             .transpose()
+    }
+
+    fn written(&self) -> Result<Vec<WrittenLine>, PortFailure> {
+        let layout = self.source.layout()?;
+        let root = self.required(&layout, &layout.root.join(MANIFEST))?;
+        let mut lines = Vec::new();
+        for manifest in Self::manifests(&layout) {
+            let text = self.required(&layout, &manifest)?;
+            lines.extend(RequirementFinder.written(&Self::named(&layout, &manifest), &text)?);
+        }
+        for (_, manifest) in &layout.members {
+            let text = self.required(&layout, manifest)?;
+            lines.extend(RustVersionFinder.written(
+                &Self::named(&layout, manifest),
+                &text,
+                &root,
+            )?);
+        }
+        lines.extend(self.toolchain()?.map(|file| WrittenLine {
+            at: file.at,
+            key: String::from(CHANNEL),
+            value: file.channel,
+        }));
+        lines.sort_by(|left, right| left.at.cmp(&right.at));
+        lines.dedup();
+        Ok(lines)
     }
 }

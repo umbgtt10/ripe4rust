@@ -2,18 +2,32 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::render::document_renderer::DocumentRenderer;
+use crate::render::json::check_json::CheckJson;
 use crate::render::json::diagnostic_json::DiagnosticJson;
 use crate::render::json::documents::diagnostic_document::DiagnosticDocument;
 use crate::render::json::documents::unit_document::UnitDocument;
+use crate::render::json::guide_json::GuideJson;
+use crate::render::json::hold_json::HoldJson;
 use crate::render::json::unit_json::UnitJson;
-use crate::render::plan_renderer::PlanRenderer;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::checking::check_report::CheckReport;
+use ripe4rust_core::planning::round::guiding::guide_text::GuideText;
+use ripe4rust_core::planning::round::holding::hold_report::HoldReport;
 use serde::Serialize;
 use serde_json::to_string_pretty;
 
 const SCHEMA: u32 = 1;
+
+#[derive(Serialize)]
+struct Enveloped<'a, T: Serialize> {
+    pub schema: u32,
+    pub command: &'a str,
+    #[serde(flatten)]
+    pub body: T,
+}
 
 #[derive(Serialize)]
 struct FailureDocument<'a> {
@@ -23,9 +37,18 @@ struct FailureDocument<'a> {
 }
 
 #[derive(Serialize)]
+struct WrittenLineDocument<'a> {
+    #[serde(rename = "where")]
+    pub at: String,
+    pub key: &'a str,
+    pub value: &'a str,
+}
+
+#[derive(Serialize)]
 struct WorkspaceDocument<'a> {
     pub fingerprint: &'a str,
     pub lock: &'a [String],
+    pub lines: Vec<WrittenLineDocument<'a>>,
 }
 
 #[derive(Serialize)]
@@ -42,7 +65,8 @@ struct PlanDocument<'a> {
 
 /// The one document a command prints with `--format json`, on success and
 /// on failure alike: `schema`, which moves when the shape does, the command,
-/// and the diagnostics -- and for a plan, everything it holds. Every object
+/// and the diagnostics -- and for a plan, a check, a hold or the guide,
+/// everything it holds. Every object
 /// is a record of its own, so its keys keep the design's order.
 pub struct JsonRenderer {
     command: String,
@@ -62,6 +86,14 @@ impl JsonRenderer {
             .collect()
     }
 
+    fn enveloped(&self, body: impl Serialize) -> String {
+        Self::text(&Enveloped {
+            schema: SCHEMA,
+            command: &self.command,
+            body,
+        })
+    }
+
     fn text(document: &impl Serialize) -> String {
         let mut text = to_string_pretty(document).unwrap_or_default();
         text.push('\n');
@@ -69,13 +101,25 @@ impl JsonRenderer {
     }
 }
 
-impl PlanRenderer for JsonRenderer {
+impl DocumentRenderer for JsonRenderer {
+    fn check(&self, report: &CheckReport) -> String {
+        self.enveloped(CheckJson.document(report))
+    }
+
     fn failure(&self, failure: &PlanFailure) -> String {
         Self::text(&FailureDocument {
             schema: SCHEMA,
             command: &self.command,
             diagnostics: Self::diagnostics(&failure.diagnostics),
         })
+    }
+
+    fn guide(&self, text: &GuideText) -> String {
+        self.enveloped(GuideJson.document(text))
+    }
+
+    fn hold(&self, report: &HoldReport) -> String {
+        self.enveloped(HoldJson.document(report))
     }
 
     fn plan(&self, plan: &Plan) -> String {
@@ -87,6 +131,16 @@ impl PlanRenderer for JsonRenderer {
             workspace: WorkspaceDocument {
                 fingerprint: &plan.workspace.fingerprint,
                 lock: &plan.workspace.lock,
+                lines: plan
+                    .workspace
+                    .lines
+                    .iter()
+                    .map(|line| WrittenLineDocument {
+                        at: line.at.to_string(),
+                        key: &line.key,
+                        value: &line.value,
+                    })
+                    .collect(),
             },
             gates: &plan.gates,
             diagnostics: Self::diagnostics(&plan.diagnostics),

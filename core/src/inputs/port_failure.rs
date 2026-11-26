@@ -20,6 +20,8 @@ pub enum PortFailure {
     CargoUpdateUnrecognised { line: String },
     CurlMissing,
     Internal { doing: String, detail: String },
+    PlanSchemaUnknown { file: String, schema: String },
+    PlanUnreadable { file: String, detail: String },
     RegistryCacheUnusable { detail: String },
     RegistryUnreachable { detail: String },
     ToolchainUnreachable { detail: String },
@@ -77,6 +79,22 @@ impl PortFailure {
                 DiagnosticCode::Internal,
                 format!("ripe4rust failed while {doing}: {detail}"),
                 format!("report it at {ISSUES} with this diagnostic"),
+            ),
+            Self::PlanSchemaUnknown { file, schema } => (
+                DiagnosticCode::PlanSchemaUnknown,
+                format!(
+                    "`{file}` is a plan of schema {schema}, and this release of ripe4rust reads schema 1"
+                ),
+                format!(
+                    "plan again with this release -- `cargo ripe4rust plan --format json > {file}` -- and go on with the new plan"
+                ),
+            ),
+            Self::PlanUnreadable { file, detail } => (
+                DiagnosticCode::PlanUnreadable,
+                format!("`{file}` could not be read as a plan: {detail}"),
+                format!(
+                    "write the plan with `cargo ripe4rust plan --format json > {file}`, and run the command again"
+                ),
             ),
             Self::RegistryCacheUnusable { detail } => (
                 DiagnosticCode::RegistryCacheUnusable,

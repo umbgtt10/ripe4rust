@@ -18,3 +18,27 @@ fn label_of_each_kind_is_its_name() {
     // Assert
     assert_eq!(labels, ["advisory", "breaking", "compatible", "toolchain"]);
 }
+
+#[test]
+fn parse_of_each_label_is_its_kind_and_of_anything_else_none() {
+    // Arrange & Act
+    let parsed = [
+        UnitKind::parse("advisory"),
+        UnitKind::parse("breaking"),
+        UnitKind::parse("compatible"),
+        UnitKind::parse("toolchain"),
+        UnitKind::parse("major"),
+    ];
+
+    // Assert
+    assert_eq!(
+        parsed,
+        [
+            Some(UnitKind::Advisory),
+            Some(UnitKind::Breaking),
+            Some(UnitKind::Compatible),
+            Some(UnitKind::Toolchain),
+            None,
+        ]
+    );
+}

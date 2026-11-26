@@ -6,10 +6,10 @@ use crate::support::releases::date;
 use crate::support::releases::release;
 use crate::support::units::breaking;
 use crate::support::units::dependency;
-use ripe4rust_core::planning::choice::histories::Histories;
-use ripe4rust_core::planning::choice::maturity::Maturity;
-use ripe4rust_core::planning::choice::release_history::ReleaseHistory;
 use ripe4rust_core::planning::units::breaking_units::BreakingUnits;
+use ripe4rust_core::planning::units::choice::histories::Histories;
+use ripe4rust_core::planning::units::choice::maturity::Maturity;
+use ripe4rust_core::planning::units::choice::release_history::ReleaseHistory;
 use ripe4rust_core::values::version::Version;
 
 fn histories() -> Histories {

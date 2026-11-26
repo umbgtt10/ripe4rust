@@ -7,10 +7,25 @@ use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use crate::support::plans::rest;
 use crate::support::plans::toolchain;
-use cargo_ripe4rust::render::plan_renderer::PlanRenderer;
+use crate::support::reports::held;
+use crate::support::reports::not_as_planned;
+use cargo_ripe4rust::render::document_renderer::DocumentRenderer;
 use cargo_ripe4rust::render::table::table_renderer::TableRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::guiding::guide::Guide;
+
+#[test]
+fn check_prints_the_report() {
+    // Arrange & Act
+    let text = TableRenderer.check(&not_as_planned());
+
+    // Assert
+    assert!(
+        text.starts_with("check compatible:widget: not as planned\n"),
+        "{text}"
+    );
+}
 
 #[test]
 fn failure_prints_each_diagnostic_on_a_line() {
@@ -30,6 +45,29 @@ fn failure_prints_each_diagnostic_on_a_line() {
     assert_eq!(
         text,
         "error[cargo-deny-missing] cargo-deny is not installed. Do: install it\n"
+    );
+}
+
+#[test]
+fn guide_prints_the_guide() {
+    // Arrange & Act
+    let text = TableRenderer.guide(&Guide::new("0.0.1").text());
+
+    // Assert
+    assert!(text.starts_with("ripe4rust 0.0.1: the guide\n"), "{text}");
+}
+
+#[test]
+fn hold_prints_the_pins() {
+    // Arrange & Act
+    let text = TableRenderer.hold(&held(true));
+
+    // Assert
+    assert!(
+        text.starts_with(
+            "hold compatible:widget: under [workspace.metadata.ripe4rust.pins] at Cargo.toml:40\n"
+        ),
+        "{text}"
     );
 }
 

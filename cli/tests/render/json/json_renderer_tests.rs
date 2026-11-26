@@ -5,10 +5,13 @@
 use crate::support::plans::breaking;
 use crate::support::plans::compatible;
 use crate::support::plans::plan;
+use crate::support::reports::as_planned;
+use crate::support::reports::held;
+use cargo_ripe4rust::render::document_renderer::DocumentRenderer;
 use cargo_ripe4rust::render::json::json_renderer::JsonRenderer;
-use cargo_ripe4rust::render::plan_renderer::PlanRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::guiding::guide::Guide;
 use serde_json::Value;
 use serde_json::from_str;
 use serde_json::json;
@@ -19,6 +22,21 @@ fn compact(text: &str) -> String {
 
 fn parsed(text: &str) -> Value {
     from_str(text).expect("a JSON document")
+}
+
+#[test]
+fn check_prints_schema_and_command_before_the_report() {
+    // Arrange & Act
+    let text = JsonRenderer::new("check").check(&as_planned());
+
+    // Assert
+    assert!(
+        compact(&text).starts_with(
+            r#"{"schema":1,"command":"check","unit":"breaking:gadget","as_planned":true,"#
+        ),
+        "{text}"
+    );
+    assert!(text.ends_with("}\n"));
 }
 
 #[test]
@@ -54,6 +72,32 @@ fn failure_prints_schema_command_and_diagnostics() {
 }
 
 #[test]
+fn guide_prints_schema_and_command_before_the_guide() {
+    // Arrange & Act
+    let text = JsonRenderer::new("guide").guide(&Guide::new("0.0.1").text());
+
+    // Assert
+    assert!(
+        compact(&text).starts_with(r#"{"schema":1,"command":"guide","version":"0.0.1","round":["#),
+        "{text}"
+    );
+}
+
+#[test]
+fn hold_prints_schema_and_command_before_the_pins() {
+    // Arrange & Act
+    let text = JsonRenderer::new("hold").hold(&held(true));
+
+    // Assert
+    assert!(
+        compact(&text).starts_with(
+            r#"{"schema":1,"command":"hold","unit":"compatible:widget","section":"[workspace.metadata.ripe4rust.pins]","where":"Cargo.toml:40","pins":[{"crate":"widget","line":"#
+        ),
+        "{text}"
+    );
+}
+
+#[test]
 fn plan_prints_every_object_s_keys_in_the_design_s_order() {
     // Arrange
     let mut planned = plan(vec![compatible(), breaking()]);
@@ -69,6 +113,7 @@ fn plan_prints_every_object_s_keys_in_the_design_s_order() {
     // Assert
     for ordered in [
         r#""workspace":{"fingerprint":"9f2c41d0e3b5a7c9","lock":["#,
+        r#""lines":[{"where":"Cargo.toml:22","key":"gadget","value":"0.13"},"#,
         r#"{"severity":"warning","code":"gates-undeclared","where":null,"what":"nogates","do":"declarethem","needs_person":true}"#,
         r#"{"id":"compatible:widget","kind":"compatible","crate":"widget","members":["widget"],"from":"4.6.6","to":"4.6.7","moves":[{"crate":"widget","from":"4.6.6","to":"4.6.7"}"#,
         r#""outcome":"ripe","urgent":false,"rule":10,"suggestion":null,"reasons":["compatible"],"summary":"#,
@@ -126,7 +171,14 @@ fn plan_prints_the_workspace_and_every_unit() {
     assert_eq!(document["registry_read"], json!("2026-10-30"));
     assert_eq!(
         document["workspace"],
-        json!({ "fingerprint": "9f2c41d0e3b5a7c9", "lock": ["gadget 0.13.1", "widget 4.6.6"] })
+        json!({
+            "fingerprint": "9f2c41d0e3b5a7c9",
+            "lock": ["gadget 0.13.1", "widget 4.6.6"],
+            "lines": [
+                { "where": "Cargo.toml:22", "key": "gadget", "value": "0.13" },
+                { "where": "rust-toolchain.toml:2", "key": "channel", "value": "1.99.1" }
+            ]
+        })
     );
     assert_eq!(document["gates"], json!(["just stage1", "just stage2"]));
     assert_eq!(document["diagnostics"], json!([]));

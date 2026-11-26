@@ -15,11 +15,12 @@ use ripe4rust_core::inputs::release::Release;
 use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
 use ripe4rust_core::inputs::scan::Scan;
 use ripe4rust_core::inputs::workspace::Workspace;
-use ripe4rust_core::planning::choice::histories::Histories;
-use ripe4rust_core::planning::choice::release_history::ReleaseHistory;
+use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::planning::pins_and_policy::policy::Policy;
 use ripe4rust_core::planning::pins_and_policy::thresholds::Thresholds;
 use ripe4rust_core::planning::surveyed::Surveyed;
+use ripe4rust_core::planning::units::choice::histories::Histories;
+use ripe4rust_core::planning::units::choice::release_history::ReleaseHistory;
 use ripe4rust_core::planning::units::dependency_moves::DependencyMoves;
 use ripe4rust_core::planning::units::direct_dependency::DirectDependency;
 use ripe4rust_core::values::location::Location;
@@ -215,6 +216,12 @@ pub fn surveyed() -> Surveyed {
             (String::from("app"), at("Cargo.toml", 5)),
             (String::from("app-core"), at("Cargo.toml", 5)),
         ],
+        written: vec![
+            written(at("Cargo.toml", 5), "rust-version", "1.85"),
+            written(at("Cargo.toml", 21), "widget", "1.4"),
+            written(at("Cargo.toml", 22), "gadget", "0.13"),
+            written(at("rust-toolchain.toml", 9), "channel", "1.99.1"),
+        ],
         diagnostics: Vec::new(),
     }
 }
@@ -235,5 +242,13 @@ fn workspace() -> Workspace {
             locked("libc", "0.2.177", &[]),
             locked("widget", "1.4.0", &[("gizmo", "2.7.5")]),
         ],
+    }
+}
+
+pub fn written(at: Location, key: &str, value: &str) -> WrittenLine {
+    WrittenLine {
+        at,
+        key: String::from(key),
+        value: String::from(value),
     }
 }

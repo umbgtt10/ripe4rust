@@ -23,6 +23,10 @@ fn request(date: Option<Date>) -> Request {
         format: Format::Json,
         date,
         offline: false,
+        unit: None,
+        plan: None,
+        because: None,
+        review: None,
     }
 }
 

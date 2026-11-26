@@ -114,12 +114,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   YYYY-MM-DD] [--offline]`, every port's adapter set up over the seams `main` passes in -- `main` a thin shim over
   `Ripe4rust`, the library's entry point -- and the one document on stdout: exit 0 where a plan was produced, 2 where
   none could be. `--date` stands for today, `--offline` keeps every adapter off the network. A command or an
-  option it does not know is `usage-invalid`; `check`, `hold` and `guide`, until slice 3, `command-unavailable`.
+  option it does not know is `usage-invalid`; `check`, `hold` and `guide`, until slice 3, `command-unavailable`,
+  retired with slice 3.
   Tested through the entry point on a workspace recorded whole -- cargo, cargo-deny, rustc and the registry --
   against the JSON document and the table, an offline plan from its cache, and the plan's failures; the binary's
   own tests now run a command line that needs no network.
 - `.gitattributes`: the recorded fixtures kept byte for byte on every system, so a Windows checkout reads what
   Linux recorded.
+- The plan records every line a unit's `apply` can edit, with what it says (`workspace.lines`): each crates.io
+  requirement in every manifest, each member's `rust-version` -- its own or the one it inherits -- and
+  `rust-toolchain.toml`'s `channel`, read by the workspace's files adapter beside the requirement lines it already
+  found. The fingerprint tells `check` that the workspace changed; the lines tell it where, so a requirement edited
+  by hand is not taken for one a unit wrote.
+- `check`, slice 3's first command: `cargo ripe4rust check <unit> --plan <file> [--format table|json]`, a unit's id
+  or one move of its split, `<unit>/<crate>`. The core (`ripe4rust_core::planning::round`) reads the plan back
+  through a new port, `PlanSource`, the policy again, and the workspace through `WorkspaceFiles`, now also answering
+  `Cargo.lock`'s crates.io packages; then sorts every difference into the units that explain it. A lock move no unit
+  makes is the unit's -- not as planned, exit 1, every difference with its `do` --; a requirement, `rust-version` or
+  channel no unit's edit explains is the plan stale, exit 3, `plan-stale` where it is; as planned is 0, with the
+  units applied and those still to go; a breaking unit applied reports its tail as `transitive`, and a tail move
+  past a pin is a difference. The cli reads the plan document back -- schema 1, `plan`'s, holding units -- and
+  `Cargo.lock` itself rather than through cargo, so a lock a hand-edited manifest no longer matches still reads.
+  Three codes: `plan-unreadable`, `plan-schema-unknown`, `unit-unknown`. The command line reads each command's own
+  options, and the renderers print `check`'s document in JSON and text.
+- `hold`: `cargo ripe4rust hold <unit> --plan <file> --because <text> [--review YYYY-MM-DD] [--format table|json]`
+  prints the pin that holds a unit and where it goes; the agent adds it. The core
+  (`ripe4rust_core::planning::round::holding`) reads the plan, refuses an urgent unit as `unit-urgent` -- a new
+  code, for the person: it becomes an urgent ask --, sorts the workspace as `check` does, any change no unit
+  explains being the plan stale (3), and writes a line of `[workspace.metadata.ripe4rust.pins]` for every crate the
+  unit's pins hold: a compatible unit's or a split move's whole, `hold = "all"`; a breaking unit's on its line; the
+  toolchain's as `rust`. The reason is a TOML basic string, escaped; the review is `--review` or `hold-days` after
+  the plan's date; a crate pinned already keeps its reason, its condition and the sooner review. The line goes under
+  the pins table's line, or in that table added at the end of `Cargo.toml`. A test reads a printed pin back through
+  the policy's own reader.
+- `guide`: `cargo ripe4rust guide [--format table|json]` prints the round, every command with what it takes and the
+  codes it exits with, every diagnostic code with its severity, whether it needs a person, what it means and its
+  remedy, and every field of the documents of schema 1, versioned with the binary. It is generated in the core
+  (`ripe4rust_core::planning::round::guiding`) from the catalogue the diagnostics come from: `DiagnosticCode` gains
+  `ALL` and `entry`, a `CodeEntry` of what it means and its remedy, a test holds `ALL` to the enum as its source
+  declares it, and another holds every key each document prints to a field of the guide. The round gains what to do
+  when `check` exits 2.
+- ripe4rust plans itself: the workspace's `Cargo.toml` declares its gates, `just stage1` and `just stage2`, in
+  `[workspace.metadata.ripe4rust]`, so its own plan no longer warns `gates-undeclared`.
+- The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
+  `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

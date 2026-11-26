@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::releases::date;
-use ripe4rust_core::planning::choice::line_stats::LineStats;
 use ripe4rust_core::planning::judging::footprint::Footprint;
 use ripe4rust_core::planning::judging::line_standing::LineStanding;
 use ripe4rust_core::planning::judging::pin_standing::PinStanding;
 use ripe4rust_core::planning::judging::unit_facts::UnitFacts;
 use ripe4rust_core::planning::pins_and_policy::hold::Hold;
 use ripe4rust_core::planning::pins_and_policy::pin::Pin;
+use ripe4rust_core::planning::units::choice::line_stats::LineStats;
 use ripe4rust_core::unit_kind::UnitKind;
 use ripe4rust_core::values::line::Line;
 use ripe4rust_core::values::location::Location;

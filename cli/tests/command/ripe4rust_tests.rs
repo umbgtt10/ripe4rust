@@ -8,20 +8,66 @@ use crate::support::outputs::failed;
 use crate::support::recorded::recorded;
 use crate::support::replay_runner::ReplayRunner;
 use crate::support::workspace::files;
+use crate::support::workspace::layout;
 use cargo_ripe4rust::adapters::clock::fixed_clock::FixedClock;
+use cargo_ripe4rust::adapters::workspace::policy_section::PolicySection;
 use cargo_ripe4rust::command::ripe4rust::Ripe4rust;
 use cargo_ripe4rust::command::seams::Seams;
+use ripe4rust_core::planning::pins_and_policy::hold::Hold;
+use ripe4rust_core::planning::pins_and_policy::policy_reader::PolicyReader;
 use ripe4rust_core::values::date::Date;
+use serde_json::Value;
+use serde_json::from_str;
+use serde_json::json;
 use std::path::PathBuf;
 
 const JSON: [&str; 5] = ["ripe4rust", "plan", "--format", "json", "--date"];
+const LOCK: &str = include_str!("../fixtures/workspace/files/Cargo.lock.txt");
+const PLAN: &str = include_str!("../fixtures/workspace/plan.json");
 
 fn args(words: &[&str]) -> Vec<String> {
     words.iter().map(|word| String::from(*word)).collect()
 }
 
+fn check(unit: &str) -> Vec<String> {
+    args(&[
+        "ripe4rust",
+        "check",
+        unit,
+        "--plan",
+        "plan.json",
+        "--format",
+        "json",
+    ])
+}
+
 fn clock() -> FixedClock {
     FixedClock::new(Date::parse("2026-11-30").expect("a date"))
+}
+
+fn hold(unit: &str, because: &str) -> Vec<String> {
+    args(&[
+        "ripe4rust",
+        "hold",
+        unit,
+        "--plan",
+        "plan.json",
+        "--because",
+        because,
+        "--format",
+        "json",
+    ])
+}
+
+fn moved(lock: &str, name: &str, from: &str, to: &str) -> String {
+    lock.replace(
+        &format!("name = \"{name}\"\nversion = \"{from}\""),
+        &format!("name = \"{name}\"\nversion = \"{to}\""),
+    )
+}
+
+fn parsed(text: &str) -> Value {
+    from_str(text).expect("a JSON document")
 }
 
 fn plan_json(date: &str, offline: bool) -> Vec<String> {
@@ -50,29 +96,6 @@ fn seams<'a>(
 }
 
 #[test]
-fn run_of_a_command_not_built_yet_exits_two_saying_so() {
-    // Arrange
-    let (runner, files, pause, clock) = (
-        ReplayRunner::new(),
-        MemoryFiles::new(),
-        CountingPause::new(),
-        clock(),
-    );
-
-    // Act
-    let ran =
-        Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&args(&["ripe4rust", "guide"]));
-
-    // Assert
-    assert_eq!(ran.code, 2);
-    assert_eq!(
-        ran.output,
-        "error[command-unavailable] `guide` is not in this release of ripe4rust yet. Do: use `cargo ripe4rust plan`, the one command this release runs; `check`, `hold` and `guide` come with a later release\n"
-    );
-    assert_eq!(runner.commands(), Vec::<String>::new());
-}
-
-#[test]
 fn run_of_a_policy_in_error_reads_nothing_beyond_it() {
     // Arrange
     let runner = recorded(false);
@@ -96,6 +119,309 @@ fn run_of_a_policy_in_error_reads_nothing_beyond_it() {
     assert_eq!(
         runner.commands(),
         vec![String::from("cargo metadata --format-version 1 --no-deps")]
+    );
+}
+
+#[test]
+fn run_of_check_after_a_requirement_edited_by_hand_exits_three() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files()
+        .with("/work/ws/plan.json", PLAN)
+        .with(
+            "/work/ws/Cargo.lock",
+            &moved(LOCK, "itoa", "0.4.7", "0.4.8"),
+        )
+        .with(
+            "/work/ws/app/Cargo.toml",
+            &include_str!("../fixtures/workspace/files/app/Cargo.toml.txt")
+                .replace("smallvec = \"1.6.0\"", "smallvec = \"1.7\""),
+        );
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&check("compatible:itoa"));
+
+    // Assert
+    assert_eq!(ran.code, 3);
+    let document = parsed(&ran.output);
+    assert_eq!(document["diagnostics"][0]["code"], "plan-stale");
+    assert_eq!(document["diagnostics"][0]["where"], "app/Cargo.toml:12");
+}
+
+#[test]
+fn run_of_check_in_a_table_says_how_the_unit_stands() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN).with(
+        "/work/ws/Cargo.lock",
+        &moved(LOCK, "itoa", "0.4.7", "0.4.8"),
+    );
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&args(&[
+        "check",
+        "compatible:itoa",
+        "--plan",
+        "plan.json",
+    ]));
+
+    // Assert
+    assert_eq!(ran.code, 0);
+    assert_eq!(
+        ran.output,
+        "check compatible:itoa: as planned\napplied: compatible:itoa\nto go: compatible:itertools, breaking:itertools, breaking:itoa, compatible:memchr, compatible:smallvec\n"
+    );
+}
+
+#[test]
+fn run_of_check_of_a_plan_of_another_schema_exits_two() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with(
+        "/work/ws/plan.json",
+        &PLAN.replacen("\"schema\": 1", "\"schema\": 2", 1),
+    );
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&check("compatible:itoa"));
+
+    // Assert
+    assert_eq!(ran.code, 2);
+    assert_eq!(
+        parsed(&ran.output)["diagnostics"][0]["code"],
+        "plan-schema-unknown"
+    );
+}
+
+#[test]
+fn run_of_check_on_a_unit_applied_as_planned_exits_zero_listing_what_is_applied() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN).with(
+        "/work/ws/Cargo.lock",
+        &moved(LOCK, "itoa", "0.4.7", "0.4.8"),
+    );
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&check("compatible:itoa"));
+
+    // Assert
+    assert_eq!(ran.code, 0);
+    let document = parsed(&ran.output);
+    assert_eq!(document["command"], "check");
+    assert_eq!(document["unit"], "compatible:itoa");
+    assert_eq!(document["as_planned"], true);
+    assert_eq!(document["applied"], json!(["compatible:itoa"]));
+    assert_eq!(
+        document["to_go"],
+        json!([
+            "compatible:itertools",
+            "breaking:itertools",
+            "breaking:itoa",
+            "compatible:memchr",
+            "compatible:smallvec"
+        ])
+    );
+}
+
+#[test]
+fn run_of_check_on_a_unit_not_yet_applied_exits_one_naming_its_move() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN);
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&check("compatible:itoa"));
+
+    // Assert
+    assert_eq!(ran.code, 1);
+    assert_eq!(
+        parsed(&ran.output)["differences"][0]["what"],
+        "`itoa` is still 0.4.7, where the unit moves it to 0.4.8"
+    );
+}
+
+#[test]
+fn run_of_check_on_a_unit_that_moved_more_exits_one_with_each_difference() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN).with(
+        "/work/ws/Cargo.lock",
+        &moved(
+            &moved(LOCK, "itoa", "0.4.7", "0.4.8"),
+            "memchr",
+            "2.5.0",
+            "2.6.0",
+        ),
+    );
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&check("compatible:itoa"));
+
+    // Assert
+    assert_eq!(ran.code, 1);
+    assert_eq!(
+        parsed(&ran.output)["differences"],
+        json!([{
+            "where": "Cargo.lock",
+            "what": "`memchr` moved 2.5.0 -> 2.6.0, a move no unit of the plan makes",
+            "do": "carry out the unit's `revert`, `git restore -- Cargo.lock`: compatible:itoa becomes ask, with these differences attached"
+        }])
+    );
+}
+
+#[test]
+fn run_of_check_on_a_unit_the_plan_does_not_hold_exits_two() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN);
+
+    // Act
+    let ran =
+        Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&check("compatible:serde"));
+
+    // Assert
+    assert_eq!(ran.code, 2);
+    assert_eq!(
+        parsed(&ran.output)["diagnostics"][0]["code"],
+        "unit-unknown"
+    );
+}
+
+#[test]
+fn run_of_guide_prints_the_guide_reading_nothing_and_exits_zero() {
+    // Arrange
+    let (runner, files, pause, clock) = (
+        ReplayRunner::new(),
+        MemoryFiles::new(),
+        CountingPause::new(),
+        clock(),
+    );
+
+    // Act
+    let ran =
+        Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&args(&["ripe4rust", "guide"]));
+
+    // Assert
+    assert_eq!(ran.code, 0);
+    assert!(
+        ran.output.starts_with(&format!(
+            "ripe4rust {}: the guide\n\nThe round\n1. Run `cargo ripe4rust plan --format json > plan.json`.\n",
+            env!("CARGO_PKG_VERSION")
+        )),
+        "{}",
+        ran.output
+    );
+    assert_eq!(runner.commands(), Vec::<String>::new());
+}
+
+#[test]
+fn run_of_hold_in_a_table_prints_the_pin_and_what_to_do() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN);
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&args(&[
+        "hold",
+        "breaking:itoa",
+        "--plan",
+        "plan.json",
+        "--because",
+        "the person: wait",
+        "--review",
+        "2027-02-01",
+    ]));
+
+    // Assert
+    assert_eq!(ran.code, 0);
+    assert_eq!(
+        ran.output,
+        "hold breaking:itoa: under [workspace.metadata.ripe4rust.pins] at Cargo.toml:19\nitoa = { reason = \"the person: wait\", review = \"2027-02-01\" }\nDo: put the pin under `[workspace.metadata.ripe4rust.pins]` at Cargo.toml:19, and commit it\n"
+    );
+}
+
+#[test]
+fn run_of_hold_on_a_unit_prints_its_pin_under_the_pins_table() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN);
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock))
+        .run(&hold("compatible:itoa", "stage 2 failed"));
+
+    // Assert
+    assert_eq!(ran.code, 0);
+    assert_eq!(
+        parsed(&ran.output),
+        json!({
+            "schema": 1,
+            "command": "hold",
+            "unit": "compatible:itoa",
+            "section": "[workspace.metadata.ripe4rust.pins]",
+            "where": "Cargo.toml:19",
+            "pins": [{
+                "crate": "itoa",
+                "line": "itoa = { reason = \"stage 2 failed\", review = \"2026-12-10\", hold = \"all\" }",
+                "replaces": null
+            }],
+            "do": "put the pin under `[workspace.metadata.ripe4rust.pins]` at Cargo.toml:19, and commit it",
+            "diagnostics": []
+        })
+    );
+}
+
+#[test]
+fn run_of_hold_on_an_urgent_unit_exits_two_saying_it_becomes_an_urgent_ask() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN);
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock))
+        .run(&hold("compatible:smallvec", "stage 2 failed"));
+
+    // Assert
+    assert_eq!(ran.code, 2);
+    assert_eq!(parsed(&ran.output)["diagnostics"][0]["code"], "unit-urgent");
+}
+
+#[test]
+fn run_of_hold_prints_a_pin_the_policy_reads_back_as_written() {
+    // Arrange
+    let because = "stage 2: \"crap4rust\" over 15 in C:\\ws\tand a tab";
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files().with("/work/ws/plan.json", PLAN);
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock))
+        .run(&hold("compatible:itoa", because));
+    let line = parsed(&ran.output)["pins"][0]["line"]
+        .as_str()
+        .map(String::from)
+        .expect("a pin");
+    let manifest = format!(
+        "{}{line}\n",
+        include_str!("../fixtures/workspace/files/Cargo.toml.txt")
+    );
+
+    // Act
+    let policy = PolicyReader.read(&PolicySection.tree(&manifest).expect("a policy"));
+
+    // Assert
+    assert_eq!(policy.diagnostics, Vec::new());
+    let pin = policy
+        .value
+        .pins
+        .iter()
+        .find(|pin| pin.name == "itoa")
+        .expect("the pin");
+    assert_eq!(
+        (
+            pin.reason.as_str(),
+            pin.hold,
+            pin.review.map(|review| review.to_string())
+        ),
+        (because, Hold::All, Some(String::from("2026-12-10")))
     );
 }
 

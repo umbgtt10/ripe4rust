@@ -8,6 +8,7 @@ use crate::inputs::lock_move::LockMove;
 use crate::inputs::release::Release;
 use crate::inputs::scan::Scan;
 use crate::inputs::workspace::Workspace;
+use crate::inputs::written_line::WrittenLine;
 use crate::planning::pins_and_policy::policy::Policy;
 use crate::planning::units::crate_repository::CrateRepository;
 use crate::planning::units::dependency_moves::DependencyMoves;
@@ -23,8 +24,9 @@ use alloc::vec::Vec;
 /// it pins one; `toolchain` the toolchain in use; `releases` the index's
 /// answer for every crate read; `reached` the crates each target needing
 /// more than the gates reaches; the lines are where each direct
-/// dependency's requirement and each member's `rust-version` are written;
-/// `scan` is `None` while the sources are not parsed.
+/// dependency's requirement and each member's `rust-version` are written,
+/// and `written` every line a unit can edit with what it says; `scan` is
+/// `None` while the sources are not parsed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Surveyed {
     pub today: Date,
@@ -46,5 +48,6 @@ pub struct Surveyed {
     pub scan: Option<Scan>,
     pub requirement_lines: Vec<(String, Vec<Location>)>,
     pub rust_version_lines: Vec<(String, Location)>,
+    pub written: Vec<WrittenLine>,
     pub diagnostics: Vec<Diagnostic>,
 }

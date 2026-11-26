@@ -7,11 +7,13 @@ use crate::support::workspace::files;
 use crate::support::workspace::layout;
 use cargo_ripe4rust::adapters::workspace::cargo_layout::CargoLayout;
 use cargo_ripe4rust::adapters::workspace::manifest_files::ManifestFiles;
+use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_entry::PolicyEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::policy_value::PolicyValue;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
+use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::traits::workspace_files::WorkspaceFiles;
 use ripe4rust_core::values::location::Location;
 use std::path::PathBuf;
@@ -77,6 +79,50 @@ fn fingerprint_of_the_recorded_workspace_changes_with_its_lock() {
     // Assert
     assert_eq!(fingerprints[0].as_ref().map(String::len), Ok(16));
     assert_ne!(fingerprints[0], fingerprints[1]);
+}
+
+#[test]
+fn lock_of_a_workspace_without_a_lock_is_unreadable() {
+    // Arrange
+    let runner = layout();
+    let files = files();
+    files.files.borrow_mut().remove("/work/ws/Cargo.lock");
+
+    // Act
+    let lock = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).lock();
+
+    // Assert
+    assert_eq!(
+        lock,
+        Err(PortFailure::WorkspaceUnreadable {
+            file: String::from("Cargo.lock"),
+            detail: String::from("it is not there"),
+        })
+    );
+}
+
+#[test]
+fn lock_of_the_recorded_workspace_is_its_crates_io_packages() {
+    // Arrange
+    let (runner, files) = (layout(), files());
+
+    // Act
+    let lock = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).lock();
+
+    // Assert
+    assert_eq!(
+        lock.map(|entries| entries
+            .iter()
+            .map(|LockEntry { name, version }| format!("{name} {version}"))
+            .collect::<Vec<String>>()),
+        Ok(vec![
+            String::from("either 1.5.0"),
+            String::from("itertools 0.10.0"),
+            String::from("itoa 0.4.7"),
+            String::from("memchr 2.5.0"),
+            String::from("smallvec 1.6.0"),
+        ])
+    );
 }
 
 #[test]
@@ -264,5 +310,53 @@ fn toolchain_of_the_recorded_workspace_is_its_channel() {
             channel: String::from("1.99.1"),
             at: at("rust-toolchain.toml", 2),
         }))
+    );
+}
+
+#[test]
+fn written_of_a_workspace_without_a_toolchain_file_names_no_channel() {
+    // Arrange
+    let runner = layout();
+    let files = files();
+    files
+        .files
+        .borrow_mut()
+        .remove("/work/ws/rust-toolchain.toml");
+
+    // Act
+    let lines = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).written();
+
+    // Assert
+    assert_eq!(
+        lines.map(|lines| lines.iter().any(|line| line.key == "channel")),
+        Ok(false)
+    );
+}
+
+#[test]
+fn written_of_the_recorded_workspace_is_every_line_a_unit_can_edit() {
+    // Arrange
+    let (runner, files) = (layout(), files());
+    let written = |file: &str, line: u32, key: &str, value: &str| WrittenLine {
+        at: at(file, line),
+        key: String::from(key),
+        value: String::from(value),
+    };
+
+    // Act
+    let lines = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).written();
+
+    // Assert
+    assert_eq!(
+        lines,
+        Ok(vec![
+            written("Cargo.toml", 8, "rust-version", "1.85"),
+            written("Cargo.toml", 12, "itertools", "0.10"),
+            written("app-core/Cargo.toml", 5, "rust-version", "1.85"),
+            written("app-core/Cargo.toml", 9, "itoa", "0.4"),
+            written("app/Cargo.toml", 12, "smallvec", "1.6.0"),
+            written("app/Cargo.toml", 15, "memchr", "2.5"),
+            written("rust-toolchain.toml", 2, "channel", "1.99.1"),
+        ])
     );
 }

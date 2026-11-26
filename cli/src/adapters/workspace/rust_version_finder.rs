@@ -4,6 +4,7 @@
 
 use crate::adapters::workspace::toml_file::TomlFile;
 use ripe4rust_core::inputs::port_failure::PortFailure;
+use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::values::location::Location;
 use toml::de::DeValue;
 
@@ -22,6 +23,15 @@ impl RustVersionFinder {
         member: &str,
         root: &str,
     ) -> Result<Option<Location>, PortFailure> {
+        Ok(self.written(file, member, root)?.map(|written| written.at))
+    }
+
+    pub fn written(
+        &self,
+        file: &str,
+        member: &str,
+        root: &str,
+    ) -> Result<Option<WrittenLine>, PortFailure> {
         let toml = TomlFile::new(file, member);
         let document = toml.table()?;
         let declared = document
@@ -37,10 +47,12 @@ impl RustVersionFinder {
             .and_then(|workspace| workspace.get_ref().as_bool())
             .unwrap_or(false);
         match declared.get_ref() {
-            DeValue::String(_) => Ok(Some(Location {
-                file: String::from(file),
-                line: toml.line(declared.span().start),
-            })),
+            DeValue::String(value) => Ok(Some(Self::line_of(
+                file,
+                &toml,
+                declared.span().start,
+                value,
+            ))),
             DeValue::Table(_) if inherited => {
                 let workspace = TomlFile::new(MANIFEST, root);
                 let document = workspace.table()?;
@@ -49,12 +61,27 @@ impl RustVersionFinder {
                     .get("workspace")
                     .and_then(|table| table.get_ref().get("package"))
                     .and_then(|package| package.get_ref().get(KEY))
-                    .map(|version| Location {
-                        file: String::from(MANIFEST),
-                        line: workspace.line(version.span().start),
+                    .map(|version| {
+                        Self::line_of(
+                            MANIFEST,
+                            &workspace,
+                            version.span().start,
+                            version.get_ref().as_str().unwrap_or_default(),
+                        )
                     }))
             }
             _ => Ok(None),
+        }
+    }
+
+    fn line_of(file: &str, toml: &TomlFile<'_>, offset: usize, value: &str) -> WrittenLine {
+        WrittenLine {
+            at: Location {
+                file: String::from(file),
+                line: toml.line(offset),
+            },
+            key: String::from(KEY),
+            value: String::from(value),
         }
     }
 }

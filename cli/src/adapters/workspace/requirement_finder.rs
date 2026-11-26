@@ -4,6 +4,7 @@
 
 use crate::adapters::workspace::toml_file::TomlFile;
 use ripe4rust_core::inputs::port_failure::PortFailure;
+use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::values::location::Location;
 use toml::Spanned;
 use toml::de::DeTable;
@@ -27,6 +28,15 @@ pub struct RequirementFinder;
 
 impl RequirementFinder {
     pub fn lines(&self, file: &str, text: &str, name: &str) -> Result<Vec<Location>, PortFailure> {
+        Ok(self
+            .written(file, text)?
+            .into_iter()
+            .filter(|line| line.key == name)
+            .map(|line| line.at)
+            .collect())
+    }
+
+    pub fn written(&self, file: &str, text: &str) -> Result<Vec<WrittenLine>, PortFailure> {
         let toml = TomlFile::new(file, text);
         let document = toml.table()?;
         let root = document.get_ref();
@@ -50,30 +60,36 @@ impl RequirementFinder {
         let mut lines = tables
             .iter()
             .flat_map(|table| table.iter())
-            .filter_map(|(key, value)| Self::requirement(key.get_ref(), value, name))
-            .map(|offset| Location {
-                file: String::from(file),
-                line: toml.line(offset),
-            })
-            .collect::<Vec<Location>>();
-        lines.sort();
+            .filter_map(|(key, value)| Self::requirement(&toml, file, key.get_ref(), value))
+            .collect::<Vec<WrittenLine>>();
+        lines.sort_by(|left, right| left.at.cmp(&right.at));
         Ok(lines)
     }
 
-    fn requirement(key: &str, value: &Spanned<DeValue<'_>>, name: &str) -> Option<usize> {
-        match value.get_ref() {
-            DeValue::String(_) if key == name => Some(value.span().start),
-            DeValue::Table(dependency) => {
-                let package = dependency
+    fn requirement(
+        toml: &TomlFile<'_>,
+        file: &str,
+        key: &str,
+        value: &Spanned<DeValue<'_>>,
+    ) -> Option<WrittenLine> {
+        let (name, version) = match value.get_ref() {
+            DeValue::String(_) => (key, value),
+            DeValue::Table(dependency) => (
+                dependency
                     .get("package")
                     .and_then(|package| package.get_ref().as_str())
-                    .unwrap_or(key);
-                dependency
-                    .get("version")
-                    .filter(|_| package == name)
-                    .map(|version| version.span().start)
-            }
-            _ => None,
-        }
+                    .unwrap_or(key),
+                dependency.get("version")?,
+            ),
+            _ => return None,
+        };
+        Some(WrittenLine {
+            at: Location {
+                file: String::from(file),
+                line: toml.line(version.span().start),
+            },
+            key: String::from(name),
+            value: String::from(version.get_ref().as_str()?),
+        })
     }
 }

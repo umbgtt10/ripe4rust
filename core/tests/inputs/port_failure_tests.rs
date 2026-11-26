@@ -12,6 +12,50 @@ fn detail() -> String {
 }
 
 #[test]
+fn diagnostic_of_a_plan_of_another_schema_says_to_plan_again() {
+    // Arrange & Act
+    let diagnostic = PortFailure::PlanSchemaUnknown {
+        file: String::from("plan.json"),
+        schema: String::from("2"),
+    }
+    .diagnostic();
+
+    // Assert
+    assert_eq!(
+        (diagnostic.what, diagnostic.action),
+        (
+            String::from(
+                "`plan.json` is a plan of schema 2, and this release of ripe4rust reads schema 1"
+            ),
+            String::from(
+                "plan again with this release -- `cargo ripe4rust plan --format json > plan.json` -- and go on with the new plan"
+            ),
+        )
+    );
+}
+
+#[test]
+fn diagnostic_of_a_plan_that_does_not_read_says_to_write_it_again() {
+    // Arrange & Act
+    let diagnostic = PortFailure::PlanUnreadable {
+        file: String::from("plan.json"),
+        detail: String::from("it is not there"),
+    }
+    .diagnostic();
+
+    // Assert
+    assert_eq!(
+        (diagnostic.what, diagnostic.action),
+        (
+            String::from("`plan.json` could not be read as a plan: it is not there"),
+            String::from(
+                "write the plan with `cargo ripe4rust plan --format json > plan.json`, and run the command again"
+            ),
+        )
+    );
+}
+
+#[test]
 fn diagnostic_of_an_unrecognised_line_quotes_it_and_says_where_to_report_it() {
     // Arrange
     let failure = PortFailure::CargoUpdateUnrecognised {
@@ -106,6 +150,20 @@ fn diagnostic_of_every_failure_is_an_error_of_its_own_code() {
                 detail: detail(),
             },
             DiagnosticCode::Internal,
+        ),
+        (
+            PortFailure::PlanSchemaUnknown {
+                file: String::from("plan.json"),
+                schema: String::from("2"),
+            },
+            DiagnosticCode::PlanSchemaUnknown,
+        ),
+        (
+            PortFailure::PlanUnreadable {
+                file: String::from("plan.json"),
+                detail: detail(),
+            },
+            DiagnosticCode::PlanUnreadable,
         ),
         (
             PortFailure::RegistryCacheUnusable { detail: detail() },

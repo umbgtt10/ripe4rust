@@ -11,4 +11,5 @@ pub mod plans;
 pub mod recorded;
 pub mod registry;
 pub mod replay_runner;
+pub mod reports;
 pub mod workspace;

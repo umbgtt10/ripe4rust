@@ -61,6 +61,7 @@ impl FakePorts {
             },
             files: FakeFiles {
                 fingerprint: surveyed.fingerprint.clone(),
+                lock: Vec::new(),
                 policy: tree(vec![
                     entry("gates", texts(&["just stage1", "just stage2"]), 31),
                     entry("published", texts(&["app-core"]), 32),
@@ -71,6 +72,7 @@ impl FakePorts {
                 }),
                 requirement_lines: surveyed.requirement_lines.clone(),
                 rust_version_lines: surveyed.rust_version_lines.clone(),
+                written: surveyed.written.clone(),
                 failure: None,
             },
             advisories: FakeAdvisories {

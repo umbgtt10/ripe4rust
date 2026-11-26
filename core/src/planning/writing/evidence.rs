@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::lock_move::LockMove;
-use crate::planning::choice::line_stats::LineStats;
+use crate::planning::units::choice::line_stats::LineStats;
 use crate::values::location::Location;
 use crate::values::partial_version::PartialVersion;
 use alloc::string::String;

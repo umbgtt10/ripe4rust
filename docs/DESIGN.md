@@ -2,7 +2,8 @@
 
 Status: settled 2026-11-26; the agent's contract added the same day. Slices
 0, 1 and 2 of "Delivery" are implemented: the scaffolding, the core with the
-renderers, and the adapters with `plan` end to end. The decisions that were not
+renderers, the adapters with `plan` end to end, and the round's commands,
+`check`, `hold` and `guide`. The decisions that were not
 obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
@@ -198,7 +199,10 @@ Where the sections above are silent, the adapters read the inputs this way:
   every kind of dependency table, every target's, and `[workspace.dependencies]`:
   the line of `crate = "..."` or of a table's `version`, a renamed crate found
   by its `package`; one with no version of its own -- a path, a git source,
-  `workspace = true` -- states none. A member's `rust-version` line is its own,
+  `workspace = true` -- states none. The lines a plan records are these for
+  every crate a manifest names, each with the requirement written there, the
+  members' `rust-version` lines with theirs, and the channel's, in `file:line`
+  order. A member's `rust-version` line is its own,
   or `[workspace.package]`'s where it inherits it. `rust-toolchain.toml` gives
   its channel and that line, an empty channel where it names none.
 - **The fingerprint** is FNV-1a, 64 bits, written by hand rather than taken from
@@ -469,8 +473,9 @@ Every problem found on the way is a diagnostic (ADR-EveryProblemSaysWhatToDo):
 }
 ```
 
-- **severity** -- `error` stops the command (exit 2); `warning` and `notice`
-  never change the exit code.
+- **severity** -- `error` stops the command (exit 2, or 3 for `plan-stale`,
+  which `check` and `hold` exit with); `warning` and `notice` never change the
+  exit code.
 - **code** -- stable, one per kind of problem; `guide` lists every one with its
   remedy.
 - **where** -- a `file:line` where there is one.
@@ -515,10 +520,14 @@ The problems the design already names, at least:
 | `source-unscanned` | notice | the sources are not parsed yet: no footprint or exposure is known |
 | `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
 | `usage-invalid` | error | a command or an option ripe4rust does not know, or an option's value of the wrong kind |
-| `command-unavailable` | error | a command of the design this release does not run yet |
+| `plan-unreadable` | error | the plan file `--plan` names is not there, or is no plan `plan` wrote |
+| `plan-schema-unknown` | error | the plan file is of a `schema` this release does not read |
+| `unit-unknown` | error | `check` or `hold` names an id that is no unit of the plan nor a move of a unit's split, or an advisory row, which applies nothing |
+| `unit-urgent` | error | `hold` names an urgent unit, which is never held: it becomes an urgent ask |
 
-Of these, the policy's own codes, `target-unknown` and `gates-undeclared` need
-a person: each asks for a fact or a decision only the owner has.
+Of these, the policy's own codes, `target-unknown`, `gates-undeclared` and
+`unit-urgent` need a person: each asks for a fact or a decision only the owner
+has.
 
 ### The plan
 
@@ -541,7 +550,11 @@ the rest              compatible  --        --        ripe             2 moves n
   "registry_read": "2026-10-30",
   "workspace": {
     "fingerprint": "9f2c41d0...",
-    "lock": ["anyhow 1.0.102", "clap 4.6.6", "..."]
+    "lock": ["anyhow 1.0.102", "clap 4.6.6", "..."],
+    "lines": [
+      { "where": "Cargo.toml:12", "key": "clap", "value": "4.6" },
+      { "where": "rust-toolchain.toml:2", "key": "channel", "value": "1.99.1" }
+    ]
   },
   "gates": ["just stage1", "just stage2"],
   "diagnostics": [],
@@ -588,8 +601,13 @@ for the toolchain -- and its `reasons`, the table's last column; an `apply`
 step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
-release and the moves a pin holds out of the unit. Every object's keys come
-in the order shown, at every depth: a unit's `members` after `crate` and its
+release and the moves a pin holds out of the unit. The workspace's `lines` are
+every line a unit's `apply` can edit, as the plan found it written: each
+crates.io dependency's requirement in every manifest, `key` the crate; each
+member's `rust-version`, its own or the one it inherits; and
+`rust-toolchain.toml`'s `channel` -- what `check` compares the manifests and
+the toolchain file with. Every object's keys come in the order shown, at
+every depth: a unit's `members` after `crate` and its
 `reasons` after `suggestion`; the evidence's `footprint`, `held_back` and
 `held` after `yanked_in_use`; the line in use as `line`, `first_release`,
 `last_release`, `releases`. A document for a failure carries `schema`,
@@ -656,6 +674,35 @@ The answers, by the way a unit asks:
 | breaking, otherwise | `migrate-now`, `plan-it`, `wait` | its verdict |
 | anything else | `take-it`, `wait` | `take-it` |
 
+### What `check` prints
+
+```json
+{
+  "schema": 1,
+  "command": "check",
+  "unit": "compatible:itoa",
+  "as_planned": false,
+  "transitive": [],
+  "differences": [
+    { "where": "Cargo.lock",
+      "what": "`memchr` moved 2.5.0 -> 2.6.0, a move no unit of the plan makes",
+      "do": "carry out the unit's `revert`, `git restore -- Cargo.lock`: compatible:itoa becomes ask, with these differences attached" }
+  ],
+  "applied": ["compatible:itoa"],
+  "to_go": ["compatible:memchr"],
+  "diagnostics": []
+}
+```
+
+`transitive` is a breaking unit's tail, the moves its edit made beyond its
+own, each as `moves` writes it; `where` is `Cargo.lock` for a move and a
+manifest's `file:line` for an edit. A check that could not be made, or that
+found the plan stale, prints the failure document -- `schema`, `command` and
+`diagnostics` --, a stale plan's each a `plan-stale` at its `file:line`. In
+text: `check <unit>: as planned` or `not as planned`, the tail as
+`transitive: ...`, each difference as `<where>: <what>. Do: <do>`, the units
+`applied:` and `to go:`, then the diagnostics.
+
 ## Commands
 
 | command | does | exit codes |
@@ -671,9 +718,12 @@ only -- and to keep cargo and cargo-deny off the network too, so an offline
 plan reaches none. With no command, the command is `plan`; the name cargo
 passes a subcommand first is skipped, so `cargo ripe4rust` and
 `cargo-ripe4rust` read alike. An option takes its value after it or after `=`.
-A command or an option ripe4rust does not know is `usage-invalid`, and, until
-slice 3 builds them, `check`, `hold` and `guide` are `command-unavailable`:
-both errors, exit 2, the document in the format the line asked for. `main` is
+A command or an option ripe4rust does not know is `usage-invalid`, an error,
+exit 2, the document in the format the line asked for; an unknown command's
+`do` points at `guide`. Every command of the design runs, so the transitional
+`command-unavailable` of slices 1 and 2 is gone. `--plan`
+names the plan file from the directory the command runs in, or by an absolute
+path; `check` and `hold` take one unit, its id or a split id. `main` is
 a thin shim over the library's entry point, which takes every seam it reaches
 the system through.
 
@@ -681,8 +731,11 @@ the system through.
 
 `check` is what makes a step's result visible to the agent
 (ADR-ACheckAfterEveryUnit). The plan holds the workspace it was made from: a
-fingerprint of `Cargo.lock`, every manifest and `rust-toolchain.toml`, and the
-lock's packages. Against them, `check` sorts every difference in the
+fingerprint of `Cargo.lock`, every manifest and `rust-toolchain.toml`, the
+lock's packages, and every line a unit's `apply` can edit with what it said.
+The fingerprint alone tells that something changed, not what; the lines are
+what lets `check` tell a requirement a unit wrote from one edited by hand.
+Against them, `check` sorts every difference in the
 workspace into the units it belongs to:
 
 - every difference belongs to units of the plan, and the one named shows
@@ -698,6 +751,44 @@ workspace into the units it belongs to:
 For a breaking unit, `check` reads the moves the edit made, which the plan
 could not know, and reports them.
 
+Where the lines above leave it open, the differences are sorted this way:
+
+- **What is read, in order.** The plan file first: one that is not there, not
+  JSON, not `plan`'s document, or holds no units is `plan-unreadable`, and a
+  `schema` other than 1 is `plan-schema-unknown`. Then the unit: an id that is
+  no unit of the plan nor an id of a unit's `steps.split` is `unit-unknown`, and
+  so is an advisory row, which applies nothing. Then the policy as it stands,
+  whose errors stop the command as they stop `plan` and whose warnings the
+  document carries. Then the workspace: the fingerprint, and where it is the
+  plan's nothing has changed; otherwise `Cargo.lock`'s crates.io packages --
+  read from the file, not from cargo, so a lock a manifest edited by hand no
+  longer matches still reads -- and the lines a unit can edit.
+- **A move shows in the lock** where the version it leaves is gone and the one
+  it takes is there, whatever else the lock holds of the crate: a move to a copy
+  the lock already held shows as the old copy gone.
+- **A line is the same line** where it is the same key, in the same file, in
+  the same place among that key's lines there, so a line an edit above it moved
+  down is still itself. A line rewritten to the value a unit's edit writes there
+  is that unit's.
+- **The lock and the lines are sorted apart**, because they change apart. The
+  lock is what applying a unit moves, and cargo, not the plan, decides what it
+  moves: a lock move no unit of the plan makes -- an extra move, another
+  version, a crate gone -- is the step's doing, and the unit named is not as
+  planned, **1**. The manifests and `rust-toolchain.toml` are written by hand,
+  and a unit edits them only at the lines its `apply` names: a line no unit's
+  edit explains -- rewritten, new or gone -- is a change outside the plan,
+  **3**, one `plan-stale` for each. A change outside those lines -- the pin a
+  `hold` printed, a comment -- is no difference.
+- **A breaking unit's tail.** Where a breaking unit is applied, the lock moves
+  no move of the plan accounts for are its tail: the unit named's `transitive`
+  moves when it is that unit, and otherwise an earlier one's, so a compatible
+  unit checked after a migration is not blamed for it. A tail move of a crate a
+  pin holds -- off its line, or at all with `hold = "all"` -- is a difference.
+- **Applied and still to go**, in plan order, advisory rows left out: a unit
+  every move and edit of which shows is applied; one none of which shows is
+  still to go; one partly applied is listed by the ids of its split where it
+  has one, and as still to go where it has none.
+
 ### hold
 
 `hold` is how a round remembers (ADR-AFailureBecomesAPin). A unit whose gates
@@ -706,6 +797,95 @@ and the next round finds it there. ripe4rust prints the pin -- the reason
 given, a review date `hold-days` ahead unless one is given, `hold = "all"` for
 a compatible move -- and the section and line it belongs at; the agent adds it
 and commits it. ripe4rust still edits no manifest.
+
+Where the lines above leave it open, `hold` works this way:
+
+- **What is read, in order.** The plan and the unit, as `check` reads them; an
+  urgent unit -- an advisory row is one -- is refused at once, `unit-urgent`, a
+  decision for the person: it becomes an urgent ask. Then the policy as it
+  stands and the workspace, sorted as `check` sorts it. No step is being
+  checked, so a lock move no unit makes is a change outside the plan too,
+  unless it is the tail of a breaking unit applied: any change no unit explains
+  is `plan-stale`, **3**.
+- **What the pins hold**, so the next plan holds the unit: a compatible unit's
+  every crate it moves, with `hold = "all"` -- a pin on its crate alone would
+  leave the rest of its moves to be judged again --, and a split move's crate
+  the same; a breaking unit's crate on its line, the default, which holds a
+  group by its first member; the toolchain as `rust`, on its line for a new
+  minor and with `hold = "all"` for a patch release.
+- **The pin** is one line of the pins table, `<crate> = { reason = "...",
+  review = "YYYY-MM-DD" }`, `hold = "all"` added where it holds every move:
+  the reason in a TOML basic string, quotes, backslashes and control characters
+  escaped; the review the one `--review` gives, or `hold-days` after the plan's
+  date, by the policy as it stands. A crate pinned already gets a line in place
+  of its pin that keeps what that pin said: its reason first, then the new one,
+  its `until`, the sooner review, and `hold = "all"` where either held every
+  move.
+- **Where it goes**: under `[workspace.metadata.ripe4rust.pins]`, at the line
+  of that table's header or `pins` key; where the manifest has none, in that
+  table added at the end of the workspace's `Cargo.toml`.
+
+```json
+{
+  "schema": 1,
+  "command": "hold",
+  "unit": "compatible:memchr",
+  "section": "[workspace.metadata.ripe4rust.pins]",
+  "where": "Cargo.toml:41",
+  "pins": [
+    { "crate": "memchr",
+      "line": "memchr = { reason = \"2.7.6 broke stage 2: ...\", review = \"2026-12-10\", hold = \"all\" }",
+      "replaces": null }
+  ],
+  "do": "put the pin under `[workspace.metadata.ripe4rust.pins]` at Cargo.toml:41, and commit it",
+  "diagnostics": []
+}
+```
+
+`where` is `null` where the table is to be added, and `replaces` names the pin
+a line takes the place of. In text: `hold <unit>: under <section> at
+<file:line>`, or `in a new <section> at the end of Cargo.toml` followed by the
+section's header, then each pin's line and `Do: ...`.
+
+### guide
+
+`guide` prints, for the release it is part of: the round below; every command
+with its usage, what it does, what it takes and the codes it exits with; every
+diagnostic code with its severity, whether it needs a person, what it means and
+its remedy; and every field of the documents of schema 1, document by document
+-- `every` for those all of them carry, then `plan`'s, `check`'s, `hold`'s and
+`guide`'s, an array's items written `[]`. It reads nothing and exits 0.
+
+The codes come from the catalogue the diagnostics come from: `DiagnosticCode`
+gives each its label, severity and whether it needs a person, which
+`diagnose` stamps on every diagnostic, and its entry -- what it means and its
+remedy --, which only `guide` prints: a diagnostic's own `do` is that remedy
+said of the case at hand. `DiagnosticCode::ALL` holds every code, in the order of its label; a
+test reads the enum's declaration from its source and holds `ALL` to it, so a
+code cannot be added without a guide entry, and another prints every
+document's keys and holds each to a field of the guide.
+
+```json
+{
+  "schema": 1,
+  "command": "guide",
+  "version": "0.0.1",
+  "round": ["1. Run `cargo ripe4rust plan --format json > plan.json`.", "..."],
+  "commands": [
+    { "usage": "cargo ripe4rust check <unit> --plan <file> [--format table|json]",
+      "does": "compares the workspace with what the unit should have done, ...",
+      "options": [{ "option": "<unit>", "means": "..." }, "..."],
+      "exits": [{ "code": 0, "means": "as planned: ..." }, "..."] }
+  ],
+  "codes": [
+    { "code": "plan-stale", "severity": "error", "needs_person": false,
+      "means": "the workspace changed outside the plan: a change no unit of it explains",
+      "do": "plan again -- `cargo ripe4rust plan --format json > plan.json` -- and go on with the new plan" }
+  ],
+  "fields": [{ "document": "check", "field": "as_planned", "means": "..." }],
+  "diagnostics": []
+}
+```
 
 ## The round
 
@@ -729,6 +909,7 @@ What `guide` prints, and what the agent does, every time:
         held, as holding it would keep what it clears.
       - `1`: carry out `revert`; the unit becomes **ask**, with `check`'s
         differences attached.
+      - `2`: carry out each error's `do`, then run `check` again.
       - `3`: plan again, and go on with the new plan.
 4. Report every **ripening** unit, with what will release it.
 5. Put every **ask** unit's question to the person in one message. Carry out

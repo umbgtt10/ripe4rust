@@ -2,12 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use ripe4rust_core::diagnostics::code_entry::CodeEntry;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::diagnostics::severity::Severity;
 use ripe4rust_core::values::location::Location;
 
-const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
+const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 29] = [
     (
         DiagnosticCode::CargoDenyFailed,
         "cargo-deny-failed",
@@ -35,12 +36,6 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
     (
         DiagnosticCode::CargoUpdateUnrecognised,
         "cargo-update-unrecognised",
-        Severity::Error,
-        false,
-    ),
-    (
-        DiagnosticCode::CommandUnavailable,
-        "command-unavailable",
         Severity::Error,
         false,
     ),
@@ -76,8 +71,20 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
         true,
     ),
     (
+        DiagnosticCode::PlanSchemaUnknown,
+        "plan-schema-unknown",
+        Severity::Error,
+        false,
+    ),
+    (
         DiagnosticCode::PlanStale,
         "plan-stale",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::PlanUnreadable,
+        "plan-unreadable",
         Severity::Error,
         false,
     ),
@@ -159,7 +166,53 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
         Severity::Error,
         false,
     ),
+    (
+        DiagnosticCode::UnitUnknown,
+        "unit-unknown",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::UnitUrgent,
+        "unit-urgent",
+        Severity::Error,
+        true,
+    ),
 ];
+const SOURCE: &str = include_str!("../../src/diagnostics/diagnostic_code.rs");
+
+#[test]
+fn all_holds_every_code_the_enum_declares_once_in_the_order_of_its_labels() {
+    // Arrange
+    let declared = SOURCE
+        .split_once("pub enum DiagnosticCode {")
+        .and_then(|(_, rest)| rest.split_once('}'))
+        .map(|(body, _)| body)
+        .expect("the enum");
+    let mut variants = declared
+        .split(',')
+        .map(str::trim)
+        .filter(|variant| !variant.is_empty())
+        .map(String::from)
+        .collect::<Vec<String>>();
+    variants.sort();
+
+    // Act
+    let mut all = DiagnosticCode::ALL
+        .iter()
+        .map(|code| format!("{code:?}"))
+        .collect::<Vec<String>>();
+    let labels = DiagnosticCode::ALL.map(|code| code.label());
+    all.sort();
+
+    // Assert
+    assert_eq!(all, variants);
+    assert_eq!(all.len(), EVERY_CODE.len());
+    assert!(
+        labels.windows(2).all(|pair| pair[0] < pair[1]),
+        "{labels:?}"
+    );
+}
 
 #[test]
 fn diagnose_takes_severity_and_needs_person_from_the_code() {
@@ -186,6 +239,25 @@ fn diagnose_takes_severity_and_needs_person_from_the_code() {
             what: String::from("the pin on `syn` gives no reason"),
             action: String::from("add a reason"),
             needs_person: true,
+        }
+    );
+}
+
+#[test]
+fn entry_of_every_code_says_what_it_means_and_its_remedy_apart() {
+    // Arrange & Act
+    let said = DiagnosticCode::ALL.map(|code| (code.entry().means, code.entry().remedy));
+
+    // Assert
+    for (meaning, remedy) in said {
+        assert!(!meaning.is_empty() && !remedy.is_empty());
+        assert_ne!(meaning, remedy);
+    }
+    assert_eq!(
+        DiagnosticCode::PlanStale.entry(),
+        CodeEntry {
+            means: "the workspace changed outside the plan: a change no unit of it explains",
+            remedy: "plan again -- `cargo ripe4rust plan --format json > plan.json` -- and go on with the new plan",
         }
     );
 }
