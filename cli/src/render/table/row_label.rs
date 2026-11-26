@@ -5,8 +5,9 @@
 use ripe4rust_core::planning::planned_unit::PlannedUnit;
 use ripe4rust_core::unit_kind::UnitKind;
 
-/// The unit column: the crate, a group's other members as `(+N)`, the moves
-/// a compatible unit pulls in as `(+N transitive)`; the rest as `the rest`.
+/// The unit column: the crate, then in one parenthesis a group's other
+/// members as `+N released with it` and the moves a compatible unit pulls in
+/// as `+N transitive`; the rest as `the rest`.
 pub struct RowLabel;
 
 impl RowLabel {
@@ -16,21 +17,23 @@ impl RowLabel {
             return String::from("the rest");
         };
         let others = unit.members.len().saturating_sub(1);
-        let group = if others > 0 {
-            format!(" (+{others})")
-        } else {
-            String::new()
-        };
         let pulled = unit
             .moves
             .iter()
             .filter(|lock_move| !unit.members.contains(&lock_move.name))
             .count();
-        let transitive = if unit.kind == UnitKind::Compatible && pulled > 0 {
-            format!(" (+{pulled} transitive)")
+        let counts = [
+            (others > 0).then(|| format!("+{others} released with it")),
+            (unit.kind == UnitKind::Compatible && pulled > 0)
+                .then(|| format!("+{pulled} transitive")),
+        ]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<String>>();
+        if counts.is_empty() {
+            name.clone()
         } else {
-            String::new()
-        };
-        format!("{name}{group}{transitive}")
+            format!("{name} ({})", counts.join(", "))
+        }
     }
 }

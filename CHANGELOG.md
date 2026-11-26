@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 - `cargo ripe4rust --version`, and `-V`, print `cargo-ripe4rust <version>` and exit 0, where they were refused as
   `usage-invalid`; `guide` lists it among the commands.
+- The table's unit column counts a group's other members and the crates a compatible unit pulls in within one
+  parenthesis, `tonic (+1 released with it, +16 transitive)`, where it wrote `tonic (+1) (+16 transitive)`; the JSON
+  is unchanged.
 
 ## [0.1.0] — 2026-11-26
 

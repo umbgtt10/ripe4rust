@@ -651,13 +651,13 @@ has.
 
 ```
 date 2026-10-30, registry read 2026-10-30, workspace 9f2c41d0
-unit                  kind        from      to        outcome          reasons
-anyhow (+1)           compatible  1.0.102   1.0.104   ripe, urgent     clears RUSTSEC-2026-0190
-clap (+3 transitive)  compatible  4.6.6     4.6.7     ripe             compatible
-rust                  toolchain   1.99.1    1.100.0   ripe             toolchain; releases 2 versions held back
-smoltcp               breaking    0.13.1    0.14.0    ask              reaches thumbv7em-none-eabihf; plan it: footprint 42 lines in 7 files
-syn                   breaking    2.0.119   3.0.9     ripening         pinned: the parser ...; review 2027-01-31
-the rest              compatible  --        --        ripe             2 moves no unit reaches
+unit                          kind        from     to       outcome       reasons
+anyhow (+1 released with it)  compatible  1.0.102  1.0.104  ripe, urgent  clears RUSTSEC-2026-0190
+clap (+3 transitive)          compatible  4.6.6    4.6.7    ripe          compatible
+rust                          toolchain   1.99.1   1.100.0  ripe          toolchain; releases 2 versions held back
+smoltcp                       breaking    0.13.1   0.14.0   ask           reaches thumbv7em-none-eabihf; plan it: footprint 42 lines in 7 files
+syn                           breaking    2.0.119  3.0.9    ripening      pinned: the parser ...; review 2027-01-31
+the rest                      compatible  --       --       ripe          2 moves no unit reaches
 ```
 
 ```json
@@ -731,8 +731,9 @@ every depth: a unit's `members` after `crate` and its
 `last_release`, `releases`. A document for a failure carries `schema`,
 `command` and `diagnostics` alone.
 
-In the table, `(+N)` counts a group's other members and `(+N transitive)` the
-crates a compatible unit pulls in; the workspace is named by its fingerprint's
+In the table, one parenthesis after the crate counts a group's other members
+as `+N released with it` and the crates a compatible unit pulls in as `+N
+transitive`, `tonic (+1 released with it, +16 transitive)`; the workspace is named by its fingerprint's
 first eight characters, and the diagnostics follow the table, one a line.
 
 A compatible unit whose own move a pin holds -- its crate pinned with `hold =

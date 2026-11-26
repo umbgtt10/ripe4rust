@@ -35,7 +35,20 @@ fn unit_of_a_group_counts_its_other_members() {
     let label = RowLabel.unit(&group);
 
     // Assert
-    assert_eq!(label, "widget (+1)");
+    assert_eq!(label, "widget (+1 released with it)");
+}
+
+#[test]
+fn unit_of_a_group_that_pulls_crates_in_counts_both_in_one_parenthesis() {
+    // Arrange
+    let mut group = compatible();
+    group.unit.members.push(String::from("widget_derive"));
+
+    // Act
+    let label = RowLabel.unit(&group);
+
+    // Assert
+    assert_eq!(label, "widget (+1 released with it, +1 transitive)");
 }
 
 #[test]
