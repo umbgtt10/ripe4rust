@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use ripe4rust_core::inputs::git::git_source::GitSource;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::outcome::Outcome;
@@ -46,6 +47,7 @@ pub fn breaking() -> PlannedUnit {
             to: Some(version("0.14.0")),
             moves: vec![moved("gadget", Some("0.13.1"), Some("0.14.0"))],
             held: Vec::new(),
+            git: None,
         },
         decision: Decision {
             outcome: Outcome::Ask,
@@ -98,6 +100,8 @@ pub fn breaking() -> PlannedUnit {
             footprint: vec![at("src/net.rs", 4)],
             held_back: Vec::new(),
             held: Vec::new(),
+            downgrades: Vec::new(),
+            unfollowed_includes: Vec::new(),
         },
     }
 }
@@ -116,6 +120,7 @@ pub fn compatible() -> PlannedUnit {
                 moved("widget_builder", Some("4.6.6"), Some("4.6.7")),
             ],
             held: Vec::new(),
+            git: None,
         },
         decision: Decision {
             outcome: Outcome::Ripe,
@@ -156,6 +161,8 @@ pub fn compatible() -> PlannedUnit {
             footprint: Vec::new(),
             held_back: Vec::new(),
             held: Vec::new(),
+            downgrades: Vec::new(),
+            unfollowed_includes: Vec::new(),
         },
     }
 }
@@ -166,6 +173,26 @@ pub fn date(text: &str) -> Date {
 
 pub fn gates() -> Vec<String> {
     vec![String::from("just stage1"), String::from("just stage2")]
+}
+
+pub fn git_unit() -> PlannedUnit {
+    let mut git = compatible();
+    git.unit = Unit {
+        id: UnitId::of(UnitKind::Git, "gitcore"),
+        kind: UnitKind::Git,
+        name: Some(String::from("gitcore")),
+        members: vec![String::from("gitcore"), String::from("gitmacros")],
+        from: None,
+        to: None,
+        moves: vec![moved("itoa", Some("1.0.10"), Some("1.0.19"))],
+        held: Vec::new(),
+        git: Some(GitSource {
+            source: String::from("https://github.com/example/upstream?branch=main"),
+            from: String::from("9625c3d2"),
+            to: String::from("ce129c85"),
+        }),
+    };
+    git
 }
 
 pub fn moved(name: &str, from: Option<&str>, to: Option<&str>) -> LockMove {
@@ -187,6 +214,7 @@ pub fn plan(units: Vec<PlannedUnit>) -> Plan {
                 written(at("Cargo.toml", 22), "gadget", "0.13"),
                 written(at("rust-toolchain.toml", 2), "channel", "1.99.1"),
             ],
+            git: Vec::new(),
         },
         gates: gates(),
         diagnostics: Vec::new(),
@@ -208,6 +236,7 @@ pub fn rest() -> PlannedUnit {
             moved("windows-link", None, Some("0.2.1")),
         ],
         held: Vec::new(),
+        git: None,
     };
     rest.decision.reasons = vec![String::from("2 moves no unit reaches")];
     rest
@@ -230,6 +259,7 @@ pub fn toolchain() -> PlannedUnit {
         to: Some(version("1.100.0")),
         moves: Vec::new(),
         held: Vec::new(),
+        git: None,
     };
     toolchain.decision.reasons = vec![
         String::from("toolchain"),

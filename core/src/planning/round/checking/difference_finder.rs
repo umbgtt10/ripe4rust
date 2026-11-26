@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::inputs::git::git_source::GitSource;
 use crate::inputs::lock_move::LockMove;
 use crate::inputs::written_line::WrittenLine;
 use crate::planning::pins_and_policy::hold::Hold;
@@ -21,7 +22,8 @@ const LOCK: &str = "Cargo.lock";
 
 /// How the unit checked differs from its plan: a move it should make that the
 /// lock does not show, an edit not written, a crate its edit took past the
-/// line its pin holds, a move no unit of the plan makes. The lock's changes no
+/// line its pin holds, a move no unit of the plan makes, a git unit's source
+/// not at the rev it takes, a git source moved where no unit takes it. The lock's changes no
 /// move accounts for are a breaking unit's tail where one is applied -- the
 /// unit checked's, reported as its `transitive` moves, or an earlier one's --
 /// and the unit checked's extra moves where none is.
@@ -65,6 +67,27 @@ impl<'a> DifferenceFinder<'a> {
         found.extend(self.extra(sorted).iter().map(|lock_move| {
             self.difference(String::from(LOCK), MoveWording.unexplained(lock_move))
         }));
+        found.extend(
+            self.target
+                .unit
+                .git
+                .iter()
+                .filter(|source| !self.sorting.git().applied(source))
+                .map(|source| self.difference(String::from(LOCK), self.unmoved(source))),
+        );
+        found.extend(
+            sorted
+                .unexplained_git
+                .iter()
+                .filter(|moved| {
+                    self.target
+                        .unit
+                        .git
+                        .as_ref()
+                        .is_none_or(|own| own.source != moved.source)
+                })
+                .map(|moved| self.difference(String::from(LOCK), MoveWording.git(moved))),
+        );
         found
     }
 
@@ -167,5 +190,22 @@ impl<'a> DifferenceFinder<'a> {
                 edit.key, edit.value
             ),
         )
+    }
+
+    fn unmoved(&self, source: &GitSource) -> String {
+        match self.sorting.git().rev(&source.source) {
+            Some(rev) if rev == source.from => format!(
+                "`{}` is still at {rev}, where the unit moves it to {}",
+                source.source, source.to
+            ),
+            Some(rev) => format!(
+                "`{}` moved {} -> {rev}, not to {} as the unit moves it",
+                source.source, source.from, source.to
+            ),
+            None => format!(
+                "`{}` left the lock, where the unit moves it to {}",
+                source.source, source.to
+            ),
+        }
     }
 }

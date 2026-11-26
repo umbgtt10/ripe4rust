@@ -2,11 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::inputs::lock_move::LockMove;
+use crate::planning::judging::facts::downgrade_finder::DowngradeFinder;
 use crate::planning::judging::facts::footprints::Footprints;
 use crate::planning::judging::facts::held_back::HeldBack;
 use crate::planning::judging::facts::line_review::LineReview;
 use crate::planning::judging::facts::plan_context::PlanContext;
 use crate::planning::units::concern::Concern;
+use crate::planning::units::own_move::OwnMove;
 use crate::planning::units::unit::Unit;
 use crate::planning::writing::evidence::Evidence;
 use crate::unit_kind::UnitKind;
@@ -26,13 +29,20 @@ impl<'a> EvidenceWriter<'a> {
         let rust_version = unit
             .members
             .first()
-            .zip(unit.to.as_ref())
+            .zip(OwnMove.lands_on(unit))
             .filter(|_| unit.kind != UnitKind::Toolchain)
             .and_then(|(name, to)| self.context.histories().get(name)?.rust_version_of(to));
-        let footprint = if unit.kind == UnitKind::Breaking {
-            Footprints::new(self.context.surveyed().scan.as_ref()).locations(&unit.members)
+        let footprints = Footprints::new(
+            self.context.surveyed().scan.as_ref(),
+            &self.context.surveyed().workspace.members,
+        );
+        let (footprint, unfollowed_includes) = if unit.kind == UnitKind::Breaking {
+            (
+                footprints.locations(&unit.members),
+                footprints.unfollowed(&unit.members),
+            )
         } else {
-            Vec::new()
+            (Vec::new(), Vec::new())
         };
         Evidence {
             line_in_use: LineReview::new(self.context)
@@ -50,6 +60,16 @@ impl<'a> EvidenceWriter<'a> {
             footprint,
             held_back: HeldBack::new(self.context).versions(unit),
             held: unit.held.clone(),
+            downgrades: DowngradeFinder::new(self.context)
+                .of(unit)
+                .into_iter()
+                .map(|downgrade| LockMove {
+                    name: downgrade.name,
+                    from: Some(downgrade.from),
+                    to: Some(downgrade.to),
+                })
+                .collect(),
+            unfollowed_includes,
         }
     }
 }

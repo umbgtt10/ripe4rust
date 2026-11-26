@@ -36,6 +36,7 @@ impl<'a> ToolchainUnit<'a> {
             to: Some(newest),
             moves: Vec::new(),
             held: Vec::new(),
+            git: None,
         })
     }
 }

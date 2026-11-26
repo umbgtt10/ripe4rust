@@ -7,7 +7,9 @@ use crate::system::model::invocation::Invocation;
 use crate::system::model::launch_failure::LaunchFailure;
 
 /// Runs a program to its end and hands back what it printed: every
-/// adapter's process goes through it, so each is tested on recorded output.
+/// adapter's process goes through it, so each is tested on recorded output. A
+/// batch may run at once, its answers in the batch's order.
 pub trait CommandRunner {
     fn run(&self, invocation: &Invocation) -> Result<CommandOutput, LaunchFailure>;
+    fn run_all(&self, invocations: &[Invocation]) -> Vec<Result<CommandOutput, LaunchFailure>>;
 }

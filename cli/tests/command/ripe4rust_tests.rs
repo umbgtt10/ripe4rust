@@ -533,6 +533,32 @@ fn run_of_the_recorded_workspace_prints_the_plan_as_json_and_exits_zero() {
 }
 
 #[test]
+fn run_of_version_prints_the_binary_and_its_release_reading_nothing_and_exits_zero() {
+    // Arrange
+    let (runner, files, pause, clock) = (
+        ReplayRunner::new(),
+        MemoryFiles::new(),
+        CountingPause::new(),
+        clock(),
+    );
+    let ripe4rust = Ripe4rust::new(seams(&runner, &files, &pause, &clock));
+
+    // Act
+    let ran = [
+        ripe4rust.run(&args(&["ripe4rust", "--version"])),
+        ripe4rust.run(&args(&["-V"])),
+    ];
+
+    // Assert
+    let printed = format!("cargo-ripe4rust {}\n", env!("CARGO_PKG_VERSION"));
+    assert_eq!(
+        ran.map(|ran| (ran.output, ran.code)),
+        [(printed.clone(), 0), (printed, 0)]
+    );
+    assert_eq!(runner.commands(), Vec::<String>::new());
+}
+
+#[test]
 fn run_offline_after_an_online_run_prints_the_same_plan_asking_no_registry() {
     // Arrange
     let (online, files, pause, clock) = (recorded(false), files(), CountingPause::new(), clock());

@@ -15,7 +15,8 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 /// The pins that hold what a unit moves, and whether each is released. A
-/// breaking unit's own pins hold it, on the line or on everything; the
+/// breaking unit's own pins hold it, on the line or on everything; a pin on
+/// any crate of a git unit's source holds it whole, as a source has no line; the
 /// toolchain's `rust` pin holds a new minor, or with `hold = "all"` every
 /// move; a compatible unit's are the `all` pins on the moves held out of it.
 pub struct PinReview<'a> {
@@ -29,7 +30,7 @@ impl<'a> PinReview<'a> {
 
     pub fn fully_held(&self, unit: &Unit, pins: &[PinStanding]) -> bool {
         match unit.kind {
-            UnitKind::Breaking | UnitKind::Toolchain => !pins.is_empty(),
+            UnitKind::Breaking | UnitKind::Git | UnitKind::Toolchain => !pins.is_empty(),
             UnitKind::Compatible => unit.moves.is_empty() && !unit.held.is_empty(),
             UnitKind::Advisory => false,
         }
@@ -69,7 +70,7 @@ impl<'a> PinReview<'a> {
 
     fn holds(pin: &Pin, unit: &Unit) -> bool {
         match unit.kind {
-            UnitKind::Breaking => unit.members.contains(&pin.name),
+            UnitKind::Breaking | UnitKind::Git => unit.members.contains(&pin.name),
             UnitKind::Toolchain => {
                 let new_minor = unit.from.as_ref().map(Version::toolchain_line)
                     != unit.to.as_ref().map(Version::toolchain_line);

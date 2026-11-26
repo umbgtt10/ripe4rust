@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod copies;
+pub mod downgrade_finder;
 pub mod exposure;
 pub mod fact_finder;
 pub mod footprints;

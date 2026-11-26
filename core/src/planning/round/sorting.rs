@@ -2,10 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::inputs::git::git_source::GitSource;
 use crate::inputs::lock_move::LockMove;
 use crate::inputs::recorded_plan::RecordedPlan;
 use crate::inputs::recorded_unit::RecordedUnit;
 use crate::planning::round::current_state::CurrentState;
+use crate::planning::round::git_changes::GitChanges;
 use crate::planning::round::line_change::LineChange;
 use crate::planning::round::line_changes::LineChanges;
 use crate::planning::round::lock_changes::LockChanges;
@@ -23,6 +25,7 @@ pub struct Sorting<'a> {
     plan: &'a RecordedPlan,
     lock: LockChanges,
     lines: LineChanges,
+    git: GitChanges,
 }
 
 impl<'a> Sorting<'a> {
@@ -31,7 +34,12 @@ impl<'a> Sorting<'a> {
             plan,
             lock: LockChanges::new(&plan.lock, &current.lock),
             lines: LineChanges::new(&plan.lines, &current.lines),
+            git: GitChanges::new(&plan.git, &current.git),
         }
+    }
+
+    pub fn git(&self) -> &GitChanges {
+        &self.git
     }
 
     pub fn lines(&self) -> &LineChanges {
@@ -43,7 +51,7 @@ impl<'a> Sorting<'a> {
     }
 
     pub fn sort(&self) -> Sorted {
-        let progress = Progress::new(&self.lock, &self.lines);
+        let progress = Progress::new(&self.lock, &self.lines, &self.git);
         let units = self
             .plan
             .units
@@ -68,6 +76,13 @@ impl<'a> Sorting<'a> {
                 .map(|unit| unit.id.clone())
                 .collect(),
             unexplained: self.lock.unexplained(&moved),
+            unexplained_git: self.git.unexplained(
+                &units
+                    .iter()
+                    .filter_map(|unit| unit.git.clone())
+                    .filter(|source| self.git.applied(source))
+                    .collect::<Vec<GitSource>>(),
+            ),
             stale: self
                 .lines
                 .changes()

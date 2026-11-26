@@ -115,11 +115,11 @@ fn plan_prints_every_object_s_keys_in_the_design_s_order() {
         r#""workspace":{"fingerprint":"9f2c41d0e3b5a7c9","lock":["#,
         r#""lines":[{"where":"Cargo.toml:22","key":"gadget","value":"0.13"},"#,
         r#"{"severity":"warning","code":"gates-undeclared","where":null,"what":"nogates","do":"declarethem","needs_person":true}"#,
-        r#"{"id":"compatible:widget","kind":"compatible","crate":"widget","members":["widget"],"from":"4.6.6","to":"4.6.7","moves":[{"crate":"widget","from":"4.6.6","to":"4.6.7"}"#,
+        r#"{"id":"compatible:widget","kind":"compatible","crate":"widget","members":["widget"],"from":"4.6.6","to":"4.6.7","source":null,"moves":[{"crate":"widget","from":"4.6.6","to":"4.6.7"}"#,
         r#""outcome":"ripe","urgent":false,"rule":10,"suggestion":null,"reasons":["compatible"],"summary":"#,
         r#""steps":{"apply":[{"run":"cargoupdate--recursive-pwidget"}],"check":"#,
         r#""revert":{"restore":["Cargo.lock"],"run":"gitrestore--Cargo.lock"},"split":[{"id":"compatible:widget/widget","apply":["#,
-        r#""question":null,"evidence":{"line_in_use":{"line":"4.x","first_release":"2022-01-01","last_release":"2026-10-02","releases":41},"rust_version":"1.74","advisories":[],"yanked_in_use":false,"footprint":[],"held_back":[],"held":[]}"#,
+        r#""question":null,"evidence":{"line_in_use":{"line":"4.x","first_release":"2022-01-01","last_release":"2026-10-02","releases":41},"rust_version":"1.74","advisories":[],"yanked_in_use":false,"footprint":[],"held_back":[],"held":[],"downgrades":[],"unfollowed_includes":[]}"#,
         r#"{"edit":"Cargo.toml:22","key":"gadget","value":"0.14.0"}"#,
         r#""question":{"title":"Movegadgetto0.14.0?","why":"#,
         r#""options":[{"answer":"wait","means":"notnow","then":"#,
@@ -174,6 +174,7 @@ fn plan_prints_the_workspace_and_every_unit() {
         json!({
             "fingerprint": "9f2c41d0e3b5a7c9",
             "lock": ["gadget 0.13.1", "widget 4.6.6"],
+            "git": [],
             "lines": [
                 { "where": "Cargo.toml:22", "key": "gadget", "value": "0.13" },
                 { "where": "rust-toolchain.toml:2", "key": "channel", "value": "1.99.1" }

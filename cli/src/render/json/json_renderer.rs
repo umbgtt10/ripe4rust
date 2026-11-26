@@ -48,6 +48,7 @@ struct WrittenLineDocument<'a> {
 struct WorkspaceDocument<'a> {
     pub fingerprint: &'a str,
     pub lock: &'a [String],
+    pub git: &'a [String],
     pub lines: Vec<WrittenLineDocument<'a>>,
 }
 
@@ -131,6 +132,7 @@ impl DocumentRenderer for JsonRenderer {
             workspace: WorkspaceDocument {
                 fingerprint: &plan.workspace.fingerprint,
                 lock: &plan.workspace.lock,
+                git: &plan.workspace.git,
                 lines: plan
                     .workspace
                     .lines

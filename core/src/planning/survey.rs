@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 use crate::diagnostics::diagnostic::Diagnostic;
+use crate::inputs::git::git_entry::GitEntry;
+use crate::inputs::git::git_move::GitMove;
+use crate::inputs::git::git_source::GitSource;
 use crate::inputs::port_failure::PortFailure;
 use crate::inputs::release::Release;
 use crate::inputs::scan::Scan;
@@ -21,6 +24,7 @@ use crate::planning::units::crate_repository::CrateRepository;
 use crate::planning::units::dependency_moves::DependencyMoves;
 use crate::planning::units::direct_dependencies::DirectDependencies;
 use crate::planning::units::direct_dependency::DirectDependency;
+use crate::planning::units::source_moves::SourceMoves;
 use crate::values::date::Date;
 use crate::values::location::Location;
 use crate::values::version::Version;
@@ -85,13 +89,7 @@ impl<'a> Survey<'a> {
             .collect::<Vec<String>>();
         names.sort();
         names.dedup();
-        names
-            .into_iter()
-            .map(|name| {
-                let releases = self.ports.index.releases(&name)?;
-                Ok((name, releases))
-            })
-            .collect()
+        self.ports.index.releases(&names)
     }
 
     pub fn repositories(
@@ -138,6 +136,44 @@ impl<'a> Survey<'a> {
         Ok(lines)
     }
 
+    pub fn source_moves(&self, moves: &[GitMove]) -> Result<Vec<SourceMoves>, PortFailure> {
+        let mut sources = moves
+            .iter()
+            .map(|git| git.source.clone())
+            .collect::<Vec<String>>();
+        sources.sort();
+        sources.dedup();
+        sources
+            .into_iter()
+            .filter_map(|source| {
+                let mut crates = moves
+                    .iter()
+                    .filter(|git| git.source == source)
+                    .collect::<Vec<&GitMove>>();
+                crates.sort_by(|left, right| left.name.cmp(&right.name));
+                let asked = crates.iter().find(|git| git.from.is_some())?;
+                let revs = GitSource {
+                    source: source.clone(),
+                    from: asked.from.clone().unwrap_or_default(),
+                    to: crates
+                        .iter()
+                        .find_map(|git| git.to.clone())
+                        .unwrap_or_default(),
+                };
+                Some((revs, asked.name.clone(), asked.version.clone(), crates))
+            })
+            .map(|(revs, name, version, crates)| {
+                Ok(SourceMoves {
+                    moves: self.ports.lock_moves.of_source(&name, &version)?.registry,
+                    source: revs,
+                    crates: crates.iter().map(|git| git.name.clone()).collect(),
+                    name,
+                    version,
+                })
+            })
+            .collect()
+    }
+
     pub fn survey(&self) -> Result<Surveyed, PlanFailure> {
         let today = self.ports.clock.today();
         let policy = self
@@ -159,12 +195,15 @@ impl<'a> Survey<'a> {
         let scan = self.ports.scan.scan().map_err(stop)?;
         let direct = DirectDependencies.of(&workspace);
         let registry_read = self.ports.index.read_on();
+        let workspace_moves = self.ports.lock_moves.of_workspace().map_err(stop)?;
         let surveyed = Surveyed {
             today,
             registry_read,
             fingerprint: self.ports.files.fingerprint().map_err(stop)?,
             dependency_moves: self.moves(&direct).map_err(stop)?,
-            workspace_moves: self.ports.lock_moves.of_workspace().map_err(stop)?,
+            workspace_moves: workspace_moves.registry,
+            source_moves: self.source_moves(&workspace_moves.git).map_err(stop)?,
+            git: self.ports.files.git().map_err(stop)?,
             repositories: self.repositories(&direct).map_err(stop)?,
             reached: self.reached(&policy).map_err(stop)?,
             requirement_lines: self.requirement_lines(&direct).map_err(stop)?,
@@ -185,6 +224,7 @@ impl<'a> Survey<'a> {
         found.extend(self.warnings(
             &surveyed.policy,
             &surveyed.workspace,
+            &surveyed.git,
             surveyed.scan.as_ref(),
             registry_read,
             today,
@@ -234,6 +274,7 @@ impl<'a> Survey<'a> {
         &self,
         policy: &Policy,
         workspace: &Workspace,
+        git: &[GitEntry],
         scan: Option<&Scan>,
         registry_read: Date,
         today: Date,
@@ -247,6 +288,7 @@ impl<'a> Survey<'a> {
                         .lock
                         .iter()
                         .any(|package| package.name == pin.name)
+                    && !git.iter().any(|entry| entry.name == pin.name)
             })
             .map(|pin| Findings.pin_for_absent_crate(pin));
         let old =

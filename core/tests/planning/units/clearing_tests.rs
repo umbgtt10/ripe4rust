@@ -60,6 +60,44 @@ fn assign_gives_a_concern_to_the_first_unit_that_clears_it() {
 }
 
 #[test]
+fn rows_of_the_concerns_no_unit_clears_are_one_per_crate_version() {
+    // Arrange
+    let first = advisory("RUSTSEC-2026-0003", "ring", "0.16.20", ">=9");
+    let other = advisory("RUSTSEC-2026-0002", "atty", "0.2.14", ">=9");
+    let second = advisory("RUSTSEC-2026-0004", "ring", "0.16.20", ">=9");
+    let yanked = Concern::Yanked {
+        name: String::from("ring"),
+        version: version("0.16.20"),
+    };
+    let elsewhere = advisory("RUSTSEC-2026-0005", "ring", "0.17.8", ">=9");
+    let concerns = vec![
+        first.clone(),
+        other.clone(),
+        second.clone(),
+        yanked.clone(),
+        elsewhere.clone(),
+    ];
+
+    // Act
+    let rows = Clearing::new(concerns).rows(&[]);
+
+    // Assert
+    assert_eq!(
+        rows.iter()
+            .map(|(row, concerns)| (row.id.to_string(), concerns.clone()))
+            .collect::<Vec<_>>(),
+        vec![
+            (
+                String::from("advisory:ring@0.16.20"),
+                vec![first, second, yanked]
+            ),
+            (String::from("advisory:atty@0.2.14"), vec![other]),
+            (String::from("advisory:ring@0.17.8"), vec![elsewhere]),
+        ]
+    );
+}
+
+#[test]
 fn unclear_are_the_concerns_no_unit_clears() {
     // Arrange
     let cleared = advisory("RUSTSEC-2026-0592", "url", "2.5.8", ">=2.5.9");

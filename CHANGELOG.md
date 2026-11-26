@@ -6,6 +6,72 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-11-26
+
+What the first dry round found, with 0.1.0 across 32 workspaces: a git source moving stopped the plan, a
+crate that stays read as moving to itself, `include!` went unread, a move back went unsaid, a missing lock was taken
+for an outdated one, and the small ones.
+
+### Fixed
+- `cargo ripe4rust --version`, and `-V`, print `cargo-ripe4rust <version>` and exit 0, where they were refused as
+  `usage-invalid`; `guide` lists it among the commands.
+- The table's unit column counts a group's other members and the crates a compatible unit pulls in within one
+  parenthesis, `tonic (+1 released with it, +16 transitive)`, where it wrote `tonic (+1) (+16 transitive)`; the JSON
+  is unchanged.
+- A workspace with no `Cargo.lock` -- a library that leaves it out -- is the new error `lock-missing`, which needs a
+  person: whether to commit a lock is the owner's call, and with their word `cargo generate-lockfile` writes it, to
+  commit before planning again. It was `lock-outdated`, which needs none and told the agent to write and commit one;
+  `lock-outdated` is now only a lock that exists and no longer matches the manifests. `guide` lists the new code.
+- A compatible unit whose own crate does not move, only the crates it pulls in, read `serde 1.0.229 -> 1.0.229`
+  and asked "Move tokio to 1.48.0?" of a crate already there. Its `to` is now null, the table writes `stays`, and
+  its question asks "Move the N crates <crate> pulls in?", as its summary already said; one whose own move a pin
+  holds still writes `held`. Nothing else about the unit changes: it groups, and its evidence names the
+  `rust-version`, by the version in use (`ripe4rust_core::planning::units::own_move::OwnMove`); `guide`'s
+  description of `units[].to` says when it is null.
+- A move to a lower version inside a unit was silent: a compatible unit of over a hundred moves took one crate back
+  from 0.1.7 to 0.1.6, a release not yanked, and read as ripe. Every move back is now named among the unit's reasons,
+  "moves <crate> back from <from> to <to>", and listed in its evidence as `downgrades`; one leaving a release that
+  is not yanked makes a unit the rules call ripe ask, rule and urgency kept, with the new suggestion `moves-back`.
+  One leaving a yanked release is the cure, named "back from the yanked ...", its outcome unchanged
+  (`ADR-AMoveBackIsAsked`).
+- What no unit clears is one advisory row per crate version, `advisory:<crate>@<version>`, listing every advisory
+  against that version and its yanking, as a compatible unit lists all it clears; it was one row per advisory,
+  `advisory:<id>`, so a crate with four advisories took four rows. `check` and `hold` refuse the new ids as they did
+  the old, and `guide` names the form.
+- The parse follows an `include!` of a literal path -- the generated code `prost-build` writes, pulled into a
+  module with `include!("generated/x.rs")` -- to the file it names, from the including file's directory as the
+  compiler does, its items in the module the `include!` is in; what that code names counts in the footprint, and in
+  the exposure where the module is public. A breaking unit whose crate only generated code named read "footprint 0
+  lines in 0 files". An included file not there is unparsed at the `include!`'s line.
+- An `include!` the parse cannot follow -- its path no literal, `concat!(env!("OUT_DIR"), ...)`, or in an
+  expression -- and a macro that includes generated code, `include_proto!`, no longer leave a footprint that reads
+  as exact: each is named where it is, and the footprint of every crate the member holding it uses is a floor --
+  never small under rule 11, the verdict "wait", the reason "footprint at least N lines in M files: code is included
+  the parse cannot follow", or "named nowhere the parse could read" for none -- and the unit's evidence lists them as
+  `unfollowed_includes`. The scan carries them (`ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude`).
+- A breaking unit whose crate a complete parse finds named nowhere read "footprint 0 lines in 0 files", and rule 11
+  called it ripe. It is now possibly an unused dependency: rule 11 leaves it, its verdict is "migrate now", its
+  reasons say "named nowhere in the sources: possibly an unused dependency" whatever rule decided it, and its
+  question offers the new answer `remove` beside its others -- a person decides, as a crate can be needed for its
+  features or side effects (`ripe4rust_core::planning::judging::named_nowhere::NamedNowhere`).
+- A plan with a cold day cache fetched the sparse index one `curl` process per crate, one after the other. The index
+  files the day lacks are now one batch, which the command runner runs at most eight at once, each on a thread of
+  its own, answering in the batch's order, so the plan and the cache are the same as before: for a workspace of 461
+  locked crates, 163 s became 71 s. The core's `Index` port is asked once for every crate, and the cli's
+  `CommandRunner` and `Http` seams take a batch (`run_all`, `get_all`); the API keeps its one request a second.
+- A git dependency moving stopped the plan: `cargo update --dry-run` prints a git source's move as `Updating
+  <crate> v<version> (<source>#<rev>) -> #<rev>`, which the strict reader answered `cargo-update-unrecognised`, and a
+  workspace depending on a git branch got no plan. The reader now reads git lines strictly as what they are --
+  moved, moved back, added or removed, the source and the short revs, and no version for a moved crate, which cargo
+  does not print -- and a git source moving is a unit of the new kind `git`, `git:<crate>`: every crate of the source
+  at once, from rev to rev, with the registry's moves `cargo update --dry-run -p <crate>@<version>` says it pulls in,
+  claimed in plan order. Its `apply` is one `cargo update -p <crate>`; it never splits. It is always asked, by the new
+  rule 13 -- a git source makes no version promise --, urgent by rule 3 where it clears an advisory or a yanked
+  release, and held by a pin on any crate of its source. `check` reads the lock's git sources by their revs, `hold`
+  pins the unit's first crate with `hold = "all"`, and a pin on a crate of a git source is no absent crate. The plan
+  document gains `workspace.git` and a unit's `source`, a git unit's `from` and `to` are its revs, and `guide` names
+  them; older plans still read (`ADR-AGitSourceIsAsked`).
+
 ## [0.1.0] — 2026-11-26
 
 The first release that decides: `plan`, `check`, `hold` and `guide`, every slice of `docs/DESIGN.md`'s

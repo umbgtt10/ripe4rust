@@ -27,7 +27,7 @@ fn of_any_other_failure_is_cargo_metadata_failed() {
 }
 
 #[test]
-fn of_cargo_refusing_to_create_the_lock_is_lock_outdated_without_cargo_s_help() {
+fn of_cargo_refusing_to_create_the_lock_is_lock_missing_without_cargo_s_help() {
     // Arrange & Act
     let failure = MetadataFailure.of(format!(
         "cannot create the lock file /work/ws/Cargo.lock {REFUSED} {HELP}"
@@ -36,7 +36,7 @@ fn of_cargo_refusing_to_create_the_lock_is_lock_outdated_without_cargo_s_help() 
     // Assert
     assert_eq!(
         failure,
-        PortFailure::LockOutdated {
+        PortFailure::LockMissing {
             detail: format!("cannot create the lock file /work/ws/Cargo.lock {REFUSED}"),
         }
     );

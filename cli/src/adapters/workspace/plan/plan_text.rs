@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::date::Date;
@@ -37,6 +38,23 @@ impl PlanText {
             name: String::from(name),
             version: self.version(version)?,
         })
+    }
+
+    pub fn git_entry(&self, text: &str) -> Result<GitEntry, PortFailure> {
+        text.split_once(' ')
+            .and_then(|(name, at)| {
+                let (source, rev) = at.rsplit_once('#')?;
+                Some(GitEntry {
+                    name: String::from(name),
+                    source: String::from(source),
+                    rev: String::from(rev),
+                })
+            })
+            .ok_or_else(|| {
+                self.unreadable(&format!(
+                    "`{text}` in the lock is not a crate of a git source at its rev"
+                ))
+            })
     }
 
     pub fn location(&self, text: &str) -> Result<Location, PortFailure> {

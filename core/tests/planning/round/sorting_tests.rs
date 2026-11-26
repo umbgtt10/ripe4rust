@@ -2,10 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::recorded::SOURCE;
+use crate::support::recorded::git_at;
 use crate::support::recorded::lines;
 use crate::support::recorded::lines_with;
 use crate::support::recorded::lock;
 use crate::support::recorded::plan;
+use crate::support::recorded::plan_with_git;
 use crate::support::recorded::transitive;
 use crate::support::surveyed::at;
 use crate::support::units::moved;
@@ -15,6 +18,23 @@ use ripe4rust_core::planning::round::sorting::Sorting;
 
 fn ids(names: &[&str]) -> Vec<String> {
     names.iter().map(|name| String::from(*name)).collect()
+}
+
+#[test]
+fn git_of_a_plan_and_a_workspace_reads_each_source_at_its_rev_now() {
+    // Arrange
+    let plan = plan_with_git();
+    let current = CurrentState {
+        lock: plan.lock.clone(),
+        lines: lines(),
+        git: git_at("ce129c85"),
+    };
+
+    // Act
+    let rev = Sorting::new(&plan, &current).git().rev(SOURCE);
+
+    // Assert
+    assert_eq!(rev, Some(String::from("ce129c85")));
 }
 
 #[test]
@@ -31,6 +51,7 @@ fn sort_of_a_breaking_unit_applied_names_it_and_leaves_its_tail_unexplained() {
                 ("widget", "1.4.0"),
             ]),
             lines: lines_with(&[(22, "0.14.0")]),
+            git: Vec::new(),
         },
     );
 
@@ -41,6 +62,30 @@ fn sort_of_a_breaking_unit_applied_names_it_and_leaves_its_tail_unexplained() {
     assert_eq!(sorted.breaking, ids(&["breaking:gadget"]));
     assert_eq!(sorted.unexplained, vec![transitive("tiny", "1.0.0")]);
     assert_eq!(sorted.stale, Vec::new());
+}
+
+#[test]
+fn sort_of_a_git_unit_applied_lists_it_applied_and_leaves_no_move_unexplained() {
+    // Arrange
+    let plan = plan_with_git();
+    let current = CurrentState {
+        lock: plan.lock.clone(),
+        lines: lines(),
+        git: git_at("ce129c85"),
+    };
+
+    // Act
+    let sorted = Sorting::new(&plan, &current).sort();
+
+    // Assert
+    assert_eq!(
+        (
+            sorted.applied,
+            sorted.unexplained.len(),
+            sorted.unexplained_git.len()
+        ),
+        (ids(&["git:gitcore"]), 0, 0)
+    );
 }
 
 #[test]
@@ -56,6 +101,7 @@ fn sort_of_a_move_no_unit_explains_leaves_it_unexplained() {
                 ("widget", "1.4.0"),
             ]),
             lines: lines(),
+            git: Vec::new(),
         },
     );
 
@@ -78,6 +124,7 @@ fn sort_of_a_requirement_edited_by_hand_is_stale_where_it_is() {
         CurrentState {
             lock: plan().lock,
             lines: lines_with(&[(21, "1.5")]),
+            git: Vec::new(),
         },
     );
 
@@ -108,6 +155,7 @@ fn sort_of_a_unit_applied_lists_it_applied_and_every_other_to_go() {
                 ("widget", "1.4.1"),
             ]),
             lines: lines(),
+            git: Vec::new(),
         },
     );
 
@@ -136,6 +184,7 @@ fn sort_of_an_edit_a_unit_writes_is_no_staleness() {
         CurrentState {
             lock: plan().lock,
             lines: lines_with(&[(9, "1.100.0")]),
+            git: Vec::new(),
         },
     );
 
@@ -155,6 +204,7 @@ fn sort_of_the_workspace_the_plan_found_lists_every_unit_to_go() {
         CurrentState {
             lock: plan().lock,
             lines: lines(),
+            git: Vec::new(),
         },
     );
 

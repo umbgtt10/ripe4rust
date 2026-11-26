@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::planning::judging::facts::copies::Copies;
+use crate::planning::judging::facts::downgrade_finder::DowngradeFinder;
 use crate::planning::judging::facts::exposure::Exposure;
 use crate::planning::judging::facts::footprints::Footprints;
 use crate::planning::judging::facts::held_back::HeldBack;
@@ -40,6 +41,7 @@ impl<'a> FactFinder<'a> {
             name: self.name(unit),
             rest: unit.name.is_none().then(|| count(unit.moves.len())),
             concerns: concerns.iter().map(Concern::label).collect(),
+            downgrades: DowngradeFinder::new(self.context).of(unit),
             reaches: Reach::new(surveyed).targets(unit),
             fully_held: pins.fully_held(unit, &standings),
             pins: standings,
@@ -54,7 +56,8 @@ impl<'a> FactFinder<'a> {
             new_line: lines.new_line(unit),
             newer_active: lines.newer_active(unit),
             lines_behind: lines.behind(unit),
-            footprint: Footprints::new(surveyed.scan.as_ref()).footprint(&unit.members),
+            footprint: Footprints::new(surveyed.scan.as_ref(), &surveyed.workspace.members)
+                .footprint(&unit.members),
             removes_copy: Copies::new(&surveyed.workspace).removed(unit),
             held_back: count(HeldBack::new(self.context).versions(unit).len()),
             gates: count(surveyed.policy.gates.len()),

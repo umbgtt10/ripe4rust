@@ -12,7 +12,9 @@ use alloc::vec::Vec;
 /// What a unit's decision read, for a caller asking a person to show why:
 /// the line in use, the `rust-version` the target needs, what it clears, a
 /// breaking unit's footprint -- the migration's work list --, the versions
-/// the toolchain unit would release, and the moves a pin holds out.
+/// the toolchain unit would release, the moves a pin holds out, the moves to
+/// a lower version it makes, and the includes a breaking unit's footprint
+/// could not follow.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Evidence {
     pub line_in_use: Option<LineStats>,
@@ -22,4 +24,6 @@ pub struct Evidence {
     pub footprint: Vec<Location>,
     pub held_back: Vec<String>,
     pub held: Vec<LockMove>,
+    pub downgrades: Vec<LockMove>,
+    pub unfollowed_includes: Vec<Location>,
 }

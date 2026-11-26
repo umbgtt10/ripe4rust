@@ -3,8 +3,8 @@
 ## Meaning
 
 `ripe4rust` answers one question: is this upgrade ripe? `cargo ripe4rust` will decide, for every upgrade a Rust
-workspace could take -- a dependency to a new compatible version or a new major, the toolchain to a new stable
-release -- one of three things: **ripe**, safe to take without asking; **ask**, worth taking but a person decides;
+workspace could take -- a dependency to a new compatible version or a new major, a git source to its newest commit,
+the toolchain to a new stable release -- one of three things: **ripe**, safe to take without asking; **ask**, worth taking but a person decides;
 **ripening**, not yet, with its reason and what will release it. Its caller is an agent with no context, so every
 unit carries the steps that apply it, the check that confirms it and the question to put when it asks.
 
@@ -23,9 +23,9 @@ and where it goes; `guide` prints the round, every command, every diagnostic cod
 fields; the sources are parsed with `syn`, every member's targets and the modules they declare, for each breaking
 unit's footprint -- every `file:line` naming its crate, a migration's work list -- and its exposure in a published
 member's public API, `pub use` re-exports followed; and a channel pinning an older stable release is a toolchain
-unit, its evidence the versions the newer one would release. The next step is the first dry round across real
-workspaces: plans only, nothing applied, to tune the thresholds and the grouping. Version 0.1.0, on crates.io,
-is all of it.
+unit, its evidence the versions the newer one would release. The first dry round across real workspaces, plans
+only, ran with 0.1.0 over 32 of them, and 0.1.1 fixes what it found; tuning the thresholds and the grouping is
+next. Version 0.1.1, on crates.io, is all of it.
 
 It is self-contained.
 

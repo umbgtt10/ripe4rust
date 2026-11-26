@@ -7,6 +7,7 @@ use crate::support::outputs::printed;
 use crate::support::registry::curl;
 use crate::support::replay_runner::ReplayRunner;
 use cargo_ripe4rust::adapters::registry::curl::Curl;
+use cargo_ripe4rust::system::model::fetched::Fetched;
 use cargo_ripe4rust::system::model::launch_failure::LaunchFailure;
 use cargo_ripe4rust::system::traits::http::Http;
 use ripe4rust_core::inputs::port_failure::PortFailure;
@@ -16,6 +17,34 @@ const URL: &str = "https://index.crates.io/sm/al/smallvec";
 
 fn root() -> PathBuf {
     PathBuf::from("/work/ws")
+}
+
+#[test]
+fn get_all_of_several_urls_asks_for_them_together_answering_each_in_their_order() {
+    // Arrange
+    let missing = "https://index.crates.io/it/oa/itoa";
+    let runner = ReplayRunner::new()
+        .reply(&curl(URL), printed("an answer\n200", ""))
+        .reply(&curl(missing), printed("not here\n404", ""));
+
+    // Act
+    let fetched = Curl::new(&runner, root()).get_all(&[String::from(URL), String::from(missing)]);
+
+    // Assert
+    assert_eq!(
+        fetched,
+        vec![
+            Ok(Fetched {
+                status: 200,
+                body: String::from("an answer"),
+            }),
+            Ok(Fetched {
+                status: 404,
+                body: String::from("not here"),
+            }),
+        ]
+    );
+    assert_eq!(*runner.batches.borrow(), vec![2]);
 }
 
 #[test]

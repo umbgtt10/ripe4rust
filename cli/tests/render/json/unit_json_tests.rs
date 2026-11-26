@@ -4,6 +4,7 @@
 
 use crate::support::json::value;
 use crate::support::plans::compatible;
+use crate::support::plans::git_unit;
 use crate::support::plans::moved;
 use crate::support::plans::rest;
 use cargo_ripe4rust::render::json::unit_json::UnitJson;
@@ -24,6 +25,7 @@ fn document_of_a_compatible_unit_is_the_design_s_shape() {
             "members": ["widget"],
             "from": "4.6.6",
             "to": "4.6.7",
+            "source": null,
             "moves": [
                 { "crate": "widget", "from": "4.6.6", "to": "4.6.7" },
                 { "crate": "widget_builder", "from": "4.6.6", "to": "4.6.7" },
@@ -52,8 +54,32 @@ fn document_of_a_compatible_unit_is_the_design_s_shape() {
                 "footprint": [],
                 "held_back": [],
                 "held": [],
+                "downgrades": [],
+                "unfollowed_includes": [],
             },
         })
+    );
+}
+
+#[test]
+fn document_of_a_git_unit_shows_its_revs_and_its_source() {
+    // Arrange & Act
+    let value = value(&UnitJson.document(&git_unit()));
+
+    // Assert
+    assert_eq!(
+        [
+            &value["kind"],
+            &value["from"],
+            &value["to"],
+            &value["source"]
+        ],
+        [
+            &json!("git"),
+            &json!("9625c3d2"),
+            &json!("ce129c85"),
+            &json!("https://github.com/example/upstream?branch=main")
+        ]
     );
 }
 

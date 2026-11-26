@@ -10,10 +10,10 @@ use alloc::format;
 use alloc::string::String;
 
 /// The verdict on a breaking unit that asks: migrate now where the line in
-/// use is stale while the new one is active, or migrating removes a second
-/// copy; plan it where the new line has settled and the footprint is under
+/// use is stale while the new one is active, migrating removes a second
+/// copy, or the sources name the crate nowhere; plan it where the new line has settled and the footprint is under
 /// `moderate-footprint`; wait otherwise, with the reason -- a footprint not
-/// known among them.
+/// known, or a floor, among them.
 pub struct Verdict;
 
 impl Verdict {
@@ -57,11 +57,19 @@ impl Verdict {
                 reason: String::from("footprint not known"),
             };
         };
-        let footprint = format!(
-            "footprint {} in {}",
-            Wording.count(known.lines, "line"),
-            Wording.count(known.files, "file")
-        );
+        let footprint = Wording.footprint(known);
+        if !known.complete {
+            return VerdictCall {
+                suggestion: Suggestion::Wait,
+                reason: footprint,
+            };
+        }
+        if known.lines == 0 {
+            return VerdictCall {
+                suggestion: Suggestion::MigrateNow,
+                reason: footprint,
+            };
+        }
         if known.lines < facts.moderate_footprint {
             VerdictCall {
                 suggestion: Suggestion::PlanIt,

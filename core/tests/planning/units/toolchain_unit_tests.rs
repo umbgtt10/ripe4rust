@@ -42,6 +42,7 @@ fn build_of_an_older_pinned_release_moves_the_channel_to_the_newest() {
             to: Some(version("1.100.0")),
             moves: Vec::new(),
             held: Vec::new(),
+            git: None,
         })
     );
 }

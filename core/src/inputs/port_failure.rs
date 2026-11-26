@@ -20,6 +20,7 @@ pub enum PortFailure {
     CargoUpdateUnrecognised { line: String },
     CurlMissing,
     Internal { doing: String, detail: String },
+    LockMissing { detail: String },
     LockOutdated { detail: String },
     PlanSchemaUnknown { file: String, schema: String },
     PlanUnreadable { file: String, detail: String },
@@ -81,13 +82,9 @@ impl PortFailure {
                 format!("ripe4rust failed while {doing}: {detail}"),
                 format!("report it at {ISSUES} with this diagnostic"),
             ),
-            Self::LockOutdated { detail } => (
-                DiagnosticCode::LockOutdated,
-                format!(
-                    "`Cargo.lock` is not there, or no longer matches the workspace's manifests, and ripe4rust writes no lock: {detail}"
-                ),
-                String::from(DiagnosticCode::LockOutdated.entry().remedy),
-            ),
+            Self::LockMissing { detail } | Self::LockOutdated { detail } => {
+                return self.refused(detail);
+            }
             Self::PlanSchemaUnknown { file, schema } => (
                 DiagnosticCode::PlanSchemaUnknown,
                 format!(
@@ -130,5 +127,23 @@ impl PortFailure {
             ),
         };
         code.diagnose(None, what, action)
+    }
+
+    fn refused(&self, detail: &str) -> Diagnostic {
+        let (code, state) = match self {
+            Self::LockMissing { .. } => (
+                DiagnosticCode::LockMissing,
+                "the workspace has no `Cargo.lock`",
+            ),
+            _ => (
+                DiagnosticCode::LockOutdated,
+                "`Cargo.lock` no longer matches the workspace's manifests",
+            ),
+        };
+        code.diagnose(
+            None,
+            format!("{state}, and ripe4rust writes no lock: {detail}"),
+            String::from(code.entry().remedy),
+        )
     }
 }

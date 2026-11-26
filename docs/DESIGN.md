@@ -4,7 +4,8 @@ Status: settled 2026-11-26; the agent's contract added the same day. Every
 slice of "Delivery" is implemented: the scaffolding, the core with the
 renderers, the adapters with `plan` end to end, the round's commands, `check`,
 `hold` and `guide`, the parse of the sources, and the toolchain unit, released
-as 0.1.0. Next is the first dry round across real workspaces. The decisions that were not
+as 0.1.0. The first dry round across real workspaces ran with it, and 0.1.1
+fixes what it found. The decisions that were not
 obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
@@ -66,18 +67,23 @@ the workspace's owner has. Everything else it carries out on its own.
 
 ## Vocabulary
 
-- **Unit** -- the smallest upgrade worth one commit. Three kinds:
+- **Unit** -- the smallest upgrade worth one commit. Four kinds:
   - a **breaking** unit: one direct dependency moved to a new major (for
     `0.x`, a new minor), with whatever the lock file moves along with it;
   - a **compatible** unit: the semver-compatible lock-file moves a direct
     dependency pulls in, grouped by that dependency. One commit per transitive
     crate would be hundreds; one for everything would not bisect;
   - the **toolchain** unit: `rust-toolchain.toml`'s channel moved to a newer
-    stable release (ADR-TheToolchainIsAUnit).
+    stable release (ADR-TheToolchainIsAUnit);
+  - a **git** unit: a git source -- one URL and its branch, tag or rev spec --
+    moved to a new rev, every crate of it at once, as cargo moves it, with
+    the registry's moves it pulls in (ADR-AGitSourceIsAsked).
 - **Unit id** -- `<kind>:<crate>`: `compatible:clap`, `breaking:syn`,
-  `toolchain:rust`; `rest` for the last compatible unit; `advisory:<id>` for
-  an advisory no unit clears, and `advisory:<crate>@<version>` for a yanked
-  release none clears; such a row's kind is `advisory`. A group goes by its
+  `toolchain:rust`, `git:<crate>` by the first crate of its source in the
+  lock; `rest` for the last compatible unit;
+  `advisory:<crate>@<version>` for a crate version with advisories or a
+  yanking no unit clears, every one of them in that one row; such a row's kind
+  is `advisory`. A group goes by its
   first member's name. A compatible unit's single moves, for bisecting it, are
   `<unit>/<crate>`.
 - **Line** -- every release of one major (`2.x`), or one minor for `0.x`
@@ -95,10 +101,10 @@ the workspace's owner has. Everything else it carries out on its own.
 ## Scope
 
 - **In:** dependencies from the crates.io registry, normal, build and dev
-  alike, and the toolchain.
-- **Out:** path and git dependencies. Their moves are the workspace's own
-  business (a lock sync, a submodule), and the registry has nothing to say
-  about them.
+  alike, and the toolchain; and a git source moving, as a git unit, which is
+  always asked: a git source makes no version promise, and the registry has
+  nothing to say about it.
+- **Out:** path dependencies, whose moves are the workspace's own business.
 - **Not yet:** the cargo subcommands a workspace's gates install. They are
   upgrades of the same shape, and moving them can turn a gate red with no code
   changed, but they live outside the workspace's manifest. An open point.
@@ -110,6 +116,7 @@ the workspace's owner has. Everything else it carries out on its own.
 | available versions, yanked flags, `rust-version`, release dates | the crates.io sparse index (`pubtime`), for every crate in the lock and every crate a pin's condition names |
 | a direct dependency's repository, for grouping | the crates.io API, for direct dependencies only |
 | what a compatible unit moves | `cargo update --dry-run --recursive -p <crate>` |
+| what a git unit moves | `cargo update --dry-run -p <crate>@<version>`, by a crate of its source in the lock |
 | the dependency graph, which targets reach a crate | `cargo metadata` |
 | advisories against the versions in use | `cargo deny check advisories --format json` |
 | the toolchain in use | `rust-toolchain.toml`'s channel; `rustc --version` where it pins none |
@@ -119,9 +126,10 @@ the workspace's owner has. Everything else it carries out on its own.
 | today's date | injected, so a plan is reproducible |
 
 The registry is read politely: the sparse index for everything it carries,
-the API only for a direct dependency's repository, at most one request a
-second, with a user agent that names the tool, its version and its repository
-and nothing personal. Every answer is cached for the day it was read, under
+the static files cargo itself fetches several at a time, at most eight at
+once; the API only for a direct dependency's repository, at most one request
+a second; each with a user agent that names the tool, its version and its
+repository and nothing personal. Every answer is cached for the day it was read, under
 `~/.cache/ripe4rust/<date>/`; a plan names that date, and with the same cache
 and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). The
 requests go through a `curl` process, not an HTTP crate
@@ -150,19 +158,29 @@ Where the sections above are silent, the adapters read the inputs this way:
   none does. A crate reaches a `validate-beyond-gates` target where `cargo
   metadata --filter-platform <target>` resolves it at all, through any member
   and any kind of dependency: the conservative reading, so a crate only a host
-  tool uses still asks. A lock `--locked` would have to write -- none at all,
-  or one no longer in step with the manifests -- is `lock-outdated`, cargo's
-  refusal quoted without its advice to drop `--locked`: the remedy is to bring
-  the lock in step with `cargo update --workspace`, which moves no locked
-  version the manifests still allow, commit it and plan again, since ripe4rust
-  writes no lock. Any other failure is `cargo-metadata-failed`, with cargo's
-  error on one line; output it cannot read is `internal`.
+  tool uses still asks. A lock `--locked` would have to write is refused with
+  cargo's refusal quoted, without its advice to drop `--locked`, since
+  ripe4rust writes no lock. One it would have to create, the workspace having
+  none, is `lock-missing`, which needs a person: a library may leave its lock
+  out on purpose, so whether to commit one is the owner's call, and with their
+  word `cargo generate-lockfile` writes it, to commit before planning again.
+  One no longer in step with the manifests, which it would have to update, is
+  `lock-outdated`: the remedy is to bring the lock in step with `cargo update
+  --workspace`, which moves no locked version the manifests still allow,
+  commit it and plan again. Any other failure is `cargo-metadata-failed`, with
+  cargo's error on one line; output it cannot read is `internal`.
 - **`cargo update --dry-run`** runs as `--recursive -p <crate>@<version>` for
-  a direct dependency, the version naming the copy in use, and with
-  `--offline` in an offline plan. Every line of what it prints must be a move
-  -- `Updating` or `Downgrading <crate> v<from> -> v<to>`, `Adding <crate>
-  v<to>`, `Removing <crate> v<from>`, with no note or one of cargo's own,
-  `(available: v...)`, `(latest: v...)`, `(requires Rust ...)` -- or a line
+  a direct dependency, the version naming the copy in use, as `-p
+  <crate>@<version>` for a git source moving, by its first crate in the lock,
+  and with `--offline` in an offline plan. Every line of what it prints must be
+  a move -- `Updating` or `Downgrading <crate> v<from> -> v<to>`, `Adding
+  <crate> v<to>`, `Removing <crate> v<from>`, with no note or one of cargo's
+  own, `(available: v...)`, `(latest: v...)`, `(requires Rust ...)`; or a
+  git source's crate, `Updating` or `Downgrading <crate> v<version>
+  (<source>#<rev>) -> #<rev>`, `Adding` or `Removing <crate> v<version>
+  (<source>#<rev>)`, the source its URL and spec as cargo writes it, the revs
+  short, and no version for a moved crate, which cargo does not print -- or a
+  line
   that moves nothing: the index or a git source updated, the `Locking` summary,
   a wait for cargo's file lock, an `Unchanged` crate, a `note:` or a
   `warning:`. Anything else is `cargo-update-unrecognised`, quoting the line;
@@ -182,8 +200,13 @@ Where the sections above are silent, the adapters read the inputs this way:
 - **The registry** is read through `curl` (ADR-TheRegistryThroughCurl): a
   crate's index file at `https://index.crates.io/` under the path its name's
   length gives it, and the API at `https://crates.io/api/v1/crates/<crate>?include=`,
-  which answers the crate without its versions. The API waits a second before
-  every request after the first; a cached answer costs no request and no wait.
+  which answers the crate without its versions. The index files the day's
+  cache lacks are fetched together, one batch for the command runner, which
+  runs at most eight `curl` processes at once, each on a thread of its own,
+  and answers in the batch's order, so the plan and the cache are what one at
+  a time would make; the first failure in the crates' order is the one
+  reported. The API waits a second before every request after the first; a
+  cached answer costs no request and no wait.
   The cache is `ripe4rust/` under `$XDG_CACHE_HOME`, or `~/.cache` where it is
   not set, or `%LOCALAPPDATA%` on Windows, one directory a day,
   `<date>/index/<crate>` and `<date>/api/<crate>`, each the body as it came; a
@@ -257,8 +280,13 @@ Where the sections above are silent, the adapters read the inputs this way:
   `name.rs`, then `name/mod.rs`, beside a file that owns its directory -- a
   root, a `mod.rs`, a file a `#[path]` names -- or under a directory of the
   file's own name otherwise, inline modules adding theirs; a `#[path]` beside
-  the declaring file, `..` resolved. `cfg` is not evaluated: every module
-  declared is read, once a target, and named from the root. A dependency is
+  the declaring file, `..` resolved. An `include!` of a literal path among a
+  file's items or its inline modules' -- generated code, as `prost-build`
+  writes it -- pulls its file in as the compiler does: from the including
+  file's directory, `..` resolved, its items in the module the `include!` is
+  in, public where that module is; one not there is unparsed at the
+  `include!`'s line. `cfg` is not evaluated: every module declared is read,
+  once a target, and named from the root. A dependency is
   known by the name its code calls it, read from what `cargo metadata` says
   of the manifest: the name `package = "..."` renames it to, or the package's,
   hyphens as underscores. A crates.io one's name stands for its package; a
@@ -317,6 +345,12 @@ line young and no line active.
   does; `check` reports it after the agent has applied it.
 - **Toolchain:** `rust-toolchain.toml`'s channel, nothing else. `rust-version`
   moves only with a crate that needs it.
+- **Git:** the source, from its rev to the one `cargo update --dry-run`
+  takes it to, every crate of it -- moved, added or removed -- at once, and the
+  registry's moves `-p` on it pulls in, claimed in plan order with the
+  compatible units' by the name of its first crate in the lock. Its crates'
+  new versions are not known: cargo does not print them, and a git source
+  promises none. A git source moving is never left to the rest.
 - **Group:** the members' moves together.
 
 An advisory or a yanked release in use is attached to the unit whose moves
@@ -326,9 +360,11 @@ clear it, it lands on the first in plan order: units by crate name, a crate's
 compatible unit before its breaking one, the toolchain as `rust`, then the
 rest, then the advisory rows. A move clears an advisory when it takes the
 crate off the affected version to one the advisory names patched or
-unaffected; it clears a yanked release when it takes the crate off it. One
-that no unit clears gets a row of its own: **ask**, urgent, "replace the
-crate, or accept it in `deny.toml`'s `[advisories] ignore` with its reason".
+unaffected; it clears a yanked release when it takes the crate off it. What
+no unit clears gets a row of its own, one per crate version, which lists
+every advisory against that version and its yanking, as a compatible unit
+lists all it clears: **ask**, urgent, "replace the crate, or accept it in
+`deny.toml`'s `[advisories] ignore` with its reason".
 
 ## The rules
 
@@ -338,7 +374,7 @@ Applied in order to every unit; the first that matches decides.
 |---|---|---|---|
 | 1 | the unit clears an advisory or a yanked release, and reaches a target the policy marks as needing more than the gates | **ask**, urgent | apply, then validate there -- even past a pin or a freeze |
 | 2 | the unit clears an advisory or a yanked release, and is compatible | **ripe**, urgent | -- even past a pin or a freeze |
-| 3 | the unit clears an advisory or a yanked release, and is breaking | **ask**, urgent | migrate now -- even past a pin or a freeze |
+| 3 | the unit clears an advisory or a yanked release, and is breaking, or git | **ask**, urgent | migrate now (take it, for git) -- even past a pin or a freeze |
 | 4 | pinned, release condition not met, review date not reached | **ripening** | -- |
 | 5 | pinned, release condition met or review date reached | **ask** | revisit the pin |
 | 6 | a freeze window is open | **ripening** | until the window closes |
@@ -346,19 +382,25 @@ Applied in order to every unit; the first that matches decides.
 | 8 | breaking, and the crate's types are in a published crate's public API, or the unit raises a published crate's `rust-version` | **ask** | the upgrade is a breaking change of ours too |
 | 9 | breaking or toolchain, and the new line is young | **ripening** | until it settles |
 | 10 | compatible or toolchain | **ripe** | -- (a red gate turns it into a hold) |
-| 11 | breaking, footprint under `small-footprint` | **ripe** | -- (a red gate turns it into ask) |
+| 11 | breaking, footprint under `small-footprint`, above zero, and no floor | **ripe** | -- (a red gate turns it into ask) |
 | 12 | breaking | **ask** | migrate now / plan it / wait, by the verdict below |
+| 13 | git | **ask** | -- a git source makes no version promise, a person decides |
 
 Rules 1 to 3: an upgrade that removes an advisory or a yanked release and stays
 inside the semver range is the safest upgrade there is, and the most pressing,
 so it is ripe; it is asked only where a person must decide anyway
-(ADR-AFixInRangeIsRipe). The toolchain unit reaches every target, so rule 7
+(ADR-AFixInRangeIsRipe). A git unit is never ripe: rule 13 asks it, rule 3
+where it clears an advisory or a yanked release, urgent
+(ADR-AGitSourceIsAsked); pins, a freeze and rule 7 hold or ask it before 13,
+as any unit. The toolchain unit reaches every target, so rule 7
 asks it in every workspace that names one.
 
 A pin holds what its `hold` names (ADR-APinHoldsALine): by default the move to
 a new line, so a crate pinned on its major still takes its patch releases;
 with `hold = "all"`, every move. Rules 4 and 5 apply to a unit only where its
-pin holds what the unit would move. Where several pins hold it, rule 4 needs
+pin holds what the unit would move; a pin on any crate of a git unit's
+source holds it whole, whatever its `hold`, as a source has no line. Where
+several pins hold it, rule 4 needs
 them all unreleased and holding all of it, and rule 5 takes the first that is
 released.
 
@@ -370,10 +412,11 @@ null.
 
 ### The verdict for a breaking unit that needs asking
 
-- **Migrate now**: the line in use is stale while the new one is active, or
+- **Migrate now**: the line in use is stale while the new one is active,
   migrating removes a second copy of the crate from the tree -- the lock
   already holds it on the new line, and nothing outside the workspace's
-  members depends on the copy in use.
+  members depends on the copy in use --, or the sources name the crate
+  nowhere, so the migration has no work list.
 - **Plan it**: the new line has settled and the footprint is under
   `moderate-footprint`.
 - **Wait**: anything else, with the reason.
@@ -396,6 +439,31 @@ everything. "Two majors behind" counts lines -- majors, or minors for `0.x`
 and the toolchain -- among the candidates newer than the line in use, and "a
 newer line" is any of them; the unit keeps the number of the rule whose hold
 it overrides, 4 or 9.
+
+### A move back
+
+cargo's resolver may take a crate to a lower version inside a unit: a newer
+release of one crate can require an older one of another. Every such move is
+named among the unit's reasons, "moves <crate> back from <from> to <to>", and
+listed in its evidence as `downgrades` (ADR-AMoveBackIsAsked). One that
+leaves a release that is not yanked turns a unit the rules call ripe into
+**ask**, its rule and urgency kept, with the suggestion "moves back" -- after
+the no-gates downgrade, so an ungated workspace is still asked for its gates
+first. One that leaves a yanked release is the cure: named, "moves <crate>
+back from the yanked <from> to <to>", its outcome unchanged. A unit that asks
+or ripens for another reason keeps its outcome, the move back among its
+reasons.
+
+### A crate named nowhere
+
+A breaking unit whose crate a complete parse finds named nowhere in the
+sources -- a footprint of zero, with no include the parse could not follow
+-- is possibly an unused dependency: rule 11 does not call it ripe, the
+verdict is "migrate now", and its reasons say "named nowhere in the sources:
+possibly an unused dependency", whatever rule decided it. Its question
+offers `remove` beside its other answers: a person decides, as a crate can be
+needed for its features or side effects, and the gates say whether the build
+still holds without it. Its outcome is what the rules make it.
 
 ## Footprint and exposure
 
@@ -485,7 +553,16 @@ Where the lines above leave it open, the parse reads a file this way:
   followed in turn, until nothing more is. A `use` short of `pub` re-exports
   nothing.
 - **What it cannot see.** What a macro expands to -- generated items, a
-  derive's expansion, `include!` --, as the ADR accepts; and a dependency whose
+  derive's expansion --, as the ADR accepts, save the file an `include!` of a
+  literal path pulls in, which is read as a file of its own. An `include!` it
+  cannot follow -- its path no literal, `concat!(env!("OUT_DIR"), ...)`, or
+  in an expression -- and a macro that includes generated code,
+  `include_proto!`, are named where they are, and make the footprint of
+  every crate the member holding them uses a floor: never small under rule
+  11, the verdict "wait", the reason "footprint at least N lines in M files:
+  code is included the parse cannot follow" -- or "named nowhere the parse
+  could read" for none --, and the unit's evidence lists them as
+  `unfollowed_includes`; and a dependency whose
   library is named otherwise than its package, which the manifest does not
   say. The policy's `exposure` is the remedy for
   exposure; the footprint is a floor.
@@ -631,7 +708,8 @@ The problems the design already names, at least:
 | `policy-invalid-value` | error | a key in `[workspace.metadata.ripe4rust]` whose value is not the kind it must be |
 | `cargo-update-failed` | error | `cargo update --dry-run` could not run |
 | `cargo-metadata-failed` | error | `cargo metadata` could not run |
-| `lock-outdated` | error | `Cargo.lock` is not there, or no longer matches the manifests, and `cargo metadata --locked` will not write it |
+| `lock-outdated` | error | `Cargo.lock` no longer matches the manifests, and `cargo metadata --locked` will not update it |
+| `lock-missing` | error | the workspace has no `Cargo.lock`, and `cargo metadata --locked` will not create it: whether to commit one is the owner's call |
 | `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
 | `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
 | `curl-missing` | error | curl is not on the PATH, and the registry and the toolchain's releases are read through it |
@@ -643,21 +721,21 @@ The problems the design already names, at least:
 | `unit-unknown` | error | `check` or `hold` names an id that is no unit of the plan nor a move of a unit's split, or an advisory row, which applies nothing |
 | `unit-urgent` | error | `hold` names an urgent unit, which is never held: it becomes an urgent ask |
 
-Of these, the policy's own codes, `target-unknown`, `gates-undeclared` and
-`unit-urgent` need a person: each asks for a fact or a decision only the owner
-has.
+Of these, the policy's own codes, `target-unknown`, `gates-undeclared`,
+`lock-missing` and `unit-urgent` need a person: each asks for a fact or a
+decision only the owner has.
 
 ### The plan
 
 ```
 date 2026-10-30, registry read 2026-10-30, workspace 9f2c41d0
-unit                  kind        from      to        outcome          reasons
-anyhow (+1)           compatible  1.0.102   1.0.104   ripe, urgent     clears RUSTSEC-2026-0190
-clap (+3 transitive)  compatible  4.6.6     4.6.7     ripe             compatible
-rust                  toolchain   1.99.1    1.100.0   ripe             toolchain; releases 2 versions held back
-smoltcp               breaking    0.13.1    0.14.0    ask              reaches thumbv7em-none-eabihf; plan it: footprint 42 lines in 7 files
-syn                   breaking    2.0.119   3.0.9     ripening         pinned: the parser ...; review 2027-01-31
-the rest              compatible  --        --        ripe             2 moves no unit reaches
+unit                          kind        from     to       outcome       reasons
+anyhow (+1 released with it)  compatible  1.0.102  1.0.104  ripe, urgent  clears RUSTSEC-2026-0190
+clap (+3 transitive)          compatible  4.6.6    4.6.7    ripe          compatible
+rust                          toolchain   1.99.1   1.100.0  ripe          toolchain; releases 2 versions held back
+smoltcp                       breaking    0.13.1   0.14.0   ask           reaches thumbv7em-none-eabihf; plan it: footprint 42 lines in 7 files
+syn                           breaking    2.0.119  3.0.9    ripening      pinned: the parser ...; review 2027-01-31
+the rest                      compatible  --       --       ripe          2 moves no unit reaches
 ```
 
 ```json
@@ -719,28 +797,40 @@ for the toolchain -- and its `reasons`, the table's last column; an `apply`
 step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
-release and the moves a pin holds out of the unit. The workspace's `lines` are
+release, the moves a pin holds out of the unit, the moves to a lower
+version it makes, and the includes a breaking unit's footprint could not
+follow. The workspace's `lines` are
 every line a unit's `apply` can edit, as the plan found it written: each
 crates.io dependency's requirement in every manifest, `key` the crate; each
 member's `rust-version`, its own or the one it inherits; and
 `rust-toolchain.toml`'s `channel` -- what `check` compares the manifests and
-the toolchain file with. Every object's keys come in the order shown, at
-every depth: a unit's `members` after `crate` and its
-`reasons` after `suggestion`; the evidence's `footprint`, `held_back` and
-`held` after `yanked_in_use`; the line in use as `line`, `first_release`,
-`last_release`, `releases`. A document for a failure carries `schema`,
+the toolchain file with; its `git`, after `lock`, every crate of a git source
+the lock holds, `<crate> <source>#<rev>`, the rev short, which `check` sorts a
+git unit by. A git unit's `from` and `to` are the short revs its source
+leaves and takes, its `source` the URL and spec cargo writes, null for every
+other kind; its `moves` the registry's it pulls in. Every object's keys come
+in the order shown, at every depth: a unit's `members` after `crate`, its
+`source` after `to` and its `reasons` after `suggestion`; the evidence's
+`footprint`, `held_back`, `held`, `downgrades` and `unfollowed_includes` after
+`yanked_in_use`; the line in use as `line`, `first_release`, `last_release`,
+`releases`. A document for a failure carries `schema`,
 `command` and `diagnostics` alone.
 
-In the table, `(+N)` counts a group's other members and `(+N transitive)` the
-crates a compatible unit pulls in; the workspace is named by its fingerprint's
+In the table, one parenthesis after the crate counts a group's other members
+as `+N released with it` and the crates a compatible unit pulls in as `+N
+transitive`, `tonic (+1 released with it, +16 transitive)`; the workspace is named by its fingerprint's
 first eight characters, and the diagnostics follow the table, one a line.
 
 A compatible unit whose own move a pin holds -- its crate pinned with `hold =
 "all"` -- takes that crate to no version: its `to` is null, the table writes
 `held` in its place, and `evidence.held` names the move, so it never reads as a
 move to the version in use. It still applies the moves it pulls in, one by one.
-One whose crate does not move, only what it pulls in, keeps the version in use
-as its `to`.
+One whose crate does not move, only what it pulls in, takes it to no version
+either: its `to` is null and the table writes `stays`, so it never reads as
+`serde 1.0.229 -> 1.0.229`, and its question is "Move the N crates <crate>
+pulls in?", as its summary says. Neither changes how the unit is judged,
+grouped or applied: grouping and the evidence's `rust_version` read the
+version in use as the one it lands on.
 
 A breaking unit's `apply` names every manifest line that states the
 dependency's requirement, as `file:line`, the requirement to write there, and
@@ -748,7 +838,10 @@ then the `cargo update -p <crate>` that takes it; its evidence carries the
 footprint's locations, the migration's work list. The requirement written is
 the target version itself, `3.0.9`, a caret requirement; a `rust-version` the
 target needs raised is written the same way, at its own line. The toolchain
-unit's `apply` is the channel to write in `rust-toolchain.toml`.
+unit's `apply` is the channel to write in `rust-toolchain.toml`. A git unit's
+is one `cargo update -p <crate>`, by its first crate, which moves the whole
+source and what it needs; it never splits, as what it pulls in is what the new
+rev needs.
 
 A compatible unit with a move held out of it, and the rest, whose moves are
 taken one at a time so as not to take another unit's, apply one `cargo update
@@ -799,6 +892,9 @@ The answers, by the way a unit asks:
 | breaking, otherwise | `migrate-now`, `plan-it`, `wait` | its verdict |
 | anything else | `take-it`, `wait` | `take-it` |
 
+A breaking unit whose crate is named nowhere adds `remove` to its options,
+whichever row they come from.
+
 ### What `check` prints
 
 ```json
@@ -836,8 +932,10 @@ text: `check <unit>: as planned` or `not as planned`, the tail as
 | `cargo ripe4rust check <unit> --plan <file>` | compares the workspace with what the unit should have done | `0` as planned; `1` not as planned; `2` could not check; `3` the plan is stale |
 | `cargo ripe4rust hold <unit> --plan <file> --because <text> [--review <date>]` | prints the pin that holds the unit, and where it goes | `0` printed; `2` could not; `3` the plan is stale |
 | `cargo ripe4rust guide` | prints the round, every diagnostic code and its remedy, and the document's fields | `0` |
+| `cargo ripe4rust --version` | prints `cargo-ripe4rust <version>`, `-V` alike | `0` |
 
-Every command takes `--format table|json`. `plan` also takes `--date
+Every command but `--version`, which takes nothing and prints its one line,
+takes `--format table|json`. `plan` also takes `--date
 <YYYY-MM-DD>`, for a reproducible plan, and `--offline`, to read the cache
 only -- and to keep cargo and cargo-deny off the network too, so an offline
 plan reaches none. With no command, the command is `plan`; the name cargo
@@ -895,6 +993,12 @@ Where the lines above leave it open, the differences are sorted this way:
   the same place among that key's lines there, so a line an edit above it moved
   down is still itself. A line rewritten to the value a unit's edit writes there
   is that unit's.
+- **A git source is sorted by its rev.** The lock's crates of git sources
+  are read with their source and short rev, the plan's `workspace.git` holding
+  them as it found them: a git unit is applied where its source is at the rev
+  it takes, every crate of it moving as one; a source at a rev no git unit
+  applied takes it to is a move no unit of the plan makes -- the step's doing
+  for `check`, **1**, and a change outside the plan for `hold`, **3**.
 - **The lock and the lines are sorted apart**, because they change apart. The
   lock is what applying a unit moves, and cargo, not the plan, decides what it
   moves: a lock move no unit of the plan makes -- an extra move, another
@@ -937,7 +1041,8 @@ Where the lines above leave it open, `hold` works this way:
   leave the rest of its moves to be judged again --, and a split move's crate
   the same; a breaking unit's crate on its line, the default, which holds a
   group by its first member; the toolchain as `rust`, on its line for a new
-  minor and with `hold = "all"` for a patch release.
+  minor and with `hold = "all"` for a patch release; a git unit by its first
+  crate, with `hold = "all"`, which holds the whole source.
 - **The pin** is one line of the pins table, `<crate> = { reason = "...",
   review = "YYYY-MM-DD" }`, `hold = "all"` added where it holds every move:
   the reason in a TOML basic string, quotes, backslashes and control characters
@@ -994,7 +1099,7 @@ document's keys and holds each to a field of the guide.
 {
   "schema": 1,
   "command": "guide",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "round": ["1. Run `cargo ripe4rust plan --format json > plan.json`.", "..."],
   "commands": [
     { "usage": "cargo ripe4rust check <unit> --plan <file> [--format table|json]",

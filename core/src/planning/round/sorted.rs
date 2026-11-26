@@ -3,13 +3,15 @@
 // SPDX-License-Identifier: MIT
 
 use crate::diagnostics::diagnostic::Diagnostic;
+use crate::inputs::git::git_source::GitSource;
 use crate::inputs::lock_move::LockMove;
 use alloc::string::String;
 use alloc::vec::Vec;
 
 /// Every difference from the workspace the plan found, sorted: the units and
 /// split moves applied and those still to go, in plan order; the breaking
-/// units applied; the lock's changes no move of the plan accounts for; and a
+/// units applied; the lock's changes no move of the plan accounts for, its git
+/// sources' apart; and a
 /// `plan-stale` diagnostic for every line no unit's edit explains.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Sorted {
@@ -17,5 +19,6 @@ pub struct Sorted {
     pub to_go: Vec<String>,
     pub breaking: Vec<String>,
     pub unexplained: Vec<LockMove>,
+    pub unexplained_git: Vec<GitSource>,
     pub stale: Vec<Diagnostic>,
 }

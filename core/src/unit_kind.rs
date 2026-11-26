@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-/// The kinds of row a plan holds: the three kinds of upgrade, each one
+/// The kinds of row a plan holds: the four kinds of upgrade, each one
 /// commit's worth, and the row of an advisory no upgrade clears.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UnitKind {
@@ -13,6 +13,9 @@ pub enum UnitKind {
     /// The semver-compatible lock-file moves one direct dependency pulls in,
     /// or, for the rest, those no unit reaches.
     Compatible,
+    /// A git source moved to a new rev, every crate of it at once, with what
+    /// it pulls in.
+    Git,
     /// `rust-toolchain.toml`'s channel to a newer stable release.
     Toolchain,
 }
@@ -23,6 +26,7 @@ impl UnitKind {
             Self::Advisory,
             Self::Breaking,
             Self::Compatible,
+            Self::Git,
             Self::Toolchain,
         ]
         .into_iter()
@@ -34,6 +38,7 @@ impl UnitKind {
             Self::Advisory => "advisory",
             Self::Breaking => "breaking",
             Self::Compatible => "compatible",
+            Self::Git => "git",
             Self::Toolchain => "toolchain",
         }
     }

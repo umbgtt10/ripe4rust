@@ -167,6 +167,7 @@ fn scan() -> Scan {
         ],
         unparsed: Vec::new(),
         unread_apis: Vec::new(),
+        unfollowed: Vec::new(),
     }
 }
 
@@ -201,6 +202,8 @@ pub fn surveyed() -> Surveyed {
                 ],
             },
         ],
+        source_moves: Vec::new(),
+        git: Vec::new(),
         workspace_moves: vec![
             moved("gizmo", "2.7.5", "2.7.6"),
             moved("libc", "0.2.177", "0.2.178"),

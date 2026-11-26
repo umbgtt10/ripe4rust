@@ -8,8 +8,10 @@ use crate::support::facts::standing;
 use crate::support::releases::version;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
+use crate::support::units::git;
 use crate::support::units::moved;
 use ripe4rust_core::inputs::advisory::Advisory;
+use ripe4rust_core::planning::judging::footprint::Footprint;
 use ripe4rust_core::planning::judging::judge::Judge;
 use ripe4rust_core::planning::judging::unit_facts::UnitFacts;
 use ripe4rust_core::planning::units::concern::Concern;
@@ -90,6 +92,50 @@ fn question_of_a_breaking_unit_beyond_the_gates_recommends_the_verdict() {
 }
 
 #[test]
+fn question_of_a_breaking_unit_named_nowhere_offers_to_remove_the_crate_too() {
+    // Arrange
+    let unit = breaking("widget", "0.13.1", "0.14.0");
+    let nowhere = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 0,
+            files: 0,
+            complete: true,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+    let urgent = UnitFacts {
+        concerns: vec![String::from("RUSTSEC-2026-0097")],
+        ..nowhere.clone()
+    };
+
+    // Act
+    let answers = [
+        answers(asked(&unit, &nowhere, &[])),
+        answers(asked(&unit, &urgent, &[advisory()])),
+    ];
+
+    // Assert
+    assert_eq!(
+        answers,
+        [
+            Some((
+                Answer::MigrateNow,
+                vec![
+                    Answer::MigrateNow,
+                    Answer::PlanIt,
+                    Answer::Wait,
+                    Answer::Remove
+                ]
+            )),
+            Some((
+                Answer::MigrateNow,
+                vec![Answer::MigrateNow, Answer::Accept, Answer::Remove]
+            )),
+        ]
+    );
+}
+
+#[test]
 fn question_of_a_compatible_unit_beyond_the_gates_offers_take_it_or_wait() {
     // Arrange
     let reaching = UnitFacts {
@@ -127,6 +173,37 @@ fn question_of_a_due_pin_offers_unpin_or_keep_it() {
 }
 
 #[test]
+fn question_of_a_git_unit_moves_it_to_its_rev_take_it_or_wait() {
+    // Arrange
+    let unit = git("gitcore", &["gitcore"], Vec::new());
+    let facts = UnitFacts {
+        name: String::from("gitcore"),
+        ..facts(UnitKind::Git)
+    };
+
+    // Act
+    let question = asked(&unit, &facts, &[]).expect("a question");
+
+    // Assert
+    assert_eq!(
+        (
+            question.title,
+            question.recommendation,
+            question
+                .options
+                .iter()
+                .map(|option| option.answer)
+                .collect::<Vec<Answer>>()
+        ),
+        (
+            String::from("Move gitcore to git rev ce129c85?"),
+            Answer::TakeIt,
+            vec![Answer::TakeIt, Answer::Wait]
+        )
+    );
+}
+
+#[test]
 fn question_of_a_pinned_unit_overripe_offers_unpin_or_keep_it() {
     // Arrange
     let overripe = UnitFacts {
@@ -153,6 +230,48 @@ fn question_of_a_ripe_unit_is_none() {
 
     // Assert
     assert_eq!(question, None);
+}
+
+#[test]
+fn question_of_a_unit_whose_crate_stays_moves_what_it_pulls_in() {
+    // Arrange
+    let mut staying = compatible(
+        "widget",
+        vec![
+            moved("gizmo", "2.7.5", "2.7.6"),
+            moved("libc", "0.2.177", "0.2.178"),
+        ],
+    );
+    staying.from = Some(version("1.0.0"));
+    let ungated = UnitFacts {
+        gates: 0,
+        ..facts(UnitKind::Compatible)
+    };
+
+    // Act
+    let question = asked(&staying, &ungated, &[]).expect("a question");
+
+    // Assert
+    assert_eq!(question.title, "Move the 2 crates widget pulls in?");
+}
+
+#[test]
+fn question_of_a_unit_whose_own_move_is_held_moves_it_without_a_version() {
+    // Arrange
+    let mut held = widget();
+    held.to = None;
+    held.held = held.moves.clone();
+    held.moves = vec![moved("libc", "0.2.177", "0.2.178")];
+    let ungated = UnitFacts {
+        gates: 0,
+        ..facts(UnitKind::Compatible)
+    };
+
+    // Act
+    let question = asked(&held, &ungated, &[]).expect("a question");
+
+    // Assert
+    assert_eq!(question.title, "Move widget?");
 }
 
 #[test]

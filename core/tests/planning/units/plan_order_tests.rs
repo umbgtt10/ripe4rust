@@ -20,6 +20,7 @@ fn rest() -> Unit {
         to: None,
         moves: vec![moved("libc", "0.2.177", "0.2.178")],
         held: Vec::new(),
+        git: None,
     }
 }
 
@@ -33,6 +34,7 @@ fn row() -> Unit {
         to: None,
         moves: Vec::new(),
         held: Vec::new(),
+        git: None,
     }
 }
 
@@ -46,6 +48,7 @@ fn toolchain() -> Unit {
         to: None,
         moves: Vec::new(),
         held: Vec::new(),
+        git: None,
     }
 }
 

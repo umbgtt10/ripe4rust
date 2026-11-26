@@ -49,3 +49,33 @@ fn decide_of_a_breaking_unit_clearing_nothing_is_none() {
     // Assert
     assert_eq!(decision, None);
 }
+
+#[test]
+fn decide_of_a_git_unit_clearing_a_concern_asks_it_urgently_to_take_it() {
+    // Arrange
+    let clearing = UnitFacts {
+        concerns: vec![String::from("RUSTSEC-2026-0097")],
+        ..facts(UnitKind::Git)
+    };
+
+    // Act
+    let decision = UrgentBreaking.decide(&clearing);
+
+    // Assert
+    assert_eq!(
+        decision,
+        Some(Decision {
+            outcome: Outcome::Ask,
+            urgent: true,
+            rule: Some(3),
+            suggestion: None,
+            reasons: vec![
+                String::from("clears RUSTSEC-2026-0097"),
+                String::from("git source: no version promise, a person decides")
+            ],
+            why: Some(String::from(
+                "it clears RUSTSEC-2026-0097, and moves a git source, which makes no version promise"
+            )),
+        })
+    );
+}

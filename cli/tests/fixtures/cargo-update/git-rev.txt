@@ -1,0 +1,6 @@
+    Updating git repository `https://github.com/example/upstream`
+    Updating crates.io index
+     Locking 3 packages to highest Rust 1.99.1 compatible versions
+    Updating gitcore v0.1.0 (https://github.com/example/upstream?branch=main#9625c3d2) -> #ce129c85
+    Updating gitmacros v0.1.0 (https://github.com/example/upstream?branch=main#9625c3d2) -> #ce129c85
+    Updating itoa v1.0.10 -> v1.0.19

@@ -22,7 +22,6 @@ use crate::planning::writing::step_writer::StepWriter;
 use crate::values::version::Version;
 use alloc::format;
 use alloc::string::String;
-use alloc::vec;
 use alloc::vec::Vec;
 
 /// The plan, made from a survey alone: the units built, grouped and put in
@@ -60,10 +59,7 @@ impl<'a> PlanWriter<'a> {
         let units = PlanOrder.sorted(units);
         let clearing = Clearing::new(concerns);
         let assigned = clearing.assign(&units);
-        let rows = clearing
-            .unclear(&units)
-            .into_iter()
-            .map(|concern| (concern.row(), vec![concern]));
+        let rows = clearing.rows(&units);
         let mut lock = surveyed
             .workspace
             .lock
@@ -97,6 +93,11 @@ impl<'a> PlanWriter<'a> {
                 fingerprint: surveyed.fingerprint.clone(),
                 lock,
                 lines: surveyed.written.clone(),
+                git: surveyed
+                    .git
+                    .iter()
+                    .map(|entry| format!("{} {}#{}", entry.name, entry.source, entry.rev))
+                    .collect(),
             },
             gates: surveyed.policy.gates.clone(),
             diagnostics: surveyed.diagnostics.clone(),
@@ -138,8 +139,9 @@ impl<'a> PlanWriter<'a> {
             .filter(|pin| pin.hold == Hold::All)
             .map(|pin| pin.name.clone())
             .collect();
-        let compatible = CompatibleUnits::new(held, concerns.to_vec()).build(
+        let compatible = CompatibleUnits::new(held, concerns.to_vec()).build_with_sources(
             surveyed.dependency_moves.clone(),
+            surveyed.source_moves.clone(),
             surveyed.workspace_moves.clone(),
         );
         let maturity = context.maturity();

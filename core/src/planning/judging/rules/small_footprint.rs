@@ -8,28 +8,27 @@ use crate::planning::judging::unit_facts::UnitFacts;
 use crate::planning::judging::wording::Wording;
 use crate::traits::rule::Rule;
 use crate::unit_kind::UnitKind;
-use alloc::format;
 use alloc::vec;
 
 /// Rule 11: a breaking unit whose footprint is under `small-footprint` --
 /// ripe; a red gate turns it into ask. A footprint not known is never
-/// small.
+/// small, nor is one that is a floor, nor a crate named nowhere: possibly an
+/// unused dependency, it is asked.
 pub struct SmallFootprint;
 
 impl Rule for SmallFootprint {
     fn decide(&self, facts: &UnitFacts) -> Option<Decision> {
         let footprint = facts.footprint?;
-        let small = facts.kind == UnitKind::Breaking && footprint.lines < facts.small_footprint;
+        let small = facts.kind == UnitKind::Breaking
+            && footprint.complete
+            && footprint.lines > 0
+            && footprint.lines < facts.small_footprint;
         small.then(|| Decision {
             outcome: Outcome::Ripe,
             urgent: false,
             rule: Some(11),
             suggestion: None,
-            reasons: vec![format!(
-                "footprint {} in {}",
-                Wording.count(footprint.lines, "line"),
-                Wording.count(footprint.files, "file")
-            )],
+            reasons: vec![Wording.footprint(footprint)],
             why: None,
         })
     }

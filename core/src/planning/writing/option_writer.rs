@@ -68,6 +68,15 @@ impl<'a> OptionWriter<'a> {
                 String::from("hold it until a planned migration"),
                 format!("{hold} --review <date>"),
             ),
+            Answer::Remove => (
+                String::from(
+                    "remove the dependency: the sources name it nowhere, though a crate can be needed for its features or side effects",
+                ),
+                format!(
+                    "remove `{}` from every manifest that declares it and run the gates: green, commit it and plan again; red, restore the manifests and put the question again, the failure attached",
+                    self.facts.name
+                ),
+            ),
             Answer::Replace => (
                 String::from("replace the crate"),
                 format!(
@@ -117,6 +126,10 @@ impl<'a> OptionWriter<'a> {
 
     fn work_list(&self) -> String {
         match self.facts.footprint {
+            Some(footprint) if !footprint.complete => format!(
+                "apply it as a ripe unit; the footprint's {} are a floor of the work list, as code is included the parse cannot follow: the build's errors name the rest",
+                Wording.count(footprint.lines, "location")
+            ),
             Some(footprint) => format!(
                 "apply it as a ripe unit; the footprint's {} are the work list",
                 Wording.count(footprint.lines, "location")

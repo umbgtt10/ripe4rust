@@ -26,6 +26,8 @@ struct PlanJson {
 struct WorkspaceJson {
     pub fingerprint: String,
     pub lock: Vec<String>,
+    #[serde(default)]
+    pub git: Vec<String>,
     pub lines: Vec<LineJson>,
 }
 
@@ -96,6 +98,12 @@ impl PlanReader {
                     })
                 })
                 .collect::<Result<_, PortFailure>>()?,
+            git: plan
+                .workspace
+                .git
+                .iter()
+                .map(|entry| read.git_entry(entry))
+                .collect::<Result<_, _>>()?,
             units: plan
                 .units
                 .iter()

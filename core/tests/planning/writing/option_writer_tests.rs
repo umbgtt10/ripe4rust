@@ -6,6 +6,7 @@ use crate::support::facts::facts;
 use crate::support::facts::pinned;
 use crate::support::releases::version;
 use ripe4rust_core::inputs::advisory::Advisory;
+use ripe4rust_core::planning::judging::footprint::Footprint;
 use ripe4rust_core::planning::judging::unit_facts::UnitFacts;
 use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::planning::units::unit_id::UnitId;
@@ -121,6 +122,28 @@ fn option_of_migrate_now_names_the_work_list() {
 }
 
 #[test]
+fn option_of_migrate_now_with_a_footprint_that_is_a_floor_says_so() {
+    // Arrange
+    let floor = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 3,
+            files: 1,
+            complete: false,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let (_, then) = means_and_then(Answer::MigrateNow, &floor);
+
+    // Assert
+    assert_eq!(
+        then,
+        "apply it as a ripe unit; the footprint's 3 locations are a floor of the work list, as code is included the parse cannot follow: the build's errors name the rest"
+    );
+}
+
+#[test]
 fn option_of_migrate_now_with_an_unknown_footprint_says_the_build_is_the_work_list() {
     // Arrange
     let unknown = UnitFacts {
@@ -148,6 +171,25 @@ fn option_of_plan_it_holds_with_a_review_date() {
     assert_eq!(
         then,
         "cargo ripe4rust hold breaking:widget --plan plan.json --because \"<the person's words>\" --review <date>"
+    );
+}
+
+#[test]
+fn option_of_remove_takes_the_crate_out_where_nothing_needs_it() {
+    // Arrange & Act
+    let option = means_and_then(Answer::Remove, &facts(UnitKind::Breaking));
+
+    // Assert
+    assert_eq!(
+        option,
+        (
+            String::from(
+                "remove the dependency: the sources name it nowhere, though a crate can be needed for its features or side effects"
+            ),
+            String::from(
+                "remove `widget` from every manifest that declares it and run the gates: green, commit it and plan again; red, restore the manifests and put the question again, the failure attached"
+            )
+        )
     );
 }
 

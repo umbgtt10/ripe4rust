@@ -4,6 +4,7 @@
 
 use crate::diagnostics::diagnostic::Diagnostic;
 use crate::diagnostics::diagnostic_code::DiagnosticCode;
+use crate::inputs::git::git_source::GitSource;
 use crate::inputs::lock_move::LockMove;
 use crate::planning::round::line_change::LineChange;
 use crate::planning::round::move_wording::MoveWording;
@@ -17,6 +18,10 @@ use alloc::string::String;
 pub struct StaleFindings;
 
 impl StaleFindings {
+    pub fn git(&self, moved: &GitSource) -> Diagnostic {
+        Self::stale(None, format!("in `Cargo.lock`, {}", MoveWording.git(moved)))
+    }
+
     pub fn line(&self, change: &LineChange) -> Diagnostic {
         let (at, what) = match change {
             LineChange::Gone { then } => (

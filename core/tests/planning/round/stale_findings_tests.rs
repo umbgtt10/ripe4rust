@@ -5,6 +5,7 @@
 use crate::support::surveyed::at;
 use crate::support::surveyed::written;
 use crate::support::units::moved;
+use crate::support::units::source;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::round::line_change::LineChange;
@@ -12,6 +13,24 @@ use ripe4rust_core::planning::round::stale_findings::StaleFindings;
 
 const AGAIN: &str =
     "plan again -- `cargo ripe4rust plan --format json > plan.json` -- and go on with the new plan";
+
+#[test]
+fn git_of_a_source_moved_no_unit_takes_is_stale_in_the_lock() {
+    // Arrange & Act
+    let stale = StaleFindings.git(&source("9625c3d2", "deadbeef"));
+
+    // Assert
+    assert_eq!(
+        (stale.code, stale.at, stale.what),
+        (
+            DiagnosticCode::PlanStale,
+            None,
+            String::from(
+                "in `Cargo.lock`, `https://github.com/example/upstream?branch=main` moved 9625c3d2 -> deadbeef, a move no unit of the plan makes"
+            )
+        )
+    );
+}
 
 #[test]
 fn line_of_a_line_gone_is_stale_where_the_plan_found_it() {

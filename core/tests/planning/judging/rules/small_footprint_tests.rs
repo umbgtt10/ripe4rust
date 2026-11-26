@@ -18,6 +18,7 @@ fn decide_of_a_breaking_unit_at_the_small_footprint_is_none() {
         footprint: Some(Footprint {
             lines: 10,
             files: 2,
+            complete: true,
         }),
         ..facts(UnitKind::Breaking)
     };
@@ -30,10 +31,33 @@ fn decide_of_a_breaking_unit_at_the_small_footprint_is_none() {
 }
 
 #[test]
+fn decide_of_a_breaking_unit_named_nowhere_is_none() {
+    // Arrange
+    let nowhere = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 0,
+            files: 0,
+            complete: true,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = SmallFootprint.decide(&nowhere);
+
+    // Assert
+    assert_eq!(decision, None);
+}
+
+#[test]
 fn decide_of_a_breaking_unit_under_the_small_footprint_is_ripe() {
     // Arrange
     let small = UnitFacts {
-        footprint: Some(Footprint { lines: 9, files: 2 }),
+        footprint: Some(Footprint {
+            lines: 9,
+            files: 2,
+            complete: true,
+        }),
         ..facts(UnitKind::Breaking)
     };
 
@@ -52,6 +76,25 @@ fn decide_of_a_breaking_unit_under_the_small_footprint_is_ripe() {
             why: None,
         })
     );
+}
+
+#[test]
+fn decide_of_a_breaking_unit_whose_footprint_is_a_floor_is_none() {
+    // Arrange
+    let floor = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 2,
+            files: 1,
+            complete: false,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = SmallFootprint.decide(&floor);
+
+    // Assert
+    assert_eq!(decision, None);
 }
 
 #[test]

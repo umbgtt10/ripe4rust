@@ -29,6 +29,16 @@ impl EvidenceJson {
                 .iter()
                 .map(|held| MoveJson.document(held))
                 .collect(),
+            downgrades: evidence
+                .downgrades
+                .iter()
+                .map(|downgrade| MoveJson.document(downgrade))
+                .collect(),
+            unfollowed_includes: evidence
+                .unfollowed_includes
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
         }
     }
 }

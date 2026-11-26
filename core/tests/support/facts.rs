@@ -20,6 +20,7 @@ pub fn facts(kind: UnitKind) -> UnitFacts {
         name: String::from("widget"),
         rest: None,
         concerns: Vec::new(),
+        downgrades: Vec::new(),
         reaches: Vec::new(),
         pins: Vec::new(),
         fully_held: false,
@@ -34,6 +35,7 @@ pub fn facts(kind: UnitKind) -> UnitFacts {
         footprint: Some(Footprint {
             lines: 42,
             files: 7,
+            complete: true,
         }),
         removes_copy: false,
         held_back: 0,

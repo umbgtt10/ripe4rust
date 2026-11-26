@@ -44,6 +44,23 @@ impl SummaryWriter {
             ),
             UnitKind::Breaking => format!("Migrate {lead} to {to}"),
             UnitKind::Toolchain => format!("Move the toolchain to {to}"),
+            UnitKind::Git => {
+                let rev = unit
+                    .git
+                    .as_ref()
+                    .map(|git| git.to.clone())
+                    .unwrap_or_default();
+                let pulling = if unit.members.len() > 1 {
+                    "they pull"
+                } else {
+                    "it pulls"
+                };
+                if pulled_in == 0 {
+                    format!("Move {lead} to git rev {rev}")
+                } else {
+                    format!("Move {lead} to git rev {rev}, with {pulled} {pulling} in")
+                }
+            }
             UnitKind::Compatible if unit.name.is_none() => format!("Move {pulled} no unit reaches"),
             UnitKind::Compatible if unit.to.is_none() || unit.from == unit.to => {
                 format!("Move {pulled} {lead} pulls in")

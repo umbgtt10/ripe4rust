@@ -5,12 +5,15 @@
 use crate::inputs::locked_package::LockedPackage;
 use crate::planning::units::choice::histories::Histories;
 use crate::planning::units::crate_repository::CrateRepository;
+use crate::planning::units::own_move::OwnMove;
 use crate::planning::units::unit::Unit;
 use alloc::vec;
 use alloc::vec::Vec;
 
 /// Crates released together move together: units of one kind whose crates
-/// share a repository and released the same version on the same day, or
+/// share a repository and land on the same version, released on the same
+/// day -- the version a unit takes its crate to, or the one in use where the
+/// crate stays --, or
 /// one of which requires an exact version of the other, become one unit,
 /// named for its first member.
 pub struct Grouping<'a> {
@@ -65,7 +68,7 @@ impl<'a> Grouping<'a> {
 
     fn released_together(&self, left: &Unit, right: &Unit) -> bool {
         let (Some(left_name), Some(right_name), Some(version)) =
-            (&left.name, &right.name, &left.to)
+            (&left.name, &right.name, OwnMove.lands_on(left))
         else {
             return false;
         };
@@ -78,7 +81,7 @@ impl<'a> Grouping<'a> {
         let published = self.histories.published_on(left_name, version);
         repository(left_name).is_some()
             && repository(left_name) == repository(right_name)
-            && right.to.as_ref() == Some(version)
+            && OwnMove.lands_on(right) == Some(version)
             && published.is_some()
             && published == self.histories.published_on(right_name, version)
     }

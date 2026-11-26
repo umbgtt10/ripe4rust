@@ -16,4 +16,6 @@ pub struct EvidenceDocument<'a> {
     pub footprint: Vec<String>,
     pub held_back: &'a [String],
     pub held: Vec<MoveDocument<'a>>,
+    pub downgrades: Vec<MoveDocument<'a>>,
+    pub unfollowed_includes: Vec<String>,
 }

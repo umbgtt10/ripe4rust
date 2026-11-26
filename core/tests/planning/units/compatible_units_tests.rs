@@ -5,16 +5,33 @@
 use crate::support::releases::version;
 use crate::support::units::added;
 use crate::support::units::dependency;
+use crate::support::units::git;
 use crate::support::units::moved;
+use crate::support::units::source;
 use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::planning::units::compatible_units::CompatibleUnits;
 use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::planning::units::dependency_moves::DependencyMoves;
+use ripe4rust_core::planning::units::source_moves::SourceMoves;
 use ripe4rust_core::planning::units::unit::Unit;
 use ripe4rust_core::planning::units::unit_id::UnitId;
 use ripe4rust_core::unit_kind::UnitKind;
 use ripe4rust_core::values::requirement::Requirement;
+
+fn compatible_unit(name: &str, from: &str, to: &str) -> Unit {
+    Unit {
+        id: UnitId::of(UnitKind::Compatible, name),
+        kind: UnitKind::Compatible,
+        name: Some(String::from(name)),
+        members: vec![String::from(name)],
+        from: Some(version(from)),
+        to: Some(version(to)),
+        moves: vec![moved(name, from, to)],
+        held: Vec::new(),
+        git: None,
+    }
+}
 
 fn moves_of(name: &str, in_use: &str, moves: Vec<LockMove>) -> DependencyMoves {
     DependencyMoves {
@@ -55,6 +72,7 @@ fn build_forms_the_rest_from_the_moves_no_unit_reaches() {
                 added("windows-link", "0.2.1")
             ],
             held: Vec::new(),
+            git: None,
         }
     );
 }
@@ -89,6 +107,7 @@ fn build_gathers_a_dependency_s_moves_into_its_unit() {
                 moved("clap_builder", "4.6.6", "4.6.7")
             ],
             held: Vec::new(),
+            git: None,
         }]
     );
 }
@@ -151,7 +170,7 @@ fn build_leaves_a_move_pinned_all_out_of_the_unit_and_holds_it() {
 }
 
 #[test]
-fn build_of_a_dependency_that_does_not_move_itself_keeps_its_version() {
+fn build_of_a_dependency_that_does_not_move_itself_takes_it_to_no_version() {
     // Arrange
     let dependencies = vec![moves_of(
         "tokio",
@@ -164,7 +183,8 @@ fn build_of_a_dependency_that_does_not_move_itself_keeps_its_version() {
 
     // Assert
     assert_eq!(units[0].from, Some(version("1.48.0")));
-    assert_eq!(units[0].to, Some(version("1.48.0")));
+    assert_eq!(units[0].to, None);
+    assert_eq!(units[0].held, Vec::new());
 }
 
 #[test]
@@ -236,6 +256,49 @@ fn build_skips_a_dependency_with_nothing_left_to_move() {
             .map(|unit| unit.id.to_string())
             .collect::<Vec<_>>(),
         vec![String::from("compatible:serde")]
+    );
+}
+
+#[test]
+fn build_with_sources_forms_a_git_unit_for_each_claiming_in_plan_order() {
+    // Arrange
+    let dependencies = vec![
+        moves_of(
+            "anyhow",
+            "1.0.100",
+            vec![moved("anyhow", "1.0.100", "1.0.102")],
+        ),
+        moves_of("itoa", "1.0.10", vec![moved("itoa", "1.0.10", "1.0.19")]),
+    ];
+    let sources = vec![SourceMoves {
+        source: source("9625c3d2", "ce129c85"),
+        name: String::from("gitcore"),
+        version: version("0.1.0"),
+        crates: vec![String::from("gitcore"), String::from("gitmacros")],
+        moves: vec![
+            moved("anyhow", "1.0.100", "1.0.102"),
+            moved("itoa", "1.0.10", "1.0.19"),
+        ],
+    }];
+
+    // Act
+    let units = CompatibleUnits::new(Vec::new(), Vec::new()).build_with_sources(
+        dependencies,
+        sources,
+        vec![moved("anyhow", "1.0.100", "1.0.102")],
+    );
+
+    // Assert
+    assert_eq!(
+        units,
+        vec![
+            compatible_unit("anyhow", "1.0.100", "1.0.102"),
+            git(
+                "gitcore",
+                &["gitcore", "gitmacros"],
+                vec![moved("itoa", "1.0.10", "1.0.19")]
+            ),
+        ]
     );
 }
 

@@ -2,12 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-const LABELS: [(Answer, &str); 9] = [
+const LABELS: [(Answer, &str); 10] = [
     (Answer::Accept, "accept"),
     (Answer::DeclareGates, "declare-gates"),
     (Answer::KeepPinned, "keep-pinned"),
     (Answer::MigrateNow, "migrate-now"),
     (Answer::PlanIt, "plan-it"),
+    (Answer::Remove, "remove"),
     (Answer::Replace, "replace"),
     (Answer::TakeIt, "take-it"),
     (Answer::Unpin, "unpin"),
@@ -22,6 +23,7 @@ pub enum Answer {
     KeepPinned,
     MigrateNow,
     PlanIt,
+    Remove,
     Replace,
     TakeIt,
     Unpin,

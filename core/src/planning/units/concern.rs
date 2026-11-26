@@ -68,20 +68,12 @@ impl Concern {
     }
 
     pub fn row(&self) -> Unit {
-        let (id, name, version) = match self {
-            Self::Advisory(advisory) => (
-                UnitId::of(UnitKind::Advisory, &advisory.id),
-                &advisory.name,
-                &advisory.version,
-            ),
-            Self::Yanked { name, version } => (
-                UnitId::of(UnitKind::Advisory, &format!("{name}@{version}")),
-                name,
-                version,
-            ),
+        let (name, version) = match self {
+            Self::Advisory(advisory) => (&advisory.name, &advisory.version),
+            Self::Yanked { name, version } => (name, version),
         };
         Unit {
-            id,
+            id: UnitId::of(UnitKind::Advisory, &format!("{name}@{version}")),
             kind: UnitKind::Advisory,
             name: Some(name.clone()),
             members: Vec::new(),
@@ -89,6 +81,7 @@ impl Concern {
             to: None,
             moves: Vec::new(),
             held: Vec::new(),
+            git: None,
         }
     }
 }

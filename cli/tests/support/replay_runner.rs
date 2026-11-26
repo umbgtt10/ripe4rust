@@ -9,10 +9,13 @@ use cargo_ripe4rust::system::traits::command_runner::CommandRunner;
 use std::cell::RefCell;
 
 /// A runner that replays recorded outputs, each for the command line it was
-/// recorded for, and keeps every invocation it was asked to run.
+/// recorded for, and keeps every invocation it was asked to run and the size
+/// of every batch it was asked to run together -- in their order, one after
+/// the other.
 pub struct ReplayRunner {
     pub replies: Vec<(Vec<String>, Result<CommandOutput, LaunchFailure>)>,
     pub calls: RefCell<Vec<Invocation>>,
+    pub batches: RefCell<Vec<usize>>,
 }
 
 impl ReplayRunner {
@@ -20,6 +23,7 @@ impl ReplayRunner {
         Self {
             replies: Vec::new(),
             calls: RefCell::new(Vec::new()),
+            batches: RefCell::new(Vec::new()),
         }
     }
 
@@ -71,5 +75,13 @@ impl CommandRunner for ReplayRunner {
                 || panic!("no recording for `{}`", asked.join(" ")),
                 |(_, output)| output.clone(),
             )
+    }
+
+    fn run_all(&self, invocations: &[Invocation]) -> Vec<Result<CommandOutput, LaunchFailure>> {
+        self.batches.borrow_mut().push(invocations.len());
+        invocations
+            .iter()
+            .map(|invocation| self.run(invocation))
+            .collect()
     }
 }

@@ -21,8 +21,9 @@ const LOCK: &str = "Cargo.lock";
 /// A unit's steps. A compatible unit is one `cargo update --recursive`, or,
 /// with a move held out of it -- or for the rest, whose moves are taken
 /// alone -- one `--precise` update per move; it splits into its moves. A
-/// breaking unit edits its lines, then updates; the toolchain writes its
-/// channel. A crate the lock holds at several versions is named at its own.
+/// breaking unit edits its lines, then updates; a git unit updates its
+/// source by one of its crates, which moves every crate of it, and never
+/// splits; the toolchain writes its channel. A crate the lock holds at several versions is named at its own.
 pub struct StepWriter {
     gates: Vec<String>,
     ambiguous: Vec<String>,
@@ -57,6 +58,13 @@ impl StepWriter {
                 apply
             }
             UnitKind::Toolchain => edits.to_vec(),
+            UnitKind::Git => unit
+                .name
+                .iter()
+                .map(|name| Step::Run {
+                    command: format!("cargo update -p {}", self.spec(name, None)),
+                })
+                .collect(),
         };
         let mut restore: Vec<String> = Vec::new();
         if unit.kind != UnitKind::Toolchain {

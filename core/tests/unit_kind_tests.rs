@@ -11,12 +11,16 @@ fn label_of_each_kind_is_its_name() {
         UnitKind::Advisory,
         UnitKind::Breaking,
         UnitKind::Compatible,
+        UnitKind::Git,
         UnitKind::Toolchain,
     ]
     .map(|kind| kind.label());
 
     // Assert
-    assert_eq!(labels, ["advisory", "breaking", "compatible", "toolchain"]);
+    assert_eq!(
+        labels,
+        ["advisory", "breaking", "compatible", "git", "toolchain"]
+    );
 }
 
 #[test]
@@ -26,6 +30,7 @@ fn parse_of_each_label_is_its_kind_and_of_anything_else_none() {
         UnitKind::parse("advisory"),
         UnitKind::parse("breaking"),
         UnitKind::parse("compatible"),
+        UnitKind::parse("git"),
         UnitKind::parse("toolchain"),
         UnitKind::parse("major"),
     ];
@@ -37,6 +42,7 @@ fn parse_of_each_label_is_its_kind_and_of_anything_else_none() {
             Some(UnitKind::Advisory),
             Some(UnitKind::Breaking),
             Some(UnitKind::Compatible),
+            Some(UnitKind::Git),
             Some(UnitKind::Toolchain),
             None,
         ]

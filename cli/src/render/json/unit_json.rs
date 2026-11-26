@@ -9,8 +9,9 @@ use crate::render::json::question_json::QuestionJson;
 use crate::render::json::steps_json::StepsJson;
 use ripe4rust_core::planning::planned_unit::PlannedUnit;
 
-/// One row of the plan: the unit, its decision, its steps, its question and
-/// its evidence.
+/// One row of the plan: the unit -- a git unit's revs as its `from` and
+/// `to`, beside its `source` --, its decision, its steps, its question and its
+/// evidence.
 pub struct UnitJson;
 
 impl UnitJson {
@@ -22,8 +23,15 @@ impl UnitJson {
             kind: unit.kind.label(),
             name: unit.name.as_deref(),
             members: &unit.members,
-            from: unit.from.as_ref().map(ToString::to_string),
-            to: unit.to.as_ref().map(ToString::to_string),
+            from: unit.git.as_ref().map_or_else(
+                || unit.from.as_ref().map(ToString::to_string),
+                |git| Some(git.from.clone()),
+            ),
+            to: unit.git.as_ref().map_or_else(
+                || unit.to.as_ref().map(ToString::to_string),
+                |git| Some(git.to.clone()),
+            ),
+            source: unit.git.as_ref().map(|git| git.source.as_str()),
             moves: unit
                 .moves
                 .iter()

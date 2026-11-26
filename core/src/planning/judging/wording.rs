@@ -2,10 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::planning::judging::footprint::Footprint;
 use alloc::format;
 use alloc::string::String;
 
-/// The few words the reasons are written with.
+/// The few words the reasons are written with: counts, lists and a
+/// footprint, a floor said to be one.
 pub struct Wording;
 
 impl Wording {
@@ -14,6 +16,26 @@ impl Wording {
             format!("1 {noun}")
         } else {
             format!("{number} {noun}s")
+        }
+    }
+
+    pub fn footprint(&self, footprint: Footprint) -> String {
+        let counted = format!(
+            "{} in {}",
+            self.count(footprint.lines, "line"),
+            self.count(footprint.files, "file")
+        );
+        match (footprint.complete, footprint.lines) {
+            (true, 0) => {
+                String::from("named nowhere in the sources: possibly an unused dependency")
+            }
+            (true, _) => format!("footprint {counted}"),
+            (false, 0) => String::from(
+                "named nowhere the parse could read: code is included it cannot follow",
+            ),
+            (false, _) => {
+                format!("footprint at least {counted}: code is included the parse cannot follow")
+            }
         }
     }
 

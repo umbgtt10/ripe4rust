@@ -9,8 +9,8 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
 
-/// A unit's id: `<kind>:<crate>`, `rest` for the rest, `advisory:<id>` for an
-/// advisory row; one of its moves, for bisecting it, `<unit>/<crate>`.
+/// A unit's id: `<kind>:<crate>`, `rest` for the rest, `advisory:<crate>@<version>`
+/// for an advisory row; one of its moves, for bisecting it, `<unit>/<crate>`.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct UnitId {
     text: String,

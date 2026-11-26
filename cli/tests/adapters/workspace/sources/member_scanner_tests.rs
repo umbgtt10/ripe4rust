@@ -67,6 +67,36 @@ fn named_of_a_file_is_each_line_naming_a_dependency_in_that_file() {
 }
 
 #[test]
+fn scan_of_a_member_including_generated_code_counts_what_that_code_names() {
+    // Arrange
+    let files = MemoryFiles::new()
+        .with(
+            "/work/ws/app/src/lib.rs",
+            "pub mod wire {\n    include!(\"generated/wire.rs\");\n}\n",
+        )
+        .with(
+            "/work/ws/app/src/generated/wire.rs",
+            "#[derive(Clone, PartialEq, ::serde::Serialize)]\npub struct Envelope {\n    pub level: ::log::Level,\n}\n",
+        );
+    let member = with_targets(vec![target("lib", "/work/ws/app/src/lib.rs")]);
+
+    // Act
+    let found = MemberScanner::new(&files, Path::new("/work/ws")).scan(&member);
+
+    // Assert
+    assert_eq!(
+        (found.named, found.exposed),
+        (
+            vec![
+                (String::from("log"), at("app/src/generated/wire.rs", 3)),
+                (String::from("serde"), at("app/src/generated/wire.rs", 1)),
+            ],
+            vec![String::from("log"), String::from("serde")]
+        )
+    );
+}
+
+#[test]
 fn scan_of_a_member_is_every_target_s_lines_and_its_library_s_api() {
     // Arrange
     let files = MemoryFiles::new()

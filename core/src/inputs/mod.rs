@@ -4,6 +4,7 @@
 
 pub mod advisory;
 pub mod crate_use;
+pub mod git;
 pub mod lock_entry;
 pub mod lock_move;
 pub mod locked_package;
@@ -18,6 +19,7 @@ pub mod release;
 pub mod resolved_dependency;
 pub mod scan;
 pub mod toolchain_file;
+pub mod unfollowed_include;
 pub mod unparsed_file;
 pub mod workspace;
 pub mod written_line;

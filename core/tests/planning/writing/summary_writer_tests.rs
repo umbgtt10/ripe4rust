@@ -5,6 +5,7 @@
 use crate::support::releases::version;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
+use crate::support::units::git;
 use crate::support::units::moved;
 use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::planning::units::unit::Unit;
@@ -65,6 +66,33 @@ fn summary_of_a_dependency_that_does_not_move_itself_counts_what_it_pulls_in() {
 
     // Assert
     assert_eq!(summary, "Move 1 crate tokio pulls in");
+}
+
+#[test]
+fn summary_of_a_git_unit_moves_its_crates_to_the_new_rev() {
+    // Arrange & Act
+    let summaries = [
+        SummaryWriter.summary(&git("gitcore", &["gitcore"], Vec::new()), &[]),
+        SummaryWriter.summary(
+            &git(
+                "gitcore",
+                &["gitcore", "gitmacros"],
+                vec![moved("itoa", "1.0.10", "1.0.19")],
+            ),
+            &[],
+        ),
+    ];
+
+    // Assert
+    assert_eq!(
+        summaries,
+        [
+            String::from("Move gitcore to git rev ce129c85"),
+            String::from(
+                "Move gitcore with gitmacros to git rev ce129c85, with 1 crate they pull in"
+            ),
+        ]
+    );
 }
 
 #[test]
@@ -130,6 +158,7 @@ fn summary_of_the_rest_counts_its_moves() {
             moved("ryu", "1.0.20", "1.0.21"),
         ],
         held: Vec::new(),
+        git: None,
     };
 
     // Act

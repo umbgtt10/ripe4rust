@@ -17,7 +17,8 @@ const PRINTED: u8 = 0;
 
 /// What a command answers, in the format its line asked for: its result
 /// with the code it exits with -- 0 for a plan, whatever it says; 0 or 1 for
-/// a check; 0 for the pins a hold prints and for the guide --, or, where it could not do its
+/// a check; 0 for the pins a hold prints, for the guide and for the binary's
+/// release --, or, where it could not do its
 /// work, the failure, exit 3 for a stale plan and 2 otherwise.
 pub struct Answer {
     document: Document,
@@ -54,6 +55,13 @@ impl Answer {
 
     pub fn planned(&self, result: Result<Plan, PlanFailure>) -> Ran {
         self.of(result, Document::plan, |_| PLANNED)
+    }
+
+    pub fn versioned(&self, version: &str) -> Ran {
+        Ran {
+            output: format!("cargo-ripe4rust {version}\n"),
+            code: PRINTED,
+        }
     }
 
     fn of<T>(

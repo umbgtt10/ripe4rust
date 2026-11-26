@@ -20,7 +20,9 @@ Checked on 2026-11-26, the sparse index carries them: every entry has a
 ## Decision
 
 - The sparse index answers versions, yanked flags, `rust-version` and release
-  dates (`pubtime`), for every crate in the lock.
+  dates (`pubtime`), for every crate in the lock. Its files are static, and
+  cargo itself fetches many at once: those the day's cache lacks are fetched
+  at most eight at a time, the answers kept in the crates' order.
 - The API is called only for a direct dependency's repository, for grouping:
   at most one request a second, with a user agent naming the tool, its version
   and its repository, and nothing personal.

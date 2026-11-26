@@ -17,6 +17,33 @@ fn invocation(program: &str, args: &[&str]) -> Invocation {
 }
 
 #[test]
+fn run_all_of_more_commands_than_run_at_once_answers_each_in_their_order() {
+    // Arrange
+    let invocations = (0..12)
+        .map(|at| match at % 3 {
+            0 => invocation("cargo", &["--version"]),
+            1 => invocation("no-such-program-4rust", &[]),
+            _ => invocation("rustc", &["--version"]),
+        })
+        .collect::<Vec<Invocation>>();
+
+    // Act
+    let outputs = SystemCommandRunner.run_all(&invocations);
+
+    // Assert
+    assert_eq!(
+        outputs
+            .iter()
+            .map(|output| match output {
+                Ok(printed) => printed.stdout.split(' ').next().unwrap_or_default(),
+                Err(_) => "missing",
+            })
+            .collect::<Vec<&str>>(),
+        ["cargo", "missing", "rustc"].repeat(4)
+    );
+}
+
+#[test]
 fn run_of_a_failing_command_captures_its_stderr_and_status() {
     // Arrange & Act
     let output = SystemCommandRunner
