@@ -2,12 +2,15 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-//! The rules behind `cargo-ripe4rust`. Design stage: this release holds the
-//! vocabulary of the design and nothing that decides yet. See
+//! The rules behind `cargo-ripe4rust`: for every upgrade a Rust workspace
+//! could take, whether it is ripe, worth asking about, or not yet. See
 //! <https://github.com/umbgtt10/ripe4rust/blob/main/docs/DESIGN.md>.
 
 #![no_std]
 #![forbid(unsafe_code)]
 
+extern crate alloc;
+
 pub mod outcome;
 pub mod unit_kind;
+pub mod values;

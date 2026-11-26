@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- `ripe4rust_core::values`, the arithmetic the rules are written in, by hand since the core takes no crate: `Version`
+  with semver's order and its line (the major, or the minor for `0.x` and the toolchain); `PartialVersion`, a version
+  as a requirement or a `rust-version` writes it; `Requirement`, cargo's comparators joined by commas, which reads a
+  pin's `until` (`>=0.32`), grouping's exact `=x.y.z` and an advisory's patched ranges, with cargo's rule that a
+  pre-release meets a requirement only where it names one; `Date`, civil dates with days added, days between and
+  months back, clamped to the shorter month; `Location`, a `file:line`.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the
