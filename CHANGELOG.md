@@ -179,6 +179,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   declaring file --, each file read once and parsed with `syn`, and marked reachable where every module on the way is
   `pub`. A file that does not parse is unparsed at the line its parse stopped at, one that cannot be read at its first
   line, one a `mod` item names but is not there at that item.
+- A library's public API read (`cargo_ripe4rust::adapters::workspace::sources::exposure`), the parse's third part:
+  the dependencies its users see, by package -- in a `pub` item of a module reachable from its root through `pub mod`
+  declarations, a function's signature, a struct's or a union's public fields, every variant of an enum, a trait's
+  bounds and items, a type alias, a constant's or a static's type, a derive, a `pub use` or `pub extern crate` --,
+  and wherever in the library they are written, a trait's implementation where neither the trait nor the type is
+  the library's own and private, and a public type's `pub` methods and constants. Bodies, private fields and
+  private items are not seen.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from

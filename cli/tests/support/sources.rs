@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use cargo_ripe4rust::adapters::workspace::sources::exposure::public_surface::PublicSurface;
+use cargo_ripe4rust::adapters::workspace::sources::exposure::scoped_file::ScopedFile;
 use cargo_ripe4rust::adapters::workspace::sources::naming::code_names::CodeNames;
 use cargo_ripe4rust::adapters::workspace::sources::naming::declaration_collector::DeclarationCollector;
 use cargo_ripe4rust::adapters::workspace::sources::naming::declarations::Declarations;
@@ -9,8 +11,10 @@ use cargo_ripe4rust::adapters::workspace::sources::naming::import_scope::ImportS
 use cargo_ripe4rust::adapters::workspace::sources::naming::name_finder::NameFinder;
 use cargo_ripe4rust::adapters::workspace::sources::naming::named::Named;
 use cargo_ripe4rust::adapters::workspace::sources::naming::target_macros::TargetMacros;
+use cargo_ripe4rust::adapters::workspace::sources::walking::parsed_file::ParsedFile;
 use cargo_ripe4rust::system::model::declared_dependency::DeclaredDependency;
 use cargo_ripe4rust::system::model::member_sources::MemberSources;
+use std::path::PathBuf;
 use std::slice::from_ref;
 use syn::File;
 use syn::parse_file;
@@ -49,6 +53,39 @@ pub fn dependency(name: &str, rename: Option<&str>) -> DeclaredDependency {
         rename: rename.map(String::from),
         source: Some(String::from(CRATES_IO)),
     }
+}
+
+/// The crates in the public API of a library whose files are these texts,
+/// each with whether it is reachable through `pub mod` declarations; the
+/// first is its `lib.rs`.
+pub fn exposed(texts: &[(&str, bool)]) -> Vec<String> {
+    let member = app();
+    let codes = CodeNames::new(&member);
+    let files = texts
+        .iter()
+        .enumerate()
+        .map(|(at, (text, public))| ParsedFile {
+            path: PathBuf::from(format!("/work/ws/app/src/{at}.rs")),
+            name: format!("app/src/{at}.rs"),
+            syntax: parsed(text),
+            public: *public,
+        })
+        .collect::<Vec<ParsedFile>>();
+    let declarations = files
+        .iter()
+        .map(|file| DeclarationCollector::of(&file.syntax))
+        .collect::<Vec<Declarations>>();
+    let macros = TargetMacros::new(&declarations, &codes);
+    let scopes = declarations
+        .iter()
+        .map(|declared| ImportScope::new(declared, &codes, &macros))
+        .collect::<Vec<ImportScope<'_>>>();
+    let library = files
+        .iter()
+        .zip(&scopes)
+        .map(|(file, scope)| ScopedFile { file, scope })
+        .collect::<Vec<ScopedFile<'_>>>();
+    PublicSurface.packages(&library)
 }
 
 /// Lines naming dependencies, as `package:line`, in order.
