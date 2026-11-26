@@ -182,7 +182,7 @@ impl<'a> Survey<'a> {
         found.extend(self.warnings(
             &surveyed.policy,
             &surveyed.workspace,
-            &surveyed.scan,
+            surveyed.scan.as_ref(),
             registry_read,
             today,
         ));
@@ -200,7 +200,13 @@ impl<'a> Survey<'a> {
             .filter(|version| !version.is_pre_release());
         let mut diagnostics = Vec::new();
         let (in_use, releases) = if let Some(version) = &pinned {
-            (version.clone(), self.ports.toolchain.releases()?)
+            let releases = self.ports.toolchain.releases()?;
+            diagnostics.extend(
+                file.as_ref()
+                    .filter(|_| releases.is_none())
+                    .map(|file| Findings.toolchain_releases_unknown(file.at.clone())),
+            );
+            (version.clone(), releases.unwrap_or_default())
         } else {
             let rustc = self.ports.toolchain.rustc()?;
             diagnostics.push(Findings.toolchain_unpinned(file.as_ref(), &rustc));
@@ -231,7 +237,7 @@ impl<'a> Survey<'a> {
         &self,
         policy: &Policy,
         workspace: &Workspace,
-        scan: &Scan,
+        scan: Option<&Scan>,
         registry_read: Date,
         today: Date,
     ) -> Vec<Diagnostic> {
@@ -249,10 +255,11 @@ impl<'a> Survey<'a> {
         let old =
             (registry_read < today).then(|| Findings.registry_cache_old(registry_read, today));
         let unparsed = scan
-            .unparsed
             .iter()
+            .flat_map(|scan| scan.unparsed.iter())
             .map(|file| Findings.source_unparsed(file));
-        absent.chain(old).chain(unparsed).collect()
+        let unscanned = scan.is_none().then(|| Findings.source_unscanned());
+        absent.chain(old).chain(unparsed).chain(unscanned).collect()
     }
 
     fn checked(found: &[Diagnostic]) -> Result<(), PlanFailure> {

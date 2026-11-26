@@ -7,6 +7,7 @@ use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use crate::support::plans::rest;
 use crate::support::plans::toolchain;
+use cargo_ripe4rust::render::plan_renderer::PlanRenderer;
 use cargo_ripe4rust::render::table::table_renderer::TableRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;

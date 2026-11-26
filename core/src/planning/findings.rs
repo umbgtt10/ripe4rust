@@ -51,12 +51,36 @@ impl Findings {
         )
     }
 
+    pub fn source_unscanned(&self) -> Diagnostic {
+        DiagnosticCode::SourceUnscanned.diagnose(
+            None,
+            String::from(
+                "the workspace's sources are not parsed yet, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8)",
+            ),
+            String::from(
+                "nothing is needed; until a release of ripe4rust parses the sources, size each breaking unit's migration by hand",
+            ),
+        )
+    }
+
     pub fn target_unknown(&self, target: &str, at: Option<Location>) -> Diagnostic {
         DiagnosticCode::TargetUnknown.diagnose(
             at,
             format!("`{target}` in `validate-beyond-gates` is a target the toolchain does not know"),
             String::from(
                 "correct its name or remove it; `rustc --print target-list` lists the targets the toolchain knows",
+            ),
+        )
+    }
+
+    pub fn toolchain_releases_unknown(&self, at: Location) -> Diagnostic {
+        DiagnosticCode::ToolchainReleasesUnknown.diagnose(
+            Some(at),
+            String::from(
+                "the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named",
+            ),
+            String::from(
+                "nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand",
             ),
         )
     }

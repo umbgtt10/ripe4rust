@@ -255,6 +255,23 @@ fn survey_of_an_unreadable_policy_stops_at_once() {
 }
 
 #[test]
+fn survey_of_sources_not_yet_scanned_carries_a_notice() {
+    // Arrange
+    let mut fakes = FakePorts::new();
+    fakes.scan.scan = None;
+
+    // Act
+    let survey = Survey::new(fakes.ports()).survey().expect("a survey");
+
+    // Assert
+    assert_eq!(survey.scan, None);
+    assert_eq!(
+        codes(&survey.diagnostics),
+        vec![DiagnosticCode::SourceUnscanned]
+    );
+}
+
+#[test]
 fn survey_of_the_fakes_is_the_fixture() {
     // Arrange
     let fakes = FakePorts::new();
@@ -309,12 +326,40 @@ fn toolchain_of_a_pinned_channel_is_its_release() {
 }
 
 #[test]
+fn toolchain_of_releases_not_yet_read_is_none_with_a_notice() {
+    // Arrange
+    let mut fakes = FakePorts::new();
+    fakes.toolchain.releases = None;
+
+    // Act
+    let toolchain = Survey::new(fakes.ports())
+        .toolchain(&surveyed().policy)
+        .expect("a toolchain");
+
+    // Assert
+    assert_eq!(toolchain.value.pinned, Some(version("1.99.1")));
+    assert_eq!(toolchain.value.releases, Vec::new());
+    assert_eq!(
+        toolchain
+            .diagnostics
+            .iter()
+            .map(|diagnostic| (diagnostic.code, diagnostic.at.clone()))
+            .collect::<Vec<_>>(),
+        vec![(
+            DiagnosticCode::ToolchainReleasesUnknown,
+            Some(at("rust-toolchain.toml", 9))
+        )]
+    );
+}
+
+#[test]
 fn warnings_name_absent_pins_an_old_cache_and_unparsed_files() {
     // Arrange
     let fakes = FakePorts::new();
     let mut surveyed = surveyed();
     surveyed.policy.pins = vec![pin("gone"), pin("rust"), pin("widget")];
-    surveyed.scan.unparsed = vec![UnparsedFile {
+    let mut scan = surveyed.scan.clone().expect("a scan");
+    scan.unparsed = vec![UnparsedFile {
         file: String::from("src/broken.rs"),
         detail: String::from("expected `;`"),
     }];
@@ -323,7 +368,7 @@ fn warnings_name_absent_pins_an_old_cache_and_unparsed_files() {
     let warnings = Survey::new(fakes.ports()).warnings(
         &surveyed.policy,
         &surveyed.workspace,
-        &surveyed.scan,
+        Some(&scan),
         date("2026-11-20"),
         surveyed.today,
     );

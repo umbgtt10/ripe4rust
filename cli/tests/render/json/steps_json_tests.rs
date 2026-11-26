@@ -2,17 +2,18 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::json::value;
 use crate::support::plans::compatible;
 use cargo_ripe4rust::render::json::steps_json::StepsJson;
 use serde_json::json;
 
 #[test]
-fn value_of_a_compatible_unit_s_steps_is_the_design_s_shape() {
+fn document_of_a_compatible_unit_s_steps_is_the_design_s_shape() {
     // Arrange
     let steps = compatible().steps.expect("steps");
 
     // Act
-    let value = StepsJson.value(&steps);
+    let value = value(&StepsJson.document(&steps));
 
     // Assert
     assert_eq!(

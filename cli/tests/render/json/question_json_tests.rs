@@ -2,17 +2,18 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::json::value;
 use crate::support::plans::breaking;
 use cargo_ripe4rust::render::json::question_json::QuestionJson;
 use serde_json::json;
 
 #[test]
-fn value_of_a_question_carries_every_option_s_then() {
+fn document_of_a_question_carries_every_option_s_then() {
     // Arrange
     let question = breaking().question.expect("a question");
 
     // Act
-    let value = QuestionJson.value(&question);
+    let value = value(&QuestionJson.document(&question));
 
     // Assert
     assert_eq!(

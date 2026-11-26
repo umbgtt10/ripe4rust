@@ -40,6 +40,40 @@ fn diagnostic_of_an_unrecognised_line_quotes_it_and_says_where_to_report_it() {
 }
 
 #[test]
+fn diagnostic_of_an_unusable_cache_says_how_to_move_it() {
+    // Arrange & Act
+    let diagnostic = PortFailure::RegistryCacheUnusable { detail: detail() }.diagnostic();
+
+    // Assert
+    assert_eq!(
+        (diagnostic.what, diagnostic.action),
+        (
+            String::from("the registry's answers could not be cached: connection refused"),
+            String::from(
+                "make the cache directory readable and writable, or set `XDG_CACHE_HOME` (`LOCALAPPDATA` on Windows) to one that is, then plan again"
+            ),
+        )
+    );
+}
+
+#[test]
+fn diagnostic_of_curl_missing_says_where_curl_comes_from() {
+    // Arrange & Act
+    let diagnostic = PortFailure::CurlMissing.diagnostic();
+
+    // Assert
+    assert_eq!(
+        (diagnostic.what, diagnostic.action),
+        (
+            String::from("curl is not installed, and ripe4rust reads the registry through it"),
+            String::from(
+                "install curl -- Windows 10 and later, macOS and most Linux distributions ship it -- or put it on the PATH, then plan again; or plan with `--offline` to read the cache alone"
+            ),
+        )
+    );
+}
+
+#[test]
 fn diagnostic_of_every_failure_is_an_error_of_its_own_code() {
     // Arrange
     let failures = [
@@ -65,12 +99,17 @@ fn diagnostic_of_every_failure_is_an_error_of_its_own_code() {
             },
             DiagnosticCode::CargoUpdateUnrecognised,
         ),
+        (PortFailure::CurlMissing, DiagnosticCode::CurlMissing),
         (
             PortFailure::Internal {
                 doing: String::from("reading the cache"),
                 detail: detail(),
             },
             DiagnosticCode::Internal,
+        ),
+        (
+            PortFailure::RegistryCacheUnusable { detail: detail() },
+            DiagnosticCode::RegistryCacheUnusable,
         ),
         (
             PortFailure::RegistryUnreachable { detail: detail() },

@@ -10,7 +10,8 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 /// A civil date, `YYYY-MM-DD`, with the day and month arithmetic the rules
-/// read: a line's age in days, a release within so many months.
+/// read: a line's age in days, a release within so many months; and the
+/// day so many days after 1970-01-01, the clock's own count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Date {
     year: i64,
@@ -37,6 +38,10 @@ impl Date {
             month,
             day: day_of_year - (153 * month_index + 2) / 5 + 1,
         }
+    }
+
+    pub fn from_unix_days(days: i64) -> Self {
+        Self::from_day_number(days)
     }
 
     pub fn parse(text: &str) -> Result<Self, ParseFailure> {

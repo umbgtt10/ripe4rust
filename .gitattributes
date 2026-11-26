@@ -1,0 +1,5 @@
+# The cli's tests replay output recorded from cargo, cargo-deny, rustc and
+# curl, and compare whole documents with what a plan of it prints: kept byte
+# for byte on every system, so a Windows checkout's line endings change
+# neither what the readers read nor the fingerprint of the files.
+cli/tests/fixtures/** -text

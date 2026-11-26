@@ -15,10 +15,10 @@ use ripe4rust_core::unit_kind::UnitKind;
 fn call_of_a_large_footprint_is_wait() {
     // Arrange
     let large = UnitFacts {
-        footprint: Footprint {
+        footprint: Some(Footprint {
             lines: 100,
             files: 12,
-        },
+        }),
         ..facts(UnitKind::Breaking)
     };
 
@@ -109,6 +109,27 @@ fn call_of_a_young_line_is_wait() {
         VerdictCall {
             suggestion: Suggestion::Wait,
             reason: String::from("2.x is young"),
+        }
+    );
+}
+
+#[test]
+fn call_of_an_unknown_footprint_is_wait() {
+    // Arrange
+    let unknown = UnitFacts {
+        footprint: None,
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let call = Verdict.call(&unknown);
+
+    // Assert
+    assert_eq!(
+        call,
+        VerdictCall {
+            suggestion: Suggestion::Wait,
+            reason: String::from("footprint not yet known"),
         }
     );
 }

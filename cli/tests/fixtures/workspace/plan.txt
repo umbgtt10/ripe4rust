@@ -1,0 +1,11 @@
+date 2026-11-26, registry read 2026-11-26, workspace af9871a4
+unit                       kind        from      to        outcome          reasons
+itertools (+1 transitive)  compatible  0.10.0    0.10.5    ask              reaches thumbv7em-none-eabihf
+itertools                  breaking    0.10.0    0.15.0    ask              pinned: the iterator chains are rewritten for 0.14; review 2027-03-01; overripe: 5 lines behind
+itoa                       compatible  0.4.7     0.4.8     ripe             compatible
+itoa                       breaking    0.4.7     1.0.19    ask              exposure in app-core's public API not yet known; migrate now: 0.4.x is stale while 1.x is active
+memchr                     compatible  2.5.0     2.8.3     ripe             compatible
+smallvec                   compatible  1.6.0     1.16.6    ask, urgent      clears RUSTSEC-2021-0003; reaches thumbv7em-none-eabihf
+
+notice[toolchain-releases-unknown] rust-toolchain.toml:2: the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named. Do: nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand
+notice[source-unscanned] the workspace's sources are not parsed yet, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8). Do: nothing is needed; until a release of ripe4rust parses the sources, size each breaking unit's migration by hand

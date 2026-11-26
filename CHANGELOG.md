@@ -60,10 +60,66 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   diagnostic of its own code (`PortFailure`), with every diagnostic found so far; `Planner` makes the plan from the
   survey. The notices and warnings the survey meets: `toolchain-unpinned`, `target-unknown`,
   `pin-for-absent-crate`, `registry-cache-old` and `source-unparsed`.
-- The renderers, in the cli (`cargo_ripe4rust::render`), a library target beside the command, which still exits 2:
+- The renderers, in the cli (`cargo_ripe4rust::render`), a library target beside the command:
   the JSON document -- `schema`, `command`, `date`, `registry_read`, `workspace`, `gates`, `diagnostics` and
   `units`, each unit with its moves, outcome, rule, suggestion, reasons, summary, steps, question and evidence; on
   failure, `schema`, `command` and `diagnostics` -- and the table for a person, the diagnostics after it in text.
+- What a plan does not know yet, said rather than guessed: the source scan's port answers `None` while the sources
+  are not parsed, and the toolchain's releases `None` while the channel manifests are not read. A footprint not
+  known is never small -- rule 11 calls nothing ripe, the verdict waits -- and a breaking unit a published member
+  uses asks under rule 8, its exposure not yet known; with no releases no toolchain unit is offered. The plan says
+  so in two notices, `source-unscanned` and `toolchain-releases-unknown`.
+- Every object of the JSON document written in the design's order, at every depth -- a record of its own each
+  (`cargo_ripe4rust::render::json::documents`), serialized as declared -- where the nested objects were written
+  with their keys sorted. serde_json's `preserve_order` stays off: it would bring a crate under a licence
+  `deny.toml` refuses.
+- The seams every adapter reaches the system through, in the cli (`cargo_ripe4rust::system::traits`): `CommandRunner`, a
+  program run to its end with what it printed, `FileSystem`, a file's text, a directory's entries and a file written
+  whole, and `Pause`, a wait between requests; their real implementations (`cargo_ripe4rust::system::real`) run a child
+  process without colour, write a file beside its place and rename it, and sleep the thread. A program not
+  installed is `LaunchFailure::Missing`, a file not there `FileFailure::Missing`.
+- `cargo metadata`, read (`cargo_ripe4rust::adapters::cargo::cargo_metadata`): the members, each with its crates.io
+  dependencies and the requirement that asked for each, and the lock's crates.io packages, from
+  `cargo metadata --format-version 1 --locked`; the crates a `validate-beyond-gates` target reaches, from the same
+  with `--filter-platform`. `--locked` leaves the lock file alone; `--offline` follows an offline plan. A failure is
+  `cargo-metadata-failed` with cargo's error on one line, output that does not read `internal`.
+- `cargo update --dry-run`, read strictly (`cargo_ripe4rust::adapters::cargo::cargo_update`): a direct dependency's moves
+  with `--recursive -p <crate>@<version>`, the workspace's without. Every line is a move -- updated, downgraded,
+  added, removed, with no note or one of cargo's own -- or a status that moves nothing; any other line is
+  `cargo-update-unrecognised`, quoting it, and a failure `cargo-update-failed`. Tested on cargo 1.99.1's own
+  output, recorded from scratch workspaces.
+- The advisories, from cargo-deny (`cargo_ripe4rust::adapters::cargo::deny`): those in force from its JSON log,
+  without what `deny.toml` ignores, each with its `patched` and `unaffected` ranges from its audit-compatible
+  report. `cargo-deny-missing` where cargo has no `deny` command, `cargo-deny-failed` with the error of its log on
+  one line where it could not check. The cli's modules regrouped, at most five folders to a directory:
+  `adapters/` for the ports' implementations, `system/` for the seams -- `traits/`, `model/`, `real/`.
+- The registry (`cargo_ripe4rust::adapters::registry`): the sparse index, every release with its yanked flag,
+  `rust_version` and `pubtime`'s day, and the API, a direct dependency's repository, at most a request a second --
+  both through `curl`, as `docs/ADRs/ADR-TheRegistryThroughCurl.md` decides, with a user agent naming the tool,
+  its version and its repository. Every answer is kept in a day cache, `ripe4rust/<date>/` under
+  `$XDG_CACHE_HOME`, `~/.cache` or `%LOCALAPPDATA%`; `--offline` reads the latest day on or before the plan's.
+  Two codes for what it meets: `curl-missing`, and `registry-cache-unusable` where the cache cannot be read or
+  written.
+- The workspace's files (`cargo_ripe4rust::adapters::workspace`), found where `cargo metadata --no-deps` says
+  they are, asked once behind a `LayoutSource` seam: `[workspace.metadata.ripe4rust]` as the raw tree with every key's `file:line`, through `toml`'s
+  span-keeping parser; a crate's requirement lines in every dependency table, every target's and
+  `[workspace.dependencies]`; a member's `rust-version` line, its own or the workspace's it inherits;
+  `rust-toolchain.toml`'s channel; and the fingerprint of the lock, the manifests and the toolchain file, FNV-1a
+  by hand. A file that cannot be read or parsed is `workspace-unreadable`, at the line where it breaks.
+- The clock, the toolchain and the scan, for now (`cargo_ripe4rust::adapters::{clock, toolchain}`): today in UTC
+  from the system's clock through the core's new `Date::from_unix_days`, or the day `--date` names; `rustc
+  --version` and `--print target-list` in the workspace's directory, `toolchain-unreachable` where they fail, and
+  no releases until slice 5; and a source scan that knows nothing until slice 4.
+- `plan`, end to end (`cargo_ripe4rust::command`): `cargo ripe4rust [plan] [--format table|json] [--date
+  YYYY-MM-DD] [--offline]`, every port's adapter set up over the seams `main` passes in -- `main` a thin shim over
+  `Ripe4rust`, the library's entry point -- and the one document on stdout: exit 0 where a plan was produced, 2 where
+  none could be. `--date` stands for today, `--offline` keeps every adapter off the network. A command or an
+  option it does not know is `usage-invalid`; `check`, `hold` and `guide`, until slice 3, `command-unavailable`.
+  Tested through the entry point on a workspace recorded whole -- cargo, cargo-deny, rustc and the registry --
+  against the JSON document and the table, an offline plan from its cache, and the plan's failures; the binary's
+  own tests now run a command line that needs no network.
+- `.gitattributes`: the recorded fixtures kept byte for byte on every system, so a Windows checkout reads what
+  Linux recorded.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the
@@ -73,8 +129,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - CI: `.github/workflows/ci.yml` runs both stages on Linux, Windows and macOS, every gate tool installed fresh.
 - Every commit message carries core's grip and braintax: `.githooks/commit-msg` runs `cargo xtask grip-braintax`,
   enabled once a clone by `just hooks`.
-- Tests for what 0.0.1 holds: `Outcome::label`'s three labels, and the command's exit code 2, its one line on stderr
-  and nothing on stdout.
+- Tests for what 0.0.1 holds: `Outcome::label`'s three labels.
 - `CLAUDE.md`: what ripe4rust is -- the design settled, the implementation in slices --, its boundary, its layout,
   the gates and the score hook, the rules every slice keeps, and the owner's strict rules and coding standards.
 - `CODE_OF_CONDUCT.md` and `DONATE.md`, with the two QR images, as the family carries them.

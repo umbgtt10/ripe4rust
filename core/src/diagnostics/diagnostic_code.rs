@@ -15,6 +15,8 @@ pub enum DiagnosticCode {
     CargoMetadataFailed,
     CargoUpdateFailed,
     CargoUpdateUnrecognised,
+    CommandUnavailable,
+    CurlMissing,
     GatesUndeclared,
     Internal,
     PinForAbsentCrate,
@@ -24,11 +26,15 @@ pub enum DiagnosticCode {
     PolicyInvalidValue,
     PolicyUnknownKey,
     RegistryCacheOld,
+    RegistryCacheUnusable,
     RegistryUnreachable,
     SourceUnparsed,
+    SourceUnscanned,
     TargetUnknown,
+    ToolchainReleasesUnknown,
     ToolchainUnpinned,
     ToolchainUnreachable,
+    UsageInvalid,
     WorkspaceUnreadable,
 }
 
@@ -51,6 +57,8 @@ impl DiagnosticCode {
             Self::CargoMetadataFailed => "cargo-metadata-failed",
             Self::CargoUpdateFailed => "cargo-update-failed",
             Self::CargoUpdateUnrecognised => "cargo-update-unrecognised",
+            Self::CommandUnavailable => "command-unavailable",
+            Self::CurlMissing => "curl-missing",
             Self::GatesUndeclared => "gates-undeclared",
             Self::Internal => "internal",
             Self::PinForAbsentCrate => "pin-for-absent-crate",
@@ -60,11 +68,15 @@ impl DiagnosticCode {
             Self::PolicyInvalidValue => "policy-invalid-value",
             Self::PolicyUnknownKey => "policy-unknown-key",
             Self::RegistryCacheOld => "registry-cache-old",
+            Self::RegistryCacheUnusable => "registry-cache-unusable",
             Self::RegistryUnreachable => "registry-unreachable",
             Self::SourceUnparsed => "source-unparsed",
+            Self::SourceUnscanned => "source-unscanned",
             Self::TargetUnknown => "target-unknown",
+            Self::ToolchainReleasesUnknown => "toolchain-releases-unknown",
             Self::ToolchainUnpinned => "toolchain-unpinned",
             Self::ToolchainUnreachable => "toolchain-unreachable",
+            Self::UsageInvalid => "usage-invalid",
             Self::WorkspaceUnreadable => "workspace-unreadable",
         }
     }
@@ -87,7 +99,9 @@ impl DiagnosticCode {
             | Self::PinForAbsentCrate
             | Self::RegistryCacheOld
             | Self::SourceUnparsed => Severity::Warning,
-            Self::ToolchainUnpinned => Severity::Notice,
+            Self::SourceUnscanned | Self::ToolchainReleasesUnknown | Self::ToolchainUnpinned => {
+                Severity::Notice
+            }
             _ => Severity::Error,
         }
     }

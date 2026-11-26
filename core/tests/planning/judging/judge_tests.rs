@@ -107,7 +107,7 @@ fn judge_of_breaking_units_runs_rules_eight_to_twelve_in_order() {
     let breaking = UnitFacts {
         exposed_in: vec![String::from("widget-core")],
         new_line: Some(standing(2, true, true)),
-        footprint: Footprint { lines: 3, files: 1 },
+        footprint: Some(Footprint { lines: 3, files: 1 }),
         ..facts(UnitKind::Breaking)
     };
 

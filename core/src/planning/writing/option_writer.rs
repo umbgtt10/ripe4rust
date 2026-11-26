@@ -63,13 +63,7 @@ impl<'a> OptionWriter<'a> {
                     self.pin()
                 ),
             ),
-            Answer::MigrateNow => (
-                now,
-                format!(
-                    "apply it as a ripe unit; the footprint's {} are the work list",
-                    Wording.count(self.facts.footprint.lines, "location")
-                ),
-            ),
+            Answer::MigrateNow => (now, self.work_list()),
             Answer::PlanIt => (
                 String::from("hold it until a planned migration"),
                 format!("{hold} --review <date>"),
@@ -119,5 +113,17 @@ impl<'a> OptionWriter<'a> {
                 || String::from("its pin"),
                 |standing| format!("the pin on `{}` at {}", standing.pin.name, standing.pin.at),
             )
+    }
+
+    fn work_list(&self) -> String {
+        match self.facts.footprint {
+            Some(footprint) => format!(
+                "apply it as a ripe unit; the footprint's {} are the work list",
+                Wording.count(footprint.lines, "location")
+            ),
+            None => String::from(
+                "apply it as a ripe unit; the footprint is not yet known, so the build's errors are the work list",
+            ),
+        }
     }
 }

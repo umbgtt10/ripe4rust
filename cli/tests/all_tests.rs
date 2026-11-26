@@ -2,6 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+mod adapters;
+mod command;
 mod main_tests;
 mod render;
 mod support;
+mod system;

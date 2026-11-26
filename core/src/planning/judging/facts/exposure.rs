@@ -13,8 +13,9 @@ use alloc::vec::Vec;
 
 /// What a breaking unit means for the workspace's own users: the published
 /// members whose public API its crates reach -- by the parse, or where the
-/// policy overrides it, by the policy -- and the members' `rust-version`s
-/// its targets need raised.
+/// policy overrides it, by the policy --, those using a crate the policy is
+/// silent on while the sources are not parsed, and the members'
+/// `rust-version`s its targets need raised.
 pub struct Exposure<'a> {
     context: &'a PlanContext<'a>,
 }
@@ -43,8 +44,8 @@ impl<'a> Exposure<'a> {
                     Some(_) => Vec::new(),
                     None => surveyed
                         .scan
-                        .uses
                         .iter()
+                        .flat_map(|scan| scan.uses.iter())
                         .find(|used| used.name == *member)
                         .map(|used| used.exposed_in.clone())
                         .unwrap_or_default(),
@@ -89,6 +90,29 @@ impl<'a> Exposure<'a> {
             }
         }
         raises
+    }
+
+    pub fn unknown_in(&self, unit: &Unit) -> Vec<String> {
+        let surveyed = self.context.surveyed();
+        if unit.kind != UnitKind::Breaking || surveyed.scan.is_some() {
+            return Vec::new();
+        }
+        let mut unknown = unit
+            .members
+            .iter()
+            .filter(|member| {
+                !surveyed
+                    .policy
+                    .exposure
+                    .iter()
+                    .any(|exposure| exposure.name == **member)
+            })
+            .flat_map(|member| self.users(member))
+            .filter(|member| surveyed.policy.published.contains(member))
+            .collect::<Vec<String>>();
+        unknown.sort();
+        unknown.dedup();
+        unknown
     }
 
     fn needs(&self, lock_move: &LockMove) -> Option<PartialVersion> {

@@ -1,0 +1,1 @@
+{"fields":{"level":"ERROR","message":"failed to parse config from '/work/ws/deny.toml': expected a right bracket, found a newline","timestamp":"2026-11-26T06:48:56.975490654Z"},"type":"log"}

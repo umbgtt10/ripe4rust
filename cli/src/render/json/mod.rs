@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod diagnostic_json;
+pub mod documents;
 pub mod evidence_json;
 pub mod json_renderer;
 pub mod move_json;

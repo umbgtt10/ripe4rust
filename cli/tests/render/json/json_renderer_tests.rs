@@ -2,14 +2,20 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::plans::breaking;
 use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use cargo_ripe4rust::render::json::json_renderer::JsonRenderer;
+use cargo_ripe4rust::render::plan_renderer::PlanRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use serde_json::Value;
 use serde_json::from_str;
 use serde_json::json;
+
+fn compact(text: &str) -> String {
+    text.split_whitespace().collect()
+}
 
 fn parsed(text: &str) -> Value {
     from_str(text).expect("a JSON document")
@@ -45,6 +51,36 @@ fn failure_prints_schema_command_and_diagnostics() {
             }],
         })
     );
+}
+
+#[test]
+fn plan_prints_every_object_s_keys_in_the_design_s_order() {
+    // Arrange
+    let mut planned = plan(vec![compatible(), breaking()]);
+    planned.diagnostics = vec![DiagnosticCode::GatesUndeclared.diagnose(
+        None,
+        String::from("no gates"),
+        String::from("declare them"),
+    )];
+
+    // Act
+    let text = compact(&JsonRenderer::new("plan").plan(&planned));
+
+    // Assert
+    for ordered in [
+        r#""workspace":{"fingerprint":"9f2c41d0e3b5a7c9","lock":["#,
+        r#"{"severity":"warning","code":"gates-undeclared","where":null,"what":"nogates","do":"declarethem","needs_person":true}"#,
+        r#"{"id":"compatible:widget","kind":"compatible","crate":"widget","members":["widget"],"from":"4.6.6","to":"4.6.7","moves":[{"crate":"widget","from":"4.6.6","to":"4.6.7"}"#,
+        r#""outcome":"ripe","urgent":false,"rule":10,"suggestion":null,"reasons":["compatible"],"summary":"#,
+        r#""steps":{"apply":[{"run":"cargoupdate--recursive-pwidget"}],"check":"#,
+        r#""revert":{"restore":["Cargo.lock"],"run":"gitrestore--Cargo.lock"},"split":[{"id":"compatible:widget/widget","apply":["#,
+        r#""question":null,"evidence":{"line_in_use":{"line":"4.x","first_release":"2022-01-01","last_release":"2026-10-02","releases":41},"rust_version":"1.74","advisories":[],"yanked_in_use":false,"footprint":[],"held_back":[],"held":[]}"#,
+        r#"{"edit":"Cargo.toml:22","key":"gadget","value":"0.14.0"}"#,
+        r#""question":{"title":"Movegadgetto0.14.0?","why":"#,
+        r#""options":[{"answer":"wait","means":"notnow","then":"#,
+    ] {
+        assert!(text.contains(ordered), "{ordered} in {text}");
+    }
 }
 
 #[test]

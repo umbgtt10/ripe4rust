@@ -82,6 +82,33 @@ fn fmt_pads_month_and_day() {
 }
 
 #[test]
+fn from_unix_days_of_a_day_before_the_epoch_is_in_1969() {
+    // Arrange & Act
+    let date = Date::from_unix_days(-1);
+
+    // Assert
+    assert_eq!(date.to_string(), "1969-12-31");
+}
+
+#[test]
+fn from_unix_days_of_the_days_since_the_epoch_is_that_day() {
+    // Arrange & Act
+    let date = Date::from_unix_days(20_783);
+
+    // Assert
+    assert_eq!(date, Date::parse("2026-11-26").expect("a date"));
+}
+
+#[test]
+fn from_unix_days_of_zero_is_the_epoch() {
+    // Arrange & Act
+    let date = Date::from_unix_days(0);
+
+    // Assert
+    assert_eq!(date.to_string(), "1970-01-01");
+}
+
+#[test]
 fn months_before_clamps_to_the_last_day_of_a_shorter_month() {
     // Arrange & Act
     let earlier = date("2026-08-31").months_before(6);

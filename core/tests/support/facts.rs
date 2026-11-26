@@ -25,15 +25,16 @@ pub fn facts(kind: UnitKind) -> UnitFacts {
         fully_held: false,
         freeze: None,
         exposed_in: Vec::new(),
+        exposure_unknown_in: Vec::new(),
         raises: Vec::new(),
         in_use_line: Some(standing(1, false, true)),
         new_line: Some(standing(2, false, true)),
         newer_active: true,
         lines_behind: 1,
-        footprint: Footprint {
+        footprint: Some(Footprint {
             lines: 42,
             files: 7,
-        },
+        }),
         removes_copy: false,
         held_back: 0,
         gates: 2,

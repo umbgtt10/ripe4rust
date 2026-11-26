@@ -15,10 +15,10 @@ use ripe4rust_core::unit_kind::UnitKind;
 fn decide_of_a_breaking_unit_at_the_small_footprint_is_none() {
     // Arrange
     let at = UnitFacts {
-        footprint: Footprint {
+        footprint: Some(Footprint {
             lines: 10,
             files: 2,
-        },
+        }),
         ..facts(UnitKind::Breaking)
     };
 
@@ -33,7 +33,7 @@ fn decide_of_a_breaking_unit_at_the_small_footprint_is_none() {
 fn decide_of_a_breaking_unit_under_the_small_footprint_is_ripe() {
     // Arrange
     let small = UnitFacts {
-        footprint: Footprint { lines: 9, files: 2 },
+        footprint: Some(Footprint { lines: 9, files: 2 }),
         ..facts(UnitKind::Breaking)
     };
 
@@ -52,4 +52,19 @@ fn decide_of_a_breaking_unit_under_the_small_footprint_is_ripe() {
             why: None,
         })
     );
+}
+
+#[test]
+fn decide_of_a_breaking_unit_whose_footprint_is_unknown_is_none() {
+    // Arrange
+    let unknown = UnitFacts {
+        footprint: None,
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = SmallFootprint.decide(&unknown);
+
+    // Assert
+    assert_eq!(decision, None);
 }

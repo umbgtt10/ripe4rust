@@ -12,7 +12,8 @@ use alloc::string::String;
 /// The verdict on a breaking unit that asks: migrate now where the line in
 /// use is stale while the new one is active, or migrating removes a second
 /// copy; plan it where the new line has settled and the footprint is under
-/// `moderate-footprint`; wait otherwise, with the reason.
+/// `moderate-footprint`; wait otherwise, with the reason -- a footprint not
+/// yet known among them.
 pub struct Verdict;
 
 impl Verdict {
@@ -50,12 +51,18 @@ impl Verdict {
     }
 
     fn waiting(facts: &UnitFacts) -> VerdictCall {
+        let Some(known) = facts.footprint else {
+            return VerdictCall {
+                suggestion: Suggestion::Wait,
+                reason: String::from("footprint not yet known"),
+            };
+        };
         let footprint = format!(
             "footprint {} in {}",
-            Wording.count(facts.footprint.lines, "line"),
-            Wording.count(facts.footprint.files, "file")
+            Wording.count(known.lines, "line"),
+            Wording.count(known.files, "file")
         );
-        if facts.footprint.lines < facts.moderate_footprint {
+        if known.lines < facts.moderate_footprint {
             VerdictCall {
                 suggestion: Suggestion::PlanIt,
                 reason: footprint,

@@ -37,6 +37,58 @@ fn decide_of_a_compatible_unit_is_none() {
 }
 
 #[test]
+fn decide_of_a_crate_a_published_member_uses_unscanned_asks_it() {
+    // Arrange
+    let unknown = UnitFacts {
+        exposure_unknown_in: vec![String::from("widget-core")],
+        footprint: None,
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = BreakingChangeOfOurs.decide(&unknown);
+
+    // Assert
+    assert_eq!(
+        decision,
+        Some(Decision {
+            outcome: Outcome::Ask,
+            urgent: false,
+            rule: Some(8),
+            suggestion: Some(Suggestion::BreakingChangeOfOurs),
+            reasons: vec![
+                String::from("exposure in widget-core's public API not yet known"),
+                String::from("wait: footprint not yet known"),
+            ],
+            why: Some(String::from(
+                "whether widget's types are in widget-core's public API is not yet known, and if they are, the upgrade is a breaking change of ours too"
+            )),
+        })
+    );
+}
+
+#[test]
+fn decide_of_a_crate_both_exposed_and_unscanned_says_it_is_ours() {
+    // Arrange
+    let both = UnitFacts {
+        exposed_in: vec![String::from("widget-core")],
+        exposure_unknown_in: vec![String::from("widget-tools")],
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = BreakingChangeOfOurs.decide(&both);
+
+    // Assert
+    assert_eq!(
+        decision.and_then(|decision| decision.why),
+        Some(String::from(
+            "widget's types are in widget-core's public API; whether widget's types are in widget-tools's public API is not yet known: the upgrade is a breaking change of ours too"
+        ))
+    );
+}
+
+#[test]
 fn decide_of_a_crate_in_a_published_api_asks_it() {
     // Arrange
     let exposed = UnitFacts {

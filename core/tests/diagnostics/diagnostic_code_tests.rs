@@ -7,7 +7,7 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::diagnostics::severity::Severity;
 use ripe4rust_core::values::location::Location;
 
-const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
+const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
     (
         DiagnosticCode::CargoDenyFailed,
         "cargo-deny-failed",
@@ -35,6 +35,18 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
     (
         DiagnosticCode::CargoUpdateUnrecognised,
         "cargo-update-unrecognised",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::CommandUnavailable,
+        "command-unavailable",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::CurlMissing,
+        "curl-missing",
         Severity::Error,
         false,
     ),
@@ -88,6 +100,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
         false,
     ),
     (
+        DiagnosticCode::RegistryCacheUnusable,
+        "registry-cache-unusable",
+        Severity::Error,
+        false,
+    ),
+    (
         DiagnosticCode::RegistryUnreachable,
         "registry-unreachable",
         Severity::Error,
@@ -97,6 +115,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
         DiagnosticCode::SourceUnparsed,
         "source-unparsed",
         Severity::Warning,
+        false,
+    ),
+    (
+        DiagnosticCode::SourceUnscanned,
+        "source-unscanned",
+        Severity::Notice,
         false,
     ),
     (
@@ -112,6 +136,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
         false,
     ),
     (
+        DiagnosticCode::ToolchainReleasesUnknown,
+        "toolchain-releases-unknown",
+        Severity::Notice,
+        false,
+    ),
+    (
         DiagnosticCode::ToolchainUnreachable,
         "toolchain-unreachable",
         Severity::Error,
@@ -120,6 +150,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
     (
         DiagnosticCode::WorkspaceUnreadable,
         "workspace-unreadable",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::UsageInvalid,
+        "usage-invalid",
         Severity::Error,
         false,
     ),

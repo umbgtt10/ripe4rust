@@ -1,0 +1,2 @@
+{"errors":[{"detail":"crate `no-such-crate-here` does not exist"}]}
+404

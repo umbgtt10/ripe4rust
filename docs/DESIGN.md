@@ -1,9 +1,9 @@
 # ripe4rust -- design
 
 Status: settled 2026-11-26; the agent's contract added the same day. Slices
-0 and 1 of "Delivery" are implemented: the scaffolding, and the core with the
-renderers. The decisions that were not obvious each have an ADR under
-`docs/ADRs/`.
+0, 1 and 2 of "Delivery" are implemented: the scaffolding, the core with the
+renderers, and the adapters with `plan` end to end. The decisions that were not
+obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
 
@@ -121,7 +121,9 @@ the API only for a direct dependency's repository, at most one request a
 second, with a user agent that names the tool, its version and its repository
 and nothing personal. Every answer is cached for the day it was read, under
 `~/.cache/ripe4rust/<date>/`; a plan names that date, and with the same cache
-and the same date it is the same plan (ADR-TheIndexForVersionsAndDates).
+and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). The
+requests go through a `curl` process, not an HTTP crate
+(ADR-TheRegistryThroughCurl).
 
 cargo-deny is required. Without it, or when it fails, no plan is produced: a
 plan blind to advisories would call ripe what it should call urgent.
@@ -129,6 +131,90 @@ plan blind to advisories would call ripe what it should call urgent.
 `cargo update --dry-run` reports in text, not JSON. ripe4rust reads it
 strictly: a line it does not recognise stops the plan with a diagnostic,
 rather than leave a move out of it (ADR-CargoComputesTheLockMoves).
+
+### How the cli reads them
+
+Every adapter is a process or a file behind a seam of the cli's own -- a
+`CommandRunner`, a `FileSystem`, a `Pause` -- so each is tested on output
+recorded from the pinned toolchain, and none of the tests reaches the network.
+Where the sections above are silent, the adapters read the inputs this way:
+
+- **`cargo metadata`** runs with `--format-version 1 --locked`, so it never
+  writes the lock file, and with `--offline` in an offline plan. A member's
+  dependencies and a locked package's are the crates.io packages its resolve
+  node names, each with the requirement that asked for it: the first declared
+  for that crate, from crates.io, that the resolved version meets, or `*` where
+  none does. A crate reaches a `validate-beyond-gates` target where `cargo
+  metadata --filter-platform <target>` resolves it at all, through any member
+  and any kind of dependency: the conservative reading, so a crate only a host
+  tool uses still asks. A failure is `cargo-metadata-failed`, with cargo's
+  error on one line; output it cannot read is `internal`.
+- **`cargo update --dry-run`** runs as `--recursive -p <crate>@<version>` for
+  a direct dependency, the version naming the copy in use, and with
+  `--offline` in an offline plan. Every line of what it prints must be a move
+  -- `Updating` or `Downgrading <crate> v<from> -> v<to>`, `Adding <crate>
+  v<to>`, `Removing <crate> v<from>`, with no note or one of cargo's own,
+  `(available: v...)`, `(latest: v...)`, `(requires Rust ...)` -- or a line
+  that moves nothing: the index or a git source updated, the `Locking` summary,
+  a wait for cargo's file lock, an `Unchanged` crate, a `note:` or a
+  `warning:`. Anything else is `cargo-update-unrecognised`, quoting the line;
+  a failure is `cargo-update-failed`.
+- **`cargo deny`** runs as `cargo deny --format json --locked --workspace
+  check --audit-compatible-output advisories`, with `--offline` in an offline
+  plan. The advisories in force are the advisory diagnostics of its log, on
+  stderr -- `vulnerability`, `unmaintained`, `unsound`, `notice`, one for each
+  crate and version it names -- which leaves out what `deny.toml` ignores;
+  the ranges each is clear in, `patched` and `unaffected`, come from the audit
+  report on stdout, which the log does not carry. An advisory the report does
+  not hold is cleared by no version. It exits 1 when it found advisories, so
+  0 and 1 are a check made; an error in its log, or any other end, is
+  `cargo-deny-failed` with that error on one line, and cargo answering `no such
+  command` is `cargo-deny-missing`. Yanked releases are read from the index,
+  not from cargo-deny's own yanked check.
+- **The registry** is read through `curl` (ADR-TheRegistryThroughCurl): a
+  crate's index file at `https://index.crates.io/` under the path its name's
+  length gives it, and the API at `https://crates.io/api/v1/crates/<crate>?include=`,
+  which answers the crate without its versions. The API waits a second before
+  every request after the first; a cached answer costs no request and no wait.
+  The cache is `ripe4rust/` under `$XDG_CACHE_HOME`, or `~/.cache` where it is
+  not set, or `%LOCALAPPDATA%` on Windows, one directory a day,
+  `<date>/index/<crate>` and `<date>/api/<crate>`, each the body as it came; a
+  404 is kept as an empty answer, so an offline plan reads what the online one
+  did. The day is the plan's date, `--date` included: online, an answer the
+  day lacks is fetched and kept under it; `--offline` reads the latest day on or
+  before the plan's date, and an answer it lacks is `registry-unreachable`. A
+  cache that cannot be read or written, or no directory to keep it in, is
+  `registry-cache-unusable`.
+- **The workspace's files** are found where `cargo metadata --format-version 1
+  --no-deps` says they are -- the root and every member's manifest --, which
+  resolves nothing, so it needs no network and moves no lock; each is named
+  from the root with `/` on every system. They are parsed with `toml` (MIT OR
+  Apache-2.0, its `parse` feature alone), which keeps every key's span: a
+  policy key's line is the line its key is written on, and the section's own
+  that of its `ripe4rust` key, in a table header or a dotted key alike. A bare
+  date, a float and an integer beyond 64 bits arrive as text, for the policy's
+  readers to refuse where text is not what the key takes; a `ripe4rust` that is
+  no table is `workspace-unreadable`. A crate's requirement lines are found in
+  every kind of dependency table, every target's, and `[workspace.dependencies]`:
+  the line of `crate = "..."` or of a table's `version`, a renamed crate found
+  by its `package`; one with no version of its own -- a path, a git source,
+  `workspace = true` -- states none. A member's `rust-version` line is its own,
+  or `[workspace.package]`'s where it inherits it. `rust-toolchain.toml` gives
+  its channel and that line, an empty channel where it names none.
+- **The fingerprint** is FNV-1a, 64 bits, written by hand rather than taken from
+  a crate: over `Cargo.lock`, every manifest and `rust-toolchain.toml`, each by
+  its name from the root, then its length and bytes, or a mark where it is
+  absent, as sixteen hex digits. It tells `check` that the workspace changed;
+  it seals nothing, so a cryptographic hash would buy no more.
+- **The clock** is today in UTC, the system's time counted from the epoch with
+  the core's date arithmetic. `--date` stands for today everywhere: in the
+  rules, and as the day of the cache read and written.
+- **The toolchain** is `rustc --version` and `rustc --print target-list`, run
+  in the workspace's directory so `rust-toolchain.toml` chooses the compiler;
+  a failure is `toolchain-unreachable`. Its releases are slice 5's: until then
+  it answers that it knows none.
+- **The source scan** is slice 4's: until then it answers that it knows
+  nothing, and the plan reads that as "Footprint and exposure" says.
 
 ## Which version a unit moves to
 
@@ -150,6 +236,11 @@ A version within the toolchain but needing more than the workspace's declared
 published crate that is rule 8's question. It raises the `rust-version` of
 every member that uses the crate and declares a lower one; a member that
 declares none promises nothing, and is not raised.
+
+Until the channel manifests are read (slice 5 of "Delivery"), the toolchain
+answers that it knows no releases: no toolchain unit is offered, no version is
+named as held back for it, and the plan carries the notice
+`toolchain-releases-unknown` at the channel's line.
 
 The toolchain's youth is judged by `toolchain-young-days` alone: a minor
 rarely has three releases. Its evidence names, for each direct dependency, the
@@ -278,6 +369,14 @@ public item). The policy can override it, crate by crate: `public` exposes the
 crate in every published member that uses it, `private` in none. A source file
 the parse cannot read is a warning: the footprint may be low.
 
+Until the parse is built (slice 4 of "Delivery"), the scan answers that it
+knows neither, and the plan reads that conservatively. A footprint not known
+is never small, so rule 11 calls no unit ripe, and the verdict is "wait:
+footprint not yet known". A crate the policy is silent on may be in the public
+API of any published member that uses it, so its breaking unit asks under rule
+8, "exposure in <member>'s public API not yet known". The plan carries the
+notice `source-unscanned`, and an override in the policy still decides.
+
 ## Groups
 
 Some crates only move together: a framework and its macros, a family released
@@ -351,8 +450,9 @@ reported at once, before any rule runs. An empty `reason` is no reason, and
 
 Every command prints one document: a table and text for a person, or, with
 `--format json`, a JSON document for the agent -- on success and on failure
-alike, so the agent always has one thing to read. Each carries `schema`,
-which moves when the shape does, the command, and the diagnostics.
+alike, so the agent always has one thing to read, and on stdout either way.
+Each carries `schema`, which moves when the shape does, the command, and the
+diagnostics.
 
 ### Diagnostics
 
@@ -410,6 +510,12 @@ The problems the design already names, at least:
 | `cargo-metadata-failed` | error | `cargo metadata` could not run |
 | `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
 | `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
+| `curl-missing` | error | curl is not on the PATH, and the registry is read through it |
+| `registry-cache-unusable` | error | the day cache cannot be read or written, or there is no directory for it |
+| `source-unscanned` | notice | the sources are not parsed yet: no footprint or exposure is known |
+| `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
+| `usage-invalid` | error | a command or an option ripe4rust does not know, or an option's value of the wrong kind |
+| `command-unavailable` | error | a command of the design this release does not run yet |
 
 Of these, the policy's own codes, `target-unknown` and `gates-undeclared` need
 a person: each asks for a fact or a decision only the owner has.
@@ -482,9 +588,12 @@ for the toolchain -- and its `reasons`, the table's last column; an `apply`
 step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
-release and the moves a pin holds out of the unit. The document's own keys
-come in the order shown; the objects within it, with their keys sorted. A
-document for a failure carries `schema`, `command` and `diagnostics` alone.
+release and the moves a pin holds out of the unit. Every object's keys come
+in the order shown, at every depth: a unit's `members` after `crate` and its
+`reasons` after `suggestion`; the evidence's `footprint`, `held_back` and
+`held` after `yanked_in_use`; the line in use as `line`, `first_release`,
+`last_release`, `releases`. A document for a failure carries `schema`,
+`command` and `diagnostics` alone.
 
 In the table, `(+N)` counts a group's other members and `(+N transitive)` the
 crates a compatible unit pulls in; the workspace is named by its fingerprint's
@@ -558,7 +667,15 @@ The answers, by the way a unit asks:
 
 Every command takes `--format table|json`. `plan` also takes `--date
 <YYYY-MM-DD>`, for a reproducible plan, and `--offline`, to read the cache
-only.
+only -- and to keep cargo and cargo-deny off the network too, so an offline
+plan reaches none. With no command, the command is `plan`; the name cargo
+passes a subcommand first is skipped, so `cargo ripe4rust` and
+`cargo-ripe4rust` read alike. An option takes its value after it or after `=`.
+A command or an option ripe4rust does not know is `usage-invalid`, and, until
+slice 3 builds them, `check`, `hold` and `guide` are `command-unavailable`:
+both errors, exit 2, the document in the format the line asked for. `main` is
+a thin shim over the library's entry point, which takes every seam it reaches
+the system through.
 
 ### check
 

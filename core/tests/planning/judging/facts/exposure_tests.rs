@@ -83,6 +83,21 @@ fn exposed_in_of_a_crate_the_policy_calls_public_is_every_published_user() {
 }
 
 #[test]
+fn exposed_in_of_sources_not_yet_scanned_is_empty() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.scan = None;
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let exposed = Exposure::new(&context).exposed_in(&breaking("widget", "1.4.0", "2.1.0"));
+
+    // Assert
+    assert_eq!(exposed, Vec::<String>::new());
+}
+
+#[test]
 fn raises_name_every_user_whose_rust_version_the_target_needs_raised() {
     // Arrange
     let surveyed = surveyed();
@@ -123,4 +138,70 @@ fn raises_of_a_target_declaring_no_rust_version_are_none() {
 
     // Assert
     assert_eq!(raises, Vec::new());
+}
+
+#[test]
+fn unknown_in_of_a_compatible_unit_is_empty() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.scan = None;
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let unknown = Exposure::new(&context).unknown_in(&compatible(
+        "widget",
+        vec![moved("widget", "1.4.0", "1.4.1")],
+    ));
+
+    // Assert
+    assert_eq!(unknown, Vec::<String>::new());
+}
+
+#[test]
+fn unknown_in_of_a_crate_the_policy_overrides_is_empty() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.scan = None;
+    surveyed.policy.exposure = vec![ExposureOverride {
+        name: String::from("widget"),
+        public: false,
+    }];
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let unknown = Exposure::new(&context).unknown_in(&breaking("widget", "1.4.0", "2.1.0"));
+
+    // Assert
+    assert_eq!(unknown, Vec::<String>::new());
+}
+
+#[test]
+fn unknown_in_of_scanned_sources_is_empty() {
+    // Arrange
+    let surveyed = surveyed();
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let unknown = Exposure::new(&context).unknown_in(&breaking("widget", "1.4.0", "2.1.0"));
+
+    // Assert
+    assert_eq!(unknown, Vec::<String>::new());
+}
+
+#[test]
+fn unknown_in_of_sources_not_yet_scanned_is_every_published_user() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.scan = None;
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let unknown = Exposure::new(&context).unknown_in(&breaking("widget", "1.4.0", "2.1.0"));
+
+    // Assert
+    assert_eq!(unknown, vec![String::from("app-core")]);
 }
