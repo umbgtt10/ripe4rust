@@ -14,10 +14,16 @@ resolver 3, the `[patch]` and `[replace]` sections, the lock's existing pins.
 ## Decision
 
 ripe4rust asks cargo. A compatible unit's moves are what
-`cargo update --recursive -p <crate>` reports when asked only to report; the
-whole workspace's are what a reporting `cargo update` reports, and what no
-unit reaches is the last unit, the rest. Reporting writes nothing, so "it
-never applies" holds.
+`cargo update --dry-run --recursive -p <crate>` reports; the whole
+workspace's are what `cargo update --dry-run` reports, and what no unit
+reaches is the last unit, the rest. `--dry-run` writes nothing, so "it never
+applies" holds.
+
+cargo reports these moves as text, not JSON. ripe4rust reads them strictly: a
+line it does not recognise stops the plan with the diagnostic
+`cargo-update-unrecognised`, rather than leave a move out of the plan. The
+reader is tested against recorded output of the toolchain the workspace
+pins.
 
 Units are taken in plan order, by crate name. A transitive move that several
 units share belongs to the first, because applying the first moves it for the
@@ -25,7 +31,8 @@ others.
 
 A breaking unit's moves are not computed: they need the manifest edited, and
 ripe4rust edits no manifest. The plan names the direct crate and its target;
-the caller sees the rest when it applies.
+`check` reports the rest once the agent has applied it
+(ADR-ACheckAfterEveryUnit).
 
 ## Rejected alternatives
 

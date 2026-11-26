@@ -24,3 +24,7 @@ stays the gate on advisories, yanked releases, licences and sources.
 
 One tool, one question. A workspace being behind stays information for an
 upgrade round, never a defect in the change being gated.
+
+`check`'s exit codes (ADR-ACheckAfterEveryUnit) are a different thing: they
+tell the agent how a step it took turned out -- as planned, not as planned,
+or against a stale plan -- and belong to the round, not to a stage.
