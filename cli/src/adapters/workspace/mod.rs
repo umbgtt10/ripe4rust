@@ -12,6 +12,7 @@ pub mod policy_section;
 pub mod requirement_finder;
 pub mod root_names;
 pub mod rust_version_finder;
+pub mod sources;
 pub mod toml_file;
 pub mod toml_values;
 pub mod toolchain_reader;

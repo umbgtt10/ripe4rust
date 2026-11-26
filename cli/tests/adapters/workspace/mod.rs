@@ -12,6 +12,7 @@ pub mod policy_section_tests;
 pub mod requirement_finder_tests;
 pub mod root_names_tests;
 pub mod rust_version_finder_tests;
+pub mod sources;
 pub mod toml_file_tests;
 pub mod toml_values_tests;
 pub mod toolchain_reader_tests;

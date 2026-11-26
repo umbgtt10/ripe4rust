@@ -12,4 +12,5 @@ pub mod recorded;
 pub mod registry;
 pub mod replay_runner;
 pub mod reports;
+pub mod sources;
 pub mod workspace;

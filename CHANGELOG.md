@@ -164,6 +164,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `Scan` names the members whose public API it could not read in full, a file of their library among those it could
   not read. A breaking unit a published one of them uses asks under rule 8, its exposure there not known, as for a
   scan that failed as a whole. The reasons and the question say "not known" where they said "not yet known".
+- What a file's names stand for (`cargo_ripe4rust::adapters::workspace::sources::naming`), the first part of slice
+  4's parse, read with `syn` 2 and `proc-macro2`'s span locations: a member's dependencies by the names its code
+  calls them -- a `package = ...` rename, hyphens as underscores --; every name a file's `use` and `extern crate`
+  items bind, through renames, groups and one another, and the dependencies it glob-imports; and `NameFinder`, every
+  line naming a dependency -- a path rooted at it, a `use` item and every name it binds, a macro by path, by
+  `#[macro_use]` or through a glob, the tokens a macro or an attribute is given, a derive, an attribute the crate
+  owns. A name nothing declares that a glob may have brought -- starting a longer path, or in capitals -- is put down
+  to the file's globs; the standard library's names, built-in attributes, derives and macros never are. A
+  dependency's own name alone in code is a variable's, and an item of the file's own shadows it.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
