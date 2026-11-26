@@ -93,6 +93,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   report. `cargo-deny-missing` where cargo has no `deny` command, `cargo-deny-failed` with the error of its log on
   one line where it could not check. The cli's modules regrouped, at most five folders to a directory:
   `adapters/` for the ports' implementations, `system/` for the seams -- `traits/`, `model/`, `real/`.
+- The registry (`cargo_ripe4rust::adapters::registry`): the sparse index, every release with its yanked flag,
+  `rust_version` and `pubtime`'s day, and the API, a direct dependency's repository, at most a request a second --
+  both through `curl`, as `docs/ADRs/ADR-TheRegistryThroughCurl.md` decides, with a user agent naming the tool,
+  its version and its repository. Every answer is kept in a day cache, `ripe4rust/<date>/` under
+  `$XDG_CACHE_HOME`, `~/.cache` or `%LOCALAPPDATA%`; `--offline` reads the latest day on or before the plan's.
+  Two codes for what it meets: `curl-missing`, and `registry-cache-unusable` where the cache cannot be read or
+  written.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

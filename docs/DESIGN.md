@@ -121,7 +121,9 @@ the API only for a direct dependency's repository, at most one request a
 second, with a user agent that names the tool, its version and its repository
 and nothing personal. Every answer is cached for the day it was read, under
 `~/.cache/ripe4rust/<date>/`; a plan names that date, and with the same cache
-and the same date it is the same plan (ADR-TheIndexForVersionsAndDates).
+and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). The
+requests go through a `curl` process, not an HTTP crate
+(ADR-TheRegistryThroughCurl).
 
 cargo-deny is required. Without it, or when it fails, no plan is produced: a
 plan blind to advisories would call ripe what it should call urgent.
@@ -169,6 +171,20 @@ Where the sections above are silent, the adapters read the inputs this way:
   `cargo-deny-failed` with that error on one line, and cargo answering `no such
   command` is `cargo-deny-missing`. Yanked releases are read from the index,
   not from cargo-deny's own yanked check.
+- **The registry** is read through `curl` (ADR-TheRegistryThroughCurl): a
+  crate's index file at `https://index.crates.io/` under the path its name's
+  length gives it, and the API at `https://crates.io/api/v1/crates/<crate>?include=`,
+  which answers the crate without its versions. The API waits a second before
+  every request after the first; a cached answer costs no request and no wait.
+  The cache is `ripe4rust/` under `$XDG_CACHE_HOME`, or `~/.cache` where it is
+  not set, or `%LOCALAPPDATA%` on Windows, one directory a day,
+  `<date>/index/<crate>` and `<date>/api/<crate>`, each the body as it came; a
+  404 is kept as an empty answer, so an offline plan reads what the online one
+  did. The day is the plan's date, `--date` included: online, an answer the
+  day lacks is fetched and kept under it; `--offline` reads the latest day on or
+  before the plan's date, and an answer it lacks is `registry-unreachable`. A
+  cache that cannot be read or written, or no directory to keep it in, is
+  `registry-cache-unusable`.
 
 ## Which version a unit moves to
 
@@ -463,6 +479,8 @@ The problems the design already names, at least:
 | `cargo-metadata-failed` | error | `cargo metadata` could not run |
 | `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
 | `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
+| `curl-missing` | error | curl is not on the PATH, and the registry is read through it |
+| `registry-cache-unusable` | error | the day cache cannot be read or written, or there is no directory for it |
 | `source-unscanned` | notice | the sources are not parsed yet: no footprint or exposure is known |
 | `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
 

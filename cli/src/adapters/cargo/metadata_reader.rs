@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::adapters::cargo::crates_io::CratesIo;
-use crate::adapters::cargo::unreadable::Unreadable;
+use crate::adapters::unreadable::Unreadable;
 use ripe4rust_core::inputs::locked_package::LockedPackage;
 use ripe4rust_core::inputs::member::Member;
 use ripe4rust_core::inputs::port_failure::PortFailure;

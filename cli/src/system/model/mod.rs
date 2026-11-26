@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod command_output;
+pub mod fetched;
 pub mod file_failure;
 pub mod invocation;
 pub mod launch_failure;

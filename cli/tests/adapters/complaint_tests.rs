@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use cargo_ripe4rust::adapters::cargo::complaint::Complaint;
+use cargo_ripe4rust::adapters::complaint::Complaint;
 use cargo_ripe4rust::system::model::command_output::CommandOutput;
 use cargo_ripe4rust::system::model::launch_failure::LaunchFailure;
 
@@ -50,7 +50,7 @@ fn of_a_recorded_failure_is_cargo_s_error() {
     // Arrange
     let output = ended(
         Some(101),
-        include_str!("../../fixtures/cargo/metadata-nowhere.txt"),
+        include_str!("../fixtures/cargo/metadata-nowhere.txt"),
     );
 
     // Act

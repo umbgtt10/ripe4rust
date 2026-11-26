@@ -18,7 +18,9 @@ pub enum PortFailure {
     CargoMetadataFailed { detail: String },
     CargoUpdateFailed { detail: String },
     CargoUpdateUnrecognised { line: String },
+    CurlMissing,
     Internal { doing: String, detail: String },
+    RegistryCacheUnusable { detail: String },
     RegistryUnreachable { detail: String },
     ToolchainUnreachable { detail: String },
     WorkspaceUnreadable { file: String, detail: String },
@@ -64,10 +66,24 @@ impl PortFailure {
                     "report it at {ISSUES} with the line; no plan is made that could leave a move out"
                 ),
             ),
+            Self::CurlMissing => (
+                DiagnosticCode::CurlMissing,
+                String::from("curl is not installed, and ripe4rust reads the registry through it"),
+                String::from(
+                    "install curl -- Windows 10 and later, macOS and most Linux distributions ship it -- or put it on the PATH, then plan again; or plan with `--offline` to read the cache alone",
+                ),
+            ),
             Self::Internal { doing, detail } => (
                 DiagnosticCode::Internal,
                 format!("ripe4rust failed while {doing}: {detail}"),
                 format!("report it at {ISSUES} with this diagnostic"),
+            ),
+            Self::RegistryCacheUnusable { detail } => (
+                DiagnosticCode::RegistryCacheUnusable,
+                format!("the registry's answers could not be cached: {detail}"),
+                String::from(
+                    "make the cache directory readable and writable, or set `XDG_CACHE_HOME` (`LOCALAPPDATA` on Windows) to one that is, then plan again",
+                ),
             ),
             Self::RegistryUnreachable { detail } => (
                 DiagnosticCode::RegistryUnreachable,

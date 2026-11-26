@@ -35,17 +35,24 @@ impl ReplayRunner {
             .collect()
     }
 
-    pub fn refuse(self, command: &[&str], failure: LaunchFailure) -> Self {
+    pub fn refuse(self, command: &[impl AsRef<str>], failure: LaunchFailure) -> Self {
         self.answer(command, Err(failure))
     }
 
-    pub fn reply(self, command: &[&str], output: CommandOutput) -> Self {
+    pub fn reply(self, command: &[impl AsRef<str>], output: CommandOutput) -> Self {
         self.answer(command, Ok(output))
     }
 
-    fn answer(mut self, command: &[&str], output: Result<CommandOutput, LaunchFailure>) -> Self {
+    fn answer(
+        mut self,
+        command: &[impl AsRef<str>],
+        output: Result<CommandOutput, LaunchFailure>,
+    ) -> Self {
         self.replies.push((
-            command.iter().map(|word| String::from(*word)).collect(),
+            command
+                .iter()
+                .map(|word| String::from(word.as_ref()))
+                .collect(),
             output,
         ));
         self

@@ -2,9 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::adapters::cargo::complaint::Complaint;
 use crate::adapters::cargo::deny::audit_report::AuditReport;
 use crate::adapters::cargo::deny::deny_log::DenyLog;
+use crate::adapters::complaint::Complaint;
 use crate::system::model::invocation::Invocation;
 use crate::system::traits::command_runner::CommandRunner;
 use ripe4rust_core::inputs::advisory::Advisory;

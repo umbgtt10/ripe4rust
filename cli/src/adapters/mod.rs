@@ -3,3 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod cargo;
+pub mod complaint;
+pub mod registry;
+pub mod unreadable;

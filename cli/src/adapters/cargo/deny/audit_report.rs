@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::adapters::cargo::deny::advisory_hit::AdvisoryHit;
-use crate::adapters::cargo::unreadable::Unreadable;
+use crate::adapters::unreadable::Unreadable;
 use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::requirement::Requirement;

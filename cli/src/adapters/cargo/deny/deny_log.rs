@@ -2,9 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::adapters::cargo::complaint::Complaint;
 use crate::adapters::cargo::deny::advisory_hit::AdvisoryHit;
 use crate::adapters::cargo::deny::deny_findings::DenyFindings;
+use crate::adapters::complaint::Complaint;
 use ripe4rust_core::values::version::Version;
 use serde_json::Value;
 use serde_json::from_str;

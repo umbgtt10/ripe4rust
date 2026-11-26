@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::adapters::cargo::complaint::Complaint;
+use crate::adapters::complaint::Complaint;
 use crate::system::model::command_output::CommandOutput;
 use crate::system::model::invocation::Invocation;
 use crate::system::traits::command_runner::CommandRunner;
