@@ -32,6 +32,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   against that version and its yanking, as a compatible unit lists all it clears; it was one row per advisory,
   `advisory:<id>`, so a crate with four advisories took four rows. `check` and `hold` refuse the new ids as they did
   the old, and `guide` names the form.
+- The parse follows an `include!` of a literal path -- the generated code `prost-build` writes, pulled into a
+  module with `include!("generated/x.rs")` -- to the file it names, from the including file's directory as the
+  compiler does, its items in the module the `include!` is in; what that code names counts in the footprint, and in
+  the exposure where the module is public. A breaking unit whose crate only generated code named read "footprint 0
+  lines in 0 files". An included file not there is unparsed at the `include!`'s line.
 
 ## [0.1.0] — 2026-11-26
 

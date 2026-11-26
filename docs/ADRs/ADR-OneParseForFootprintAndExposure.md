@@ -26,6 +26,10 @@ One `syn` parse of the workspace's sources answers both.
 The footprint keeps every location as `file:line`: an asked breaking unit's
 evidence carries them, the work list of its migration. A source file the parse
 cannot read is the warning `source-unparsed`: the footprint may be low.
+The parse follows an `include!` of a literal path to the file it names, from
+the including file's directory as the compiler does: generated code, which a
+build script writes and the sources include, names its crates as often as
+hand-written code does.
 
 Where the parse is wrong -- a type alias, a macro expanding to a public item --
 the policy overrides it per crate: `exposure = { serde = "public" }`.

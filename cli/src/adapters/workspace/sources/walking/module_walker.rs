@@ -4,6 +4,7 @@
 
 use crate::adapters::workspace::root_names::RootNames;
 use crate::adapters::workspace::sources::naming::span_line::SpanLine;
+use crate::adapters::workspace::sources::walking::include_finder::IncludeFinder;
 use crate::adapters::workspace::sources::walking::module_declarations::ModuleDeclarations;
 use crate::adapters::workspace::sources::walking::module_files::ModuleFiles;
 use crate::adapters::workspace::sources::walking::module_source::ModuleSource;
@@ -15,14 +16,18 @@ use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
 use ripe4rust_core::values::location::Location;
 use std::path::Path;
 use syn::parse_file;
+use syn::visit::Visit;
 
 const MOD_RS: &str = "mod.rs";
 const NOT_THERE: &str = "it is not there";
 
 /// A target's modules, from its root through every `mod` item it and its
-/// modules declare, each file read once and parsed with `syn`. A file that
-/// cannot be read or parsed, or that a `mod` item names but is not there, is
-/// unparsed, where to look and why, and its own modules go unread.
+/// modules declare and every file an `include!` of a literal path pulls in --
+/// from the including file's directory, as the compiler finds it, its items in
+/// the module the `include!` is in --, each file read once and parsed with
+/// `syn`. A file that cannot be read or parsed, or that a `mod` item or an
+/// `include!` names but is not there, is unparsed, where to look and why, and
+/// its own modules go unread.
 pub struct ModuleWalker<'a> {
     files: &'a dyn FileSystem,
     root: &'a Path,
@@ -48,6 +53,30 @@ impl<'a> ModuleWalker<'a> {
                     line: declared.line,
                 }),
                 name: Some(declared.name),
+            })
+            .collect()
+    }
+
+    pub fn included(&self, parsed: &ParsedFile) -> Vec<ModuleSource> {
+        let mut finder = IncludeFinder::new(parsed.public, parsed.module.clone());
+        finder.visit_file(&parsed.syntax);
+        let beside = parsed
+            .path
+            .parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_default();
+        finder
+            .found()
+            .into_iter()
+            .map(|included| ModuleSource {
+                candidates: vec![ModuleFiles.resolved(&beside.join(&included.path))],
+                owns_directory: false,
+                public: included.public,
+                declared_at: Some(Location {
+                    file: parsed.name.clone(),
+                    line: included.line,
+                }),
+                name: included.module,
             })
             .collect()
     }
@@ -99,6 +128,7 @@ impl<'a> ModuleWalker<'a> {
             match self.read(&source) {
                 Ok(parsed) if walk.parsed.iter().all(|read| read.path != parsed.path) => {
                     pending.extend(self.children(&parsed, &source));
+                    pending.extend(self.included(&parsed));
                     walk.parsed.push(parsed);
                 }
                 Ok(_) => {}

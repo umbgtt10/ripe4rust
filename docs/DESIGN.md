@@ -262,8 +262,13 @@ Where the sections above are silent, the adapters read the inputs this way:
   `name.rs`, then `name/mod.rs`, beside a file that owns its directory -- a
   root, a `mod.rs`, a file a `#[path]` names -- or under a directory of the
   file's own name otherwise, inline modules adding theirs; a `#[path]` beside
-  the declaring file, `..` resolved. `cfg` is not evaluated: every module
-  declared is read, once a target, and named from the root. A dependency is
+  the declaring file, `..` resolved. An `include!` of a literal path among a
+  file's items or its inline modules' -- generated code, as `prost-build`
+  writes it -- pulls its file in as the compiler does: from the including
+  file's directory, `..` resolved, its items in the module the `include!` is
+  in, public where that module is; one not there is unparsed at the
+  `include!`'s line. `cfg` is not evaluated: every module declared is read,
+  once a target, and named from the root. A dependency is
   known by the name its code calls it, read from what `cargo metadata` says
   of the manifest: the name `package = "..."` renames it to, or the package's,
   hyphens as underscores. A crates.io one's name stands for its package; a
@@ -506,7 +511,8 @@ Where the lines above leave it open, the parse reads a file this way:
   followed in turn, until nothing more is. A `use` short of `pub` re-exports
   nothing.
 - **What it cannot see.** What a macro expands to -- generated items, a
-  derive's expansion, `include!` --, as the ADR accepts; and a dependency whose
+  derive's expansion --, as the ADR accepts, save the file an `include!` of a
+  literal path pulls in, which is read as a file of its own; and a dependency whose
   library is named otherwise than its package, which the manifest does not
   say. The policy's `exposure` is the remedy for
   exposure; the footprint is a floor.

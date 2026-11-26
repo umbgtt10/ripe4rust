@@ -71,6 +71,40 @@ fn children_of_a_file_are_its_modules_where_they_may_be() {
 }
 
 #[test]
+fn included_of_a_file_are_the_files_its_includes_name_from_its_directory() {
+    // Arrange
+    let files = MemoryFiles::new().with(
+        "/work/ws/app/src/net/wire.rs",
+        "\nmod proto {\n    include!(\"../generated/proto.rs\");\n}\n",
+    );
+    let walker = ModuleWalker::new(&files, Path::new("/work/ws"));
+    let parsed = walker
+        .read(&ModuleSource {
+            candidates: vec![PathBuf::from("/work/ws/app/src/net/wire.rs")],
+            owns_directory: false,
+            public: true,
+            declared_at: None,
+            name: Some(String::from("wire")),
+        })
+        .expect("a parsed file");
+
+    // Act
+    let included = walker.included(&parsed);
+
+    // Assert
+    assert_eq!(
+        included,
+        vec![ModuleSource {
+            candidates: vec![PathBuf::from("/work/ws/app/src/generated/proto.rs")],
+            owns_directory: false,
+            public: false,
+            declared_at: Some(at("app/src/net/wire.rs", 3)),
+            name: Some(String::from("proto")),
+        }]
+    );
+}
+
+#[test]
 fn read_of_a_module_is_the_first_of_its_files_there() {
     // Arrange
     let files = MemoryFiles::new().with("/work/ws/app/src/b/mod.rs", "fn f() {}\n");
@@ -106,6 +140,62 @@ fn read_of_a_module_is_the_first_of_its_files_there() {
             false,
             1
         ))
+    );
+}
+
+#[test]
+fn walk_of_a_file_including_another_reads_it_in_the_module_it_is_included_in() {
+    // Arrange
+    let files = MemoryFiles::new()
+        .with(
+            "/work/ws/app-core/src/lib.rs",
+            "pub mod transport;\n",
+        )
+        .with(
+            "/work/ws/app-core/src/transport.rs",
+            "pub mod wire {\n    include!(\"generated/wire.rs\");\n}\ninclude!(\"../shared/extra.rs\");\n",
+        )
+        .with("/work/ws/app-core/src/generated/wire.rs", "pub struct Envelope;\n")
+        .with("/work/ws/app-core/shared/extra.rs", "");
+
+    // Act
+    let walk = walked(&files, "/work/ws/app-core/src/lib.rs");
+
+    // Assert
+    assert_eq!(
+        walk.parsed
+            .iter()
+            .map(|file| (file.name.as_str(), file.public, file.module.as_deref()))
+            .collect::<Vec<_>>(),
+        vec![
+            ("app-core/shared/extra.rs", true, Some("transport")),
+            ("app-core/src/generated/wire.rs", true, Some("wire")),
+            ("app-core/src/lib.rs", true, None),
+            ("app-core/src/transport.rs", true, Some("transport")),
+        ]
+    );
+    assert_eq!(walk.unparsed, Vec::new());
+}
+
+#[test]
+fn walk_of_a_file_including_one_not_there_is_unparsed_at_the_include() {
+    // Arrange
+    let files = MemoryFiles::new().with(
+        "/work/ws/app/src/main.rs",
+        "fn main() {}\ninclude!(\"gone.rs\");\n",
+    );
+
+    // Act
+    let walk = walked(&files, "/work/ws/app/src/main.rs");
+
+    // Assert
+    assert_eq!(
+        walk.unparsed,
+        vec![unparsed(
+            "app/src/gone.rs",
+            at("app/src/main.rs", 2),
+            "it is not there"
+        )]
     );
 }
 
