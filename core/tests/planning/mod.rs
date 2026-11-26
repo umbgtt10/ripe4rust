@@ -3,5 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod choice;
+pub mod judging;
 pub mod pins_and_policy;
 pub mod units;

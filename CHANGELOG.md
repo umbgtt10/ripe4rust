@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- The rules (`ripe4rust_core::planning::judging`): all twelve, each a `Rule` (`ripe4rust_core::traits::rule`) of
+  its own over a unit's facts, applied in order with the first match deciding; the verdict for a breaking unit that
+  asks -- migrate now, plan it, wait --, also carried by rules 7 and 8; against drift, a hold of rule 4 or 9 asked
+  overripe two lines behind or on a stale line, a freeze still holding; the no-gates downgrade; the advisory row,
+  asked and urgent by no rule. Every decision carries its rule, its suggestion, short reasons for the table and,
+  for a unit that asks, why.
 - The units (`ripe4rust_core::planning::units`), from what cargo and the index will hand over -- the lock moves, the
   workspace's members and lock, the advisories (`ripe4rust_core::inputs`): compatible units, a shared move the
   first's, the rest from what no unit reaches, a move pinned with `hold = "all"` held out unless it clears an

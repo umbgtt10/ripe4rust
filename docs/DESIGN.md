@@ -214,11 +214,15 @@ asks it in every workspace that names one.
 A pin holds what its `hold` names (ADR-APinHoldsALine): by default the move to
 a new line, so a crate pinned on its major still takes its patch releases;
 with `hold = "all"`, every move. Rules 4 and 5 apply to a unit only where its
-pin holds what the unit would move.
+pin holds what the unit would move. Where several pins hold it, rule 4 needs
+them all unreleased and holding all of it, and rule 5 takes the first that is
+released.
 
 With no gates declared, nothing can validate a unit, so every unit rules 2,
 10 and 11 would call ripe is reported **ask**, "declare the gates", and the
-plan carries the diagnostic that says so.
+plan carries the diagnostic that says so. The unit keeps the rule that called
+it ripe, and its urgency. An advisory row is decided by no rule: its `rule` is
+null.
 
 ### The verdict for a breaking unit that needs asking
 
@@ -227,6 +231,9 @@ plan carries the diagnostic that says so.
 - **Plan it**: the new line has settled and the footprint is under
   `moderate-footprint`.
 - **Wait**: anything else, with the reason.
+
+A breaking unit that rule 7 or rule 8 asks carries its verdict too, among its
+reasons and as its question's recommendation.
 
 ### Against drift
 
@@ -239,7 +246,10 @@ hold:
 
 Either turns the unit into **ask** with the suggestion "overripe". A freeze
 still holds: it ends on its own date. Rules 1 to 3 already override
-everything.
+everything. "Two majors behind" counts lines -- majors, or minors for `0.x`
+and the toolchain -- among the candidates newer than the line in use, and "a
+newer line" is any of them; the unit keeps the number of the rule whose hold
+it overrides, 4 or 9.
 
 ## Footprint and exposure
 
