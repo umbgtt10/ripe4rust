@@ -15,12 +15,14 @@ use ripe4rust_core::planning::round::guiding::guide::Guide;
 const CHECK: &str = "check";
 const GUIDE: &str = "guide";
 const HOLD: &str = "hold";
+const RELEASE: &str = "--version";
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// The library's entry point, which `main` is a thin shim over: the
 /// command line read, the command it names run over the seams it was given,
-/// and the one document that command prints with the code it exits with; a
-/// command line refused is its diagnostic, exit 2.
+/// and the one document that command prints with the code it exits with --
+/// `--version` the binary and its release, exit 0; a command line refused is
+/// its diagnostic, exit 2.
 pub struct Ripe4rust<'a> {
     seams: Seams<'a>,
 }
@@ -45,6 +47,7 @@ impl<'a> Ripe4rust<'a> {
             CHECK => answer.checked(CheckCommand::new(seams).check(&request)),
             GUIDE => answer.guided(&Guide::new(VERSION).text()),
             HOLD => answer.held(HoldCommand::new(seams).hold(&request)),
+            RELEASE => answer.versioned(VERSION),
             _ => answer.planned(PlanCommand::new(seams).plan(&request)),
         }
     }

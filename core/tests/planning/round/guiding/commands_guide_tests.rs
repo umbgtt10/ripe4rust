@@ -5,7 +5,7 @@
 use ripe4rust_core::planning::round::guiding::commands_guide::CommandsGuide;
 
 #[test]
-fn commands_are_plan_check_hold_and_guide_each_with_its_exit_codes() {
+fn commands_are_plan_check_hold_guide_and_version_each_with_its_exit_codes() {
     // Arrange & Act
     let commands = CommandsGuide.commands();
 
@@ -27,6 +27,7 @@ fn commands_are_plan_check_hold_and_guide_each_with_its_exit_codes() {
             ("check", vec![0, 1, 2, 3]),
             ("hold", vec![0, 2, 3]),
             ("guide", vec![0]),
+            ("--version", vec![0]),
         ]
     );
 }
@@ -60,6 +61,7 @@ fn commands_name_every_option_each_takes() {
                 "--format table|json"
             ],
             vec!["--format table|json"],
+            vec!["-V"],
         ]
     );
 }

@@ -381,3 +381,43 @@ fn read_of_options_without_the_command_is_a_plan() {
     // Assert
     assert_eq!(request, Ok(plan(Format::Table, Some("2026-11-26"), true)));
 }
+
+#[test]
+fn read_of_version_alone_asks_for_the_version_by_either_spelling() {
+    // Arrange & Act
+    let requests = [
+        CommandLine.read(&args(&["ripe4rust", "--version"])),
+        CommandLine.read(&args(&["-V"])),
+    ];
+
+    // Assert
+    assert_eq!(
+        requests.map(|request| request.map(|request| request.command)),
+        [Ok(String::from("--version")), Ok(String::from("--version"))]
+    );
+}
+
+#[test]
+fn read_of_version_as_a_word_is_no_command() {
+    // Arrange & Act
+    let refusal = refused(&["version"]);
+
+    // Assert
+    assert_eq!(refusal.1, "`version` is not a command of ripe4rust");
+}
+
+#[test]
+fn read_of_version_given_an_option_is_usage_invalid() {
+    // Arrange & Act
+    let refusal = refused(&["--version", "--offline"]);
+
+    // Assert
+    assert_eq!(
+        refusal,
+        (
+            DiagnosticCode::UsageInvalid,
+            String::from("`--offline` is not an option of `--version`"),
+            String::from("run `cargo ripe4rust --version`")
+        )
+    );
+}

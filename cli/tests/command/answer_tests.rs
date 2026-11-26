@@ -97,3 +97,27 @@ fn planned_of_a_plan_exits_zero_whatever_it_says() {
         ran.output
     );
 }
+
+#[test]
+fn versioned_prints_the_binary_and_its_release_in_either_format_and_exits_zero() {
+    // Arrange & Act
+    let ran = [
+        Answer::new(Format::Table, "--version").versioned("9.8.7"),
+        Answer::new(Format::Json, "--version").versioned("9.8.7"),
+    ];
+
+    // Assert
+    assert_eq!(
+        ran,
+        [
+            Ran {
+                output: String::from("cargo-ripe4rust 9.8.7\n"),
+                code: 0
+            },
+            Ran {
+                output: String::from("cargo-ripe4rust 9.8.7\n"),
+                code: 0
+            }
+        ]
+    );
+}

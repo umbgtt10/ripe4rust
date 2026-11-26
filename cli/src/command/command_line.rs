@@ -12,7 +12,9 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 
 const SUBCOMMAND: &str = "ripe4rust";
 const PLAN: &str = "plan";
-const COMMANDS: [CommandSpec; 4] = [
+const VERSION: &str = "--version";
+const VERSION_SHORT: &str = "-V";
+const COMMANDS: [CommandSpec; 5] = [
     CommandSpec {
         name: PLAN,
         usage: "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]`",
@@ -41,14 +43,21 @@ const COMMANDS: [CommandSpec; 4] = [
         unit: false,
         required: &[],
     },
+    CommandSpec {
+        name: VERSION,
+        usage: "run `cargo ripe4rust --version`",
+        options: &[],
+        unit: false,
+        required: &[],
+    },
 ];
 
 /// The command line: `cargo ripe4rust [plan] [--format table|json] [--date
 /// YYYY-MM-DD] [--offline]`, `cargo ripe4rust check <unit> --plan <file>
 /// [--format table|json]`, `cargo ripe4rust hold <unit> --plan <file>
 /// --because <text> [--review YYYY-MM-DD] [--format table|json]` or `cargo
-/// ripe4rust guide [--format table|json]`, the subcommand's own name cargo
-/// passes first skipped. Anything it does not know is refused with a
+/// ripe4rust guide [--format table|json]` or `cargo ripe4rust --version`,
+/// `-V` alike, the subcommand's own name cargo passes first skipped. Anything it does not know is refused with a
 /// diagnostic, in the format the line asked for.
 pub struct CommandLine;
 
@@ -58,6 +67,7 @@ impl CommandLine {
         let words = words.strip_prefix(&[SUBCOMMAND]).unwrap_or(&words);
         let format = Self::asked_format(words);
         let (command, options) = match words.split_first() {
+            Some((&(VERSION | VERSION_SHORT), options)) => (VERSION, options),
             Some((word, options)) if !word.starts_with('-') => (*word, options),
             _ => (PLAN, words),
         };

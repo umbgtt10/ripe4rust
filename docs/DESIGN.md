@@ -836,8 +836,10 @@ text: `check <unit>: as planned` or `not as planned`, the tail as
 | `cargo ripe4rust check <unit> --plan <file>` | compares the workspace with what the unit should have done | `0` as planned; `1` not as planned; `2` could not check; `3` the plan is stale |
 | `cargo ripe4rust hold <unit> --plan <file> --because <text> [--review <date>]` | prints the pin that holds the unit, and where it goes | `0` printed; `2` could not; `3` the plan is stale |
 | `cargo ripe4rust guide` | prints the round, every diagnostic code and its remedy, and the document's fields | `0` |
+| `cargo ripe4rust --version` | prints `cargo-ripe4rust <version>`, `-V` alike | `0` |
 
-Every command takes `--format table|json`. `plan` also takes `--date
+Every command but `--version`, which takes nothing and prints its one line,
+takes `--format table|json`. `plan` also takes `--date
 <YYYY-MM-DD>`, for a reproducible plan, and `--offline`, to read the cache
 only -- and to keep cargo and cargo-deny off the network too, so an offline
 plan reaches none. With no command, the command is `plan`; the name cargo

@@ -21,7 +21,7 @@ const PLAN: (&str, &str) = (
     "the plan `plan --format json` wrote, named from the directory the command runs in or by an absolute path",
 );
 
-const COMMANDS: [Entry; 4] = [
+const COMMANDS: [Entry; 5] = [
     Entry {
         usage: "cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]",
         does: "decides, for every upgrade the workspace could take, whether it is ripe, worth asking about, or not yet, and prints the plan; it never applies",
@@ -94,6 +94,12 @@ const COMMANDS: [Entry; 4] = [
         does: "prints the round, every command, every diagnostic code with its remedy, and the fields of the documents, versioned with the binary",
         options: &[FORMAT],
         exits: &[(0, "the guide is printed")],
+    },
+    Entry {
+        usage: "cargo ripe4rust --version",
+        does: "prints `cargo-ripe4rust <version>`, the release of the binary, and nothing else; it reads nothing",
+        options: &[("-V", "the same, shorter")],
+        exits: &[(0, "the release is printed")],
     },
 ];
 
