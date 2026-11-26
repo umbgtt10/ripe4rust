@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   enabled once a clone by `just hooks`.
 - Tests for what 0.0.1 holds: `Outcome::label`'s three labels, and the command's exit code 2, its one line on stderr
   and nothing on stdout.
+- `CLAUDE.md`: what ripe4rust is -- the design settled, the implementation in slices --, its boundary, its layout,
+  the gates and the score hook, the rules every slice keeps, and the owner's strict rules and coding standards.
 - This changelog.
 
 ### Changed
