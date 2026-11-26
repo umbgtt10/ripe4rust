@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-11-26
+
+What the first dry round found, with 0.1.0 across 32 workspaces: a git source moving stopped the plan, a
+crate that stays read as moving to itself, `include!` went unread, a move back went unsaid, a missing lock was taken
+for an outdated one, and the small ones.
+
 ### Fixed
 - `cargo ripe4rust --version`, and `-V`, print `cargo-ripe4rust <version>` and exit 0, where they were refused as
   `usage-invalid`; `guide` lists it among the commands.

@@ -4,7 +4,8 @@ Status: settled 2026-11-26; the agent's contract added the same day. Every
 slice of "Delivery" is implemented: the scaffolding, the core with the
 renderers, the adapters with `plan` end to end, the round's commands, `check`,
 `hold` and `guide`, the parse of the sources, and the toolchain unit, released
-as 0.1.0. Next is the first dry round across real workspaces. The decisions that were not
+as 0.1.0. The first dry round across real workspaces ran with it, and 0.1.1
+fixes what it found. The decisions that were not
 obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
@@ -1098,7 +1099,7 @@ document's keys and holds each to a field of the guide.
 {
   "schema": 1,
   "command": "guide",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "round": ["1. Run `cargo ripe4rust plan --format json > plan.json`.", "..."],
   "commands": [
     { "usage": "cargo ripe4rust check <unit> --plan <file> [--format table|json]",

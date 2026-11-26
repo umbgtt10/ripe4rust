@@ -10,7 +10,7 @@ checksum = "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
 
 [[package]]
 name = "cargo-ripe4rust"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "proc-macro2",
  "ripe4rust-core",
@@ -132,7 +132,7 @@ checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 
 [[package]]
 name = "ripe4rust-core"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "rustix"
