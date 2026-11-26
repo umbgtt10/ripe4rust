@@ -36,7 +36,14 @@ fn facts_of_a_breaking_unit_gather_what_the_rules_read() {
     assert_eq!(facts.exposed_in, vec![String::from("app-core")]);
     assert_eq!(facts.raises.len(), 2);
     assert_eq!(facts.lines_behind, 1);
-    assert_eq!(facts.footprint, Some(Footprint { lines: 3, files: 2 }));
+    assert_eq!(
+        facts.footprint,
+        Some(Footprint {
+            lines: 3,
+            files: 2,
+            complete: true
+        })
+    );
     assert_eq!(facts.gates, 2);
     assert_eq!(facts.freeze, None);
     assert!(!facts.fully_held);

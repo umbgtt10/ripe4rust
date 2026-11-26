@@ -149,7 +149,8 @@
         "footprint": [],
         "held_back": [],
         "held": [],
-        "downgrades": []
+        "downgrades": [],
+        "unfollowed_includes": []
       }
     },
     {
@@ -234,7 +235,8 @@
         ],
         "held_back": [],
         "held": [],
-        "downgrades": []
+        "downgrades": [],
+        "unfollowed_includes": []
       }
     },
     {
@@ -293,7 +295,8 @@
         "footprint": [],
         "held_back": [],
         "held": [],
-        "downgrades": []
+        "downgrades": [],
+        "unfollowed_includes": []
       }
     },
     {
@@ -384,7 +387,8 @@
         ],
         "held_back": [],
         "held": [],
-        "downgrades": []
+        "downgrades": [],
+        "unfollowed_includes": []
       }
     },
     {
@@ -443,7 +447,8 @@
         "footprint": [],
         "held_back": [],
         "held": [],
-        "downgrades": []
+        "downgrades": [],
+        "unfollowed_includes": []
       }
     },
     {
@@ -514,7 +519,8 @@
         "footprint": [],
         "held_back": [],
         "held": [],
-        "downgrades": []
+        "downgrades": [],
+        "unfollowed_includes": []
       }
     },
     {
@@ -592,7 +598,8 @@
         "footprint": [],
         "held_back": [],
         "held": [],
-        "downgrades": []
+        "downgrades": [],
+        "unfollowed_includes": []
       }
     }
   ]

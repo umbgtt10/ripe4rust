@@ -14,6 +14,7 @@ use cargo_ripe4rust::adapters::workspace::sources::source_scanner::SourceScanner
 use ripe4rust_core::inputs::crate_use::CrateUse;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::scan::Scan;
+use ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude;
 use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
 use ripe4rust_core::traits::source_scan::SourceScan;
 use ripe4rust_core::values::location::Location;
@@ -39,6 +40,7 @@ fn found(named: &[(&str, Location)], exposed: &[&str]) -> MemberFindings {
         unparsed: Vec::new(),
         api_unread: false,
         parsed: 1,
+        unfollowed: Vec::new(),
     }
 }
 
@@ -64,6 +66,32 @@ fn scan_of_a_library_that_does_not_parse_names_it_and_its_api_unread() {
     assert_eq!(
         scan.map(|scan| scan.map(|scan| (scan.unparsed.len(), scan.unread_apis))),
         Ok(Some((1, vec![String::from("app-core")])))
+    );
+}
+
+#[test]
+fn scan_of_a_member_including_code_it_cannot_follow_names_the_member_and_where() {
+    // Arrange
+    let runner = layout();
+    let source = CargoLayout::new(&runner, PathBuf::from("/work/ws"));
+    let files = files().with(
+        "/work/ws/app/src/main.rs",
+        "tonic::include_proto!(\"wire\");\nfn main() {}\n",
+    );
+
+    // Act
+    let scan = SourceScanner::new(&source, &files)
+        .scan()
+        .expect("a scan")
+        .expect("a scan that read files");
+
+    // Assert
+    assert_eq!(
+        scan.unfollowed,
+        vec![UnfollowedInclude {
+            member: String::from("app"),
+            at: at("app/src/main.rs", 1),
+        }]
     );
 }
 
@@ -120,6 +148,7 @@ fn scan_of_the_recorded_workspace_is_every_crate_named_where_and_where_exposed()
             ],
             unparsed: Vec::new(),
             unread_apis: Vec::new(),
+            unfollowed: Vec::new(),
         }))
     );
 }

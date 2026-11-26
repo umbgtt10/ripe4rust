@@ -167,6 +167,7 @@ fn scan() -> Scan {
         ],
         unparsed: Vec::new(),
         unread_apis: Vec::new(),
+        unfollowed: Vec::new(),
     }
 }
 

@@ -18,6 +18,7 @@ pub mod release;
 pub mod resolved_dependency;
 pub mod scan;
 pub mod toolchain_file;
+pub mod unfollowed_include;
 pub mod unparsed_file;
 pub mod workspace;
 pub mod written_line;

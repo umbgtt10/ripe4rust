@@ -6,6 +6,7 @@ use crate::support::facts::facts;
 use crate::support::facts::pinned;
 use crate::support::releases::version;
 use ripe4rust_core::inputs::advisory::Advisory;
+use ripe4rust_core::planning::judging::footprint::Footprint;
 use ripe4rust_core::planning::judging::unit_facts::UnitFacts;
 use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::planning::units::unit_id::UnitId;
@@ -117,6 +118,28 @@ fn option_of_migrate_now_names_the_work_list() {
                 "apply it as a ripe unit; the footprint's 42 locations are the work list"
             ),
         }
+    );
+}
+
+#[test]
+fn option_of_migrate_now_with_a_footprint_that_is_a_floor_says_so() {
+    // Arrange
+    let floor = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 3,
+            files: 1,
+            complete: false,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let (_, then) = means_and_then(Answer::MigrateNow, &floor);
+
+    // Assert
+    assert_eq!(
+        then,
+        "apply it as a ripe unit; the footprint's 3 locations are a floor of the work list, as code is included the parse cannot follow: the build's errors name the rest"
     );
 }
 

@@ -9,14 +9,15 @@ use crate::system::traits::layout_source::LayoutSource;
 use ripe4rust_core::inputs::crate_use::CrateUse;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::scan::Scan;
+use ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude;
 use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
 use ripe4rust_core::traits::source_scan::SourceScan;
 
 /// The workspace's sources parsed with `syn`, every member's targets as the
 /// layout lists them: for every crates.io dependency named, every `file:line`
 /// naming it and the members whose public API it reaches, the files the parse
-/// could not read, and the members whose public API it could not read in
-/// full. Where it read not one file of all it tried, the scan failed as a
+/// could not read, the members whose public API it could not read in full,
+/// and where a member includes code it could not follow. Where it read not one file of all it tried, the scan failed as a
 /// whole, and nothing is known.
 pub struct SourceScanner<'a> {
     source: &'a dyn LayoutSource,
@@ -26,6 +27,20 @@ pub struct SourceScanner<'a> {
 impl<'a> SourceScanner<'a> {
     pub fn new(source: &'a dyn LayoutSource, files: &'a dyn FileSystem) -> Self {
         Self { source, files }
+    }
+
+    pub fn unfollowed(&self, members: &[(String, MemberFindings)]) -> Vec<UnfollowedInclude> {
+        let mut unfollowed = members
+            .iter()
+            .flat_map(|(member, found)| {
+                found.unfollowed.iter().map(|at| UnfollowedInclude {
+                    member: member.clone(),
+                    at: at.clone(),
+                })
+            })
+            .collect::<Vec<UnfollowedInclude>>();
+        unfollowed.dedup();
+        unfollowed
     }
 
     pub fn unparsed(&self, members: &[(String, MemberFindings)]) -> Vec<UnparsedFile> {
@@ -98,6 +113,7 @@ impl SourceScan for SourceScanner<'_> {
                 .filter(|(_, found)| found.api_unread)
                 .map(|(member, _)| member.clone())
                 .collect(),
+            unfollowed: self.unfollowed(&members),
         }))
     }
 }

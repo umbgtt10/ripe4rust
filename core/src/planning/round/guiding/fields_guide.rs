@@ -6,7 +6,7 @@ use crate::planning::round::guiding::field_guide::FieldGuide;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-const FIELDS: [(&str, &str, &str); 119] = [
+const FIELDS: [(&str, &str, &str); 120] = [
     (
         "every",
         "schema",
@@ -336,6 +336,11 @@ const FIELDS: [(&str, &str, &str); 119] = [
         "plan",
         "units[].evidence.downgrades[].to",
         "the lower version it takes",
+    ),
+    (
+        "plan",
+        "units[].evidence.unfollowed_includes",
+        "a breaking unit's: every `include!` the parse could not follow -- its path no literal, or generated code as `include_proto!` writes it -- in the members using the crate, as `file:line`; where there is one, the footprint is a floor, never small",
     ),
     ("check", "unit", "the unit, or the move of a split, checked"),
     (

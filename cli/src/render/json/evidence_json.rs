@@ -34,6 +34,11 @@ impl EvidenceJson {
                 .iter()
                 .map(|downgrade| MoveJson.document(downgrade))
                 .collect(),
+            unfollowed_includes: evidence
+                .unfollowed_includes
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
         }
     }
 }

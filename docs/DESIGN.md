@@ -358,7 +358,7 @@ Applied in order to every unit; the first that matches decides.
 | 8 | breaking, and the crate's types are in a published crate's public API, or the unit raises a published crate's `rust-version` | **ask** | the upgrade is a breaking change of ours too |
 | 9 | breaking or toolchain, and the new line is young | **ripening** | until it settles |
 | 10 | compatible or toolchain | **ripe** | -- (a red gate turns it into a hold) |
-| 11 | breaking, footprint under `small-footprint` | **ripe** | -- (a red gate turns it into ask) |
+| 11 | breaking, footprint under `small-footprint`, and no floor | **ripe** | -- (a red gate turns it into ask) |
 | 12 | breaking | **ask** | migrate now / plan it / wait, by the verdict below |
 
 Rules 1 to 3: an upgrade that removes an advisory or a yanked release and stays
@@ -512,7 +512,15 @@ Where the lines above leave it open, the parse reads a file this way:
   nothing.
 - **What it cannot see.** What a macro expands to -- generated items, a
   derive's expansion --, as the ADR accepts, save the file an `include!` of a
-  literal path pulls in, which is read as a file of its own; and a dependency whose
+  literal path pulls in, which is read as a file of its own. An `include!` it
+  cannot follow -- its path no literal, `concat!(env!("OUT_DIR"), ...)`, or
+  in an expression -- and a macro that includes generated code,
+  `include_proto!`, are named where they are, and make the footprint of
+  every crate the member holding them uses a floor: never small under rule
+  11, the verdict "wait", the reason "footprint at least N lines in M files:
+  code is included the parse cannot follow" -- or "named nowhere the parse
+  could read" for none --, and the unit's evidence lists them as
+  `unfollowed_includes`; and a dependency whose
   library is named otherwise than its package, which the manifest does not
   say. The policy's `exposure` is the remedy for
   exposure; the footprint is a floor.
@@ -747,8 +755,9 @@ for the toolchain -- and its `reasons`, the table's last column; an `apply`
 step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
-release, the moves a pin holds out of the unit, and the moves to a lower
-version it makes. The workspace's `lines` are
+release, the moves a pin holds out of the unit, the moves to a lower
+version it makes, and the includes a breaking unit's footprint could not
+follow. The workspace's `lines` are
 every line a unit's `apply` can edit, as the plan found it written: each
 crates.io dependency's requirement in every manifest, `key` the crate; each
 member's `rust-version`, its own or the one it inherits; and
@@ -756,7 +765,7 @@ member's `rust-version`, its own or the one it inherits; and
 the toolchain file with. Every object's keys come in the order shown, at
 every depth: a unit's `members` after `crate` and its
 `reasons` after `suggestion`; the evidence's `footprint`, `held_back`,
-`held` and `downgrades` after `yanked_in_use`; the line in use as `line`, `first_release`,
+`held`, `downgrades` and `unfollowed_includes` after `yanked_in_use`; the line in use as `line`, `first_release`,
 `last_release`, `releases`. A document for a failure carries `schema`,
 `command` and `diagnostics` alone.
 

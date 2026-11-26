@@ -12,6 +12,7 @@ use crate::support::units::breaking;
 use crate::support::units::compatible;
 use crate::support::units::moved;
 use ripe4rust_core::inputs::advisory::Advisory;
+use ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude;
 use ripe4rust_core::planning::judging::facts::plan_context::PlanContext;
 use ripe4rust_core::planning::units::choice::line_stats::LineStats;
 use ripe4rust_core::planning::units::concern::Concern;
@@ -55,7 +56,37 @@ fn evidence_of_a_breaking_unit_carries_its_work_list() {
             held_back: Vec::new(),
             held: Vec::new(),
             downgrades: Vec::new(),
+            unfollowed_includes: Vec::new(),
         }
+    );
+}
+
+#[test]
+fn evidence_of_a_breaking_unit_names_the_includes_its_footprint_could_not_follow() {
+    // Arrange
+    let mut surveyed = surveyed();
+    if let Some(scan) = surveyed.scan.as_mut() {
+        scan.unfollowed = vec![UnfollowedInclude {
+            member: String::from("app"),
+            at: at("app/src/wire.rs", 2),
+        }];
+    }
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let evidence = [
+        EvidenceWriter::new(&context).evidence(&breaking("gadget", "0.13.1", "0.14.0"), &[]),
+        EvidenceWriter::new(&context).evidence(
+            &compatible("gadget", vec![moved("gadget", "0.13.0", "0.13.1")]),
+            &[],
+        ),
+    ];
+
+    // Assert
+    assert_eq!(
+        evidence.map(|evidence| evidence.unfollowed_includes),
+        [vec![at("app/src/wire.rs", 2)], Vec::new()]
     );
 }
 

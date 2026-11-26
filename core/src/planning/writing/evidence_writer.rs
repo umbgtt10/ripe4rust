@@ -32,10 +32,17 @@ impl<'a> EvidenceWriter<'a> {
             .zip(OwnMove.lands_on(unit))
             .filter(|_| unit.kind != UnitKind::Toolchain)
             .and_then(|(name, to)| self.context.histories().get(name)?.rust_version_of(to));
-        let footprint = if unit.kind == UnitKind::Breaking {
-            Footprints::new(self.context.surveyed().scan.as_ref()).locations(&unit.members)
+        let footprints = Footprints::new(
+            self.context.surveyed().scan.as_ref(),
+            &self.context.surveyed().workspace.members,
+        );
+        let (footprint, unfollowed_includes) = if unit.kind == UnitKind::Breaking {
+            (
+                footprints.locations(&unit.members),
+                footprints.unfollowed(&unit.members),
+            )
         } else {
-            Vec::new()
+            (Vec::new(), Vec::new())
         };
         Evidence {
             line_in_use: LineReview::new(self.context)
@@ -62,6 +69,7 @@ impl<'a> EvidenceWriter<'a> {
                     to: Some(downgrade.to),
                 })
                 .collect(),
+            unfollowed_includes,
         }
     }
 }

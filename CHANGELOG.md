@@ -37,6 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   compiler does, its items in the module the `include!` is in; what that code names counts in the footprint, and in
   the exposure where the module is public. A breaking unit whose crate only generated code named read "footprint 0
   lines in 0 files". An included file not there is unparsed at the `include!`'s line.
+- An `include!` the parse cannot follow -- its path no literal, `concat!(env!("OUT_DIR"), ...)`, or in an
+  expression -- and a macro that includes generated code, `include_proto!`, no longer leave a footprint that reads
+  as exact: each is named where it is, and the footprint of every crate the member holding it uses is a floor --
+  never small under rule 11, the verdict "wait", the reason "footprint at least N lines in M files: code is included
+  the parse cannot follow", or "named nowhere the parse could read" for none -- and the unit's evidence lists them as
+  `unfollowed_includes`. The scan carries them (`ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude`).
 
 ## [0.1.0] — 2026-11-26
 

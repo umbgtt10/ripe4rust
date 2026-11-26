@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::crate_use::CrateUse;
+use crate::inputs::unfollowed_include::UnfollowedInclude;
 use crate::inputs::unparsed_file::UnparsedFile;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -16,4 +17,5 @@ pub struct Scan {
     pub uses: Vec<CrateUse>,
     pub unparsed: Vec<UnparsedFile>,
     pub unread_apis: Vec<String>,
+    pub unfollowed: Vec<UnfollowedInclude>,
 }

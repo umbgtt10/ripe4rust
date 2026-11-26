@@ -25,9 +25,9 @@ const NOT_THERE: &str = "it is not there";
 /// modules declare and every file an `include!` of a literal path pulls in --
 /// from the including file's directory, as the compiler finds it, its items in
 /// the module the `include!` is in --, each file read once and parsed with
-/// `syn`. A file that cannot be read or parsed, or that a `mod` item or an
-/// `include!` names but is not there, is unparsed, where to look and why, and
-/// its own modules go unread.
+/// `syn`; and where it includes code it cannot follow. A file that cannot be
+/// read or parsed, or that a `mod` item or an `include!` names but is not
+/// there, is unparsed, where to look and why, and its own modules go unread.
 pub struct ModuleWalker<'a> {
     files: &'a dyn FileSystem,
     root: &'a Path,
@@ -112,6 +112,19 @@ impl<'a> ModuleWalker<'a> {
         Err(self.missing(source))
     }
 
+    pub fn unfollowed(&self, parsed: &ParsedFile) -> Vec<Location> {
+        let mut finder = IncludeFinder::new(parsed.public, parsed.module.clone());
+        finder.visit_file(&parsed.syntax);
+        finder
+            .unfollowed()
+            .into_iter()
+            .map(|line| Location {
+                file: parsed.name.clone(),
+                line,
+            })
+            .collect()
+    }
+
     pub fn walk(&self, target: &Path) -> Walk {
         let mut pending = vec![ModuleSource {
             candidates: vec![target.to_path_buf()],
@@ -123,12 +136,14 @@ impl<'a> ModuleWalker<'a> {
         let mut walk = Walk {
             parsed: Vec::new(),
             unparsed: Vec::new(),
+            unfollowed: Vec::new(),
         };
         while let Some(source) = pending.pop() {
             match self.read(&source) {
                 Ok(parsed) if walk.parsed.iter().all(|read| read.path != parsed.path) => {
                     pending.extend(self.children(&parsed, &source));
                     pending.extend(self.included(&parsed));
+                    walk.unfollowed.extend(self.unfollowed(&parsed));
                     walk.parsed.push(parsed);
                 }
                 Ok(_) => {}

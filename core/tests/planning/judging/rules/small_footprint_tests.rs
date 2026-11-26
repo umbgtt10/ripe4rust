@@ -18,6 +18,7 @@ fn decide_of_a_breaking_unit_at_the_small_footprint_is_none() {
         footprint: Some(Footprint {
             lines: 10,
             files: 2,
+            complete: true,
         }),
         ..facts(UnitKind::Breaking)
     };
@@ -33,7 +34,11 @@ fn decide_of_a_breaking_unit_at_the_small_footprint_is_none() {
 fn decide_of_a_breaking_unit_under_the_small_footprint_is_ripe() {
     // Arrange
     let small = UnitFacts {
-        footprint: Some(Footprint { lines: 9, files: 2 }),
+        footprint: Some(Footprint {
+            lines: 9,
+            files: 2,
+            complete: true,
+        }),
         ..facts(UnitKind::Breaking)
     };
 
@@ -52,6 +57,25 @@ fn decide_of_a_breaking_unit_under_the_small_footprint_is_ripe() {
             why: None,
         })
     );
+}
+
+#[test]
+fn decide_of_a_breaking_unit_whose_footprint_is_a_floor_is_none() {
+    // Arrange
+    let floor = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 2,
+            files: 1,
+            complete: false,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = SmallFootprint.decide(&floor);
+
+    // Assert
+    assert_eq!(decision, None);
 }
 
 #[test]

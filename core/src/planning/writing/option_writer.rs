@@ -117,6 +117,10 @@ impl<'a> OptionWriter<'a> {
 
     fn work_list(&self) -> String {
         match self.facts.footprint {
+            Some(footprint) if !footprint.complete => format!(
+                "apply it as a ripe unit; the footprint's {} are a floor of the work list, as code is included the parse cannot follow: the build's errors name the rest",
+                Wording.count(footprint.lines, "location")
+            ),
             Some(footprint) => format!(
                 "apply it as a ripe unit; the footprint's {} are the work list",
                 Wording.count(footprint.lines, "location")

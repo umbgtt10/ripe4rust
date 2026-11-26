@@ -13,7 +13,7 @@ use alloc::string::String;
 /// use is stale while the new one is active, or migrating removes a second
 /// copy; plan it where the new line has settled and the footprint is under
 /// `moderate-footprint`; wait otherwise, with the reason -- a footprint not
-/// known among them.
+/// known, or a floor, among them.
 pub struct Verdict;
 
 impl Verdict {
@@ -57,11 +57,13 @@ impl Verdict {
                 reason: String::from("footprint not known"),
             };
         };
-        let footprint = format!(
-            "footprint {} in {}",
-            Wording.count(known.lines, "line"),
-            Wording.count(known.files, "file")
-        );
+        let footprint = Wording.footprint(known);
+        if !known.complete {
+            return VerdictCall {
+                suggestion: Suggestion::Wait,
+                reason: footprint,
+            };
+        }
         if known.lines < facts.moderate_footprint {
             VerdictCall {
                 suggestion: Suggestion::PlanIt,

@@ -7,21 +7,26 @@ use crate::adapters::workspace::sources::walking::included_file::IncludedFile;
 use syn::ItemMacro;
 use syn::ItemMod;
 use syn::LitStr;
+use syn::Macro;
 use syn::Visibility;
 use syn::ext::IdentExt;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
 const INCLUDE: &str = "include";
+const GENERATED: [&str; 1] = ["include_proto"];
 
 /// The `include!`s of a literal path among a file's items and its inline
 /// modules', each with the module its items land in and whether they are
 /// reachable through `pub mod` declarations: the file is, and every inline
-/// module on the way is `pub`.
+/// module on the way is `pub`; and the lines of those it cannot follow -- an
+/// `include!` whose path is no literal, or one in an expression, and a macro
+/// that includes generated code, `include_proto!`.
 pub struct IncludeFinder {
     public: bool,
     module: Option<String>,
     found: Vec<IncludedFile>,
+    unfollowed: Vec<u32>,
 }
 
 impl IncludeFinder {
@@ -30,29 +35,44 @@ impl IncludeFinder {
             public,
             module,
             found: Vec::new(),
+            unfollowed: Vec::new(),
         }
     }
 
     pub fn found(&self) -> Vec<IncludedFile> {
         self.found.clone()
     }
+
+    pub fn unfollowed(&self) -> Vec<u32> {
+        self.unfollowed.clone()
+    }
+
+    fn named(mac: &Macro) -> Option<String> {
+        let name = mac.path.segments.last()?.ident.to_string();
+        (name == INCLUDE || GENERATED.contains(&name.as_str())).then_some(name)
+    }
 }
 
 impl<'ast> Visit<'ast> for IncludeFinder {
     fn visit_item_macro(&mut self, item: &'ast ItemMacro) {
-        let named = item
-            .mac
-            .path
-            .segments
-            .last()
-            .is_some_and(|segment| segment.ident == INCLUDE);
-        if let (true, Ok(path)) = (named, item.mac.parse_body::<LitStr>()) {
-            self.found.push(IncludedFile {
+        let Some(name) = Self::named(&item.mac) else {
+            return;
+        };
+        let line = SpanLine.of(item.mac.path.span());
+        match item.mac.parse_body::<LitStr>() {
+            Ok(path) if name == INCLUDE => self.found.push(IncludedFile {
                 path: path.value(),
-                line: SpanLine.of(item.mac.path.span()),
+                line,
                 public: self.public,
                 module: self.module.clone(),
-            });
+            }),
+            _ => self.unfollowed.push(line),
+        }
+    }
+
+    fn visit_macro(&mut self, mac: &'ast Macro) {
+        if Self::named(mac).is_some() {
+            self.unfollowed.push(SpanLine.of(mac.path.span()));
         }
     }
 

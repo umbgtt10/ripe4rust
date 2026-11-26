@@ -75,6 +75,10 @@ impl<'a> MemberScanner<'a> {
                 .collect(),
             api_unread: targets.iter().any(|found| found.api_unread),
             parsed: targets.iter().map(|found| found.parsed).sum(),
+            unfollowed: targets
+                .iter()
+                .flat_map(|found| found.unfollowed.clone())
+                .collect(),
         }
     }
 
@@ -113,6 +117,7 @@ impl<'a> MemberScanner<'a> {
             api_unread: api && !walk.unparsed.is_empty(),
             parsed: walk.parsed.len(),
             unparsed: walk.unparsed,
+            unfollowed: walk.unfollowed,
         }
     }
 }

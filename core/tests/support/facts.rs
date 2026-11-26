@@ -35,6 +35,7 @@ pub fn facts(kind: UnitKind) -> UnitFacts {
         footprint: Some(Footprint {
             lines: 42,
             files: 7,
+            complete: true,
         }),
         removes_copy: false,
         held_back: 0,

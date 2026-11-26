@@ -53,6 +53,7 @@ fn document_of_a_compatible_unit_is_the_design_s_shape() {
                 "held_back": [],
                 "held": [],
                 "downgrades": [],
+                "unfollowed_includes": [],
             },
         })
     );

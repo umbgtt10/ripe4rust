@@ -119,7 +119,7 @@ fn plan_prints_every_object_s_keys_in_the_design_s_order() {
         r#""outcome":"ripe","urgent":false,"rule":10,"suggestion":null,"reasons":["compatible"],"summary":"#,
         r#""steps":{"apply":[{"run":"cargoupdate--recursive-pwidget"}],"check":"#,
         r#""revert":{"restore":["Cargo.lock"],"run":"gitrestore--Cargo.lock"},"split":[{"id":"compatible:widget/widget","apply":["#,
-        r#""question":null,"evidence":{"line_in_use":{"line":"4.x","first_release":"2022-01-01","last_release":"2026-10-02","releases":41},"rust_version":"1.74","advisories":[],"yanked_in_use":false,"footprint":[],"held_back":[],"held":[],"downgrades":[]}"#,
+        r#""question":null,"evidence":{"line_in_use":{"line":"4.x","first_release":"2022-01-01","last_release":"2026-10-02","releases":41},"rust_version":"1.74","advisories":[],"yanked_in_use":false,"footprint":[],"held_back":[],"held":[],"downgrades":[],"unfollowed_includes":[]}"#,
         r#"{"edit":"Cargo.toml:22","key":"gadget","value":"0.14.0"}"#,
         r#""question":{"title":"Movegadgetto0.14.0?","why":"#,
         r#""options":[{"answer":"wait","means":"notnow","then":"#,

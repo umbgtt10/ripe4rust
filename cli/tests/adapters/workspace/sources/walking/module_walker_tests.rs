@@ -144,6 +144,31 @@ fn read_of_a_module_is_the_first_of_its_files_there() {
 }
 
 #[test]
+fn unfollowed_of_a_file_are_where_it_includes_code_the_parse_cannot_follow() {
+    // Arrange
+    let files = MemoryFiles::new().with(
+        "/work/ws/app/src/wire.rs",
+        "include!(\"followed.rs\");\n\ntonic::include_proto!(\"wire\");\n",
+    );
+    let walker = ModuleWalker::new(&files, Path::new("/work/ws"));
+    let parsed = walker
+        .read(&ModuleSource {
+            candidates: vec![PathBuf::from("/work/ws/app/src/wire.rs")],
+            owns_directory: false,
+            public: true,
+            declared_at: None,
+            name: Some(String::from("wire")),
+        })
+        .expect("a parsed file");
+
+    // Act
+    let unfollowed = walker.unfollowed(&parsed);
+
+    // Assert
+    assert_eq!(unfollowed, vec![at("app/src/wire.rs", 3)]);
+}
+
+#[test]
 fn walk_of_a_file_including_another_reads_it_in_the_module_it_is_included_in() {
     // Arrange
     let files = MemoryFiles::new()
@@ -175,6 +200,26 @@ fn walk_of_a_file_including_another_reads_it_in_the_module_it_is_included_in() {
         ]
     );
     assert_eq!(walk.unparsed, Vec::new());
+}
+
+#[test]
+fn walk_of_a_file_including_code_it_cannot_follow_names_where() {
+    // Arrange
+    let files = MemoryFiles::new()
+        .with("/work/ws/app/src/main.rs", "mod wire;\nfn main() {}\n")
+        .with(
+            "/work/ws/app/src/wire.rs",
+            "\ninclude!(concat!(env!(\"OUT_DIR\"), \"/wire.rs\"));\n",
+        );
+
+    // Act
+    let walk = walked(&files, "/work/ws/app/src/main.rs");
+
+    // Assert
+    assert_eq!(
+        (walk.unfollowed, walk.unparsed),
+        (vec![at("app/src/wire.rs", 2)], Vec::new())
+    );
 }
 
 #[test]
