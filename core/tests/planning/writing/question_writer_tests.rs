@@ -10,6 +10,7 @@ use crate::support::units::breaking;
 use crate::support::units::compatible;
 use crate::support::units::moved;
 use ripe4rust_core::inputs::advisory::Advisory;
+use ripe4rust_core::planning::judging::footprint::Footprint;
 use ripe4rust_core::planning::judging::judge::Judge;
 use ripe4rust_core::planning::judging::unit_facts::UnitFacts;
 use ripe4rust_core::planning::units::concern::Concern;
@@ -85,6 +86,50 @@ fn question_of_a_breaking_unit_beyond_the_gates_recommends_the_verdict() {
                 String::from("hold it until a planned migration")
             ),
             (Answer::Wait, String::from("not now")),
+        ]
+    );
+}
+
+#[test]
+fn question_of_a_breaking_unit_named_nowhere_offers_to_remove_the_crate_too() {
+    // Arrange
+    let unit = breaking("widget", "0.13.1", "0.14.0");
+    let nowhere = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 0,
+            files: 0,
+            complete: true,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+    let urgent = UnitFacts {
+        concerns: vec![String::from("RUSTSEC-2026-0097")],
+        ..nowhere.clone()
+    };
+
+    // Act
+    let answers = [
+        answers(asked(&unit, &nowhere, &[])),
+        answers(asked(&unit, &urgent, &[advisory()])),
+    ];
+
+    // Assert
+    assert_eq!(
+        answers,
+        [
+            Some((
+                Answer::MigrateNow,
+                vec![
+                    Answer::MigrateNow,
+                    Answer::PlanIt,
+                    Answer::Wait,
+                    Answer::Remove
+                ]
+            )),
+            Some((
+                Answer::MigrateNow,
+                vec![Answer::MigrateNow, Answer::Accept, Answer::Remove]
+            )),
         ]
     );
 }

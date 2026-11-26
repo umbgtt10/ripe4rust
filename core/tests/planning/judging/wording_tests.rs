@@ -37,6 +37,22 @@ fn footprint_of_a_complete_parse_counts_its_lines_and_files() {
 }
 
 #[test]
+fn footprint_of_a_complete_parse_naming_the_crate_nowhere_says_it_may_be_unused() {
+    // Arrange & Act
+    let said = Wording.footprint(Footprint {
+        lines: 0,
+        files: 0,
+        complete: true,
+    });
+
+    // Assert
+    assert_eq!(
+        said,
+        "named nowhere in the sources: possibly an unused dependency"
+    );
+}
+
+#[test]
 fn footprint_of_a_parse_missing_included_code_is_a_floor() {
     // Arrange & Act
     let said = [(3, 1), (0, 0)].map(|(lines, files)| {

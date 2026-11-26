@@ -6,6 +6,7 @@ use crate::outcome::Outcome;
 use crate::planning::judging::decision::Decision;
 use crate::planning::judging::drift::Drift;
 use crate::planning::judging::moved_back::MovedBack;
+use crate::planning::judging::named_nowhere::NamedNowhere;
 use crate::planning::judging::no_gates::NoGates;
 use crate::planning::judging::rules::beyond_gates::BeyondGates;
 use crate::planning::judging::rules::breaking_change_of_ours::BreakingChangeOfOurs;
@@ -29,8 +30,8 @@ use alloc::vec;
 
 /// The rules, in order, the first that matches deciding; rule 12 takes
 /// every breaking unit the others leave. Then against drift, then the
-/// no-gates downgrade, then the moves back to a lower version. An advisory
-/// row is asked, urgent, by no rule.
+/// no-gates downgrade, then the moves back to a lower version, then a crate
+/// named nowhere. An advisory row is asked, urgent, by no rule.
 pub struct Judge;
 
 impl Judge {
@@ -66,6 +67,7 @@ impl Judge {
             .iter()
             .find_map(|rule| rule.decide(facts))
             .unwrap_or_else(|| VerdictRule.decision(facts));
-        MovedBack.applied(NoGates.applied(Drift.applied(decided, facts), facts), facts)
+        let decided = NoGates.applied(Drift.applied(decided, facts), facts);
+        NamedNowhere.applied(MovedBack.applied(decided, facts), facts)
     }
 }

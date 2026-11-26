@@ -31,6 +31,25 @@ fn decide_of_a_breaking_unit_at_the_small_footprint_is_none() {
 }
 
 #[test]
+fn decide_of_a_breaking_unit_named_nowhere_is_none() {
+    // Arrange
+    let nowhere = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 0,
+            files: 0,
+            complete: true,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = SmallFootprint.decide(&nowhere);
+
+    // Assert
+    assert_eq!(decision, None);
+}
+
+#[test]
 fn decide_of_a_breaking_unit_under_the_small_footprint_is_ripe() {
     // Arrange
     let small = UnitFacts {

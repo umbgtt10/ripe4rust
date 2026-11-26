@@ -12,6 +12,31 @@ use ripe4rust_core::planning::judging::verdict_call::VerdictCall;
 use ripe4rust_core::unit_kind::UnitKind;
 
 #[test]
+fn call_of_a_crate_named_nowhere_is_migrate_now() {
+    // Arrange
+    let nowhere = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 0,
+            files: 0,
+            complete: true,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let call = Verdict.call(&nowhere);
+
+    // Assert
+    assert_eq!(
+        call,
+        VerdictCall {
+            suggestion: Suggestion::MigrateNow,
+            reason: String::from("named nowhere in the sources: possibly an unused dependency"),
+        }
+    );
+}
+
+#[test]
 fn call_of_a_footprint_that_is_a_floor_is_wait() {
     // Arrange
     let floor = UnitFacts {

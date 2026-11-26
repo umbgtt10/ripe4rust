@@ -10,6 +10,7 @@ pub mod footprint;
 pub mod judge;
 pub mod line_standing;
 pub mod moved_back;
+pub mod named_nowhere;
 pub mod no_gates;
 pub mod pin_standing;
 pub mod raise;

@@ -26,6 +26,9 @@ impl Wording {
             self.count(footprint.files, "file")
         );
         match (footprint.complete, footprint.lines) {
+            (true, 0) => {
+                String::from("named nowhere in the sources: possibly an unused dependency")
+            }
             (true, _) => format!("footprint {counted}"),
             (false, 0) => String::from(
                 "named nowhere the parse could read: code is included it cannot follow",

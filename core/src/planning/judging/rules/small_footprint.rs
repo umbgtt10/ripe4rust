@@ -12,7 +12,8 @@ use alloc::vec;
 
 /// Rule 11: a breaking unit whose footprint is under `small-footprint` --
 /// ripe; a red gate turns it into ask. A footprint not known is never
-/// small, nor is one that is a floor.
+/// small, nor is one that is a floor, nor a crate named nowhere: possibly an
+/// unused dependency, it is asked.
 pub struct SmallFootprint;
 
 impl Rule for SmallFootprint {
@@ -20,6 +21,7 @@ impl Rule for SmallFootprint {
         let footprint = facts.footprint?;
         let small = facts.kind == UnitKind::Breaking
             && footprint.complete
+            && footprint.lines > 0
             && footprint.lines < facts.small_footprint;
         small.then(|| Decision {
             outcome: Outcome::Ripe,

@@ -43,6 +43,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   never small under rule 11, the verdict "wait", the reason "footprint at least N lines in M files: code is included
   the parse cannot follow", or "named nowhere the parse could read" for none -- and the unit's evidence lists them as
   `unfollowed_includes`. The scan carries them (`ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude`).
+- A breaking unit whose crate a complete parse finds named nowhere read "footprint 0 lines in 0 files", and rule 11
+  called it ripe. It is now possibly an unused dependency: rule 11 leaves it, its verdict is "migrate now", its
+  reasons say "named nowhere in the sources: possibly an unused dependency" whatever rule decided it, and its
+  question offers the new answer `remove` beside its others -- a person decides, as a crate can be needed for its
+  features or side effects (`ripe4rust_core::planning::judging::named_nowhere::NamedNowhere`).
 
 ## [0.1.0] — 2026-11-26
 

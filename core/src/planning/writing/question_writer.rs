@@ -4,6 +4,7 @@
 
 use crate::outcome::Outcome;
 use crate::planning::judging::decision::Decision;
+use crate::planning::judging::named_nowhere::NamedNowhere;
 use crate::planning::judging::suggestion::Suggestion;
 use crate::planning::judging::unit_facts::UnitFacts;
 use crate::planning::judging::verdict::Verdict;
@@ -24,7 +25,8 @@ use alloc::vec::Vec;
 /// crate or accept it; an urgent unit is never held, so it offers to take it
 /// or accept it; a due or overripe pin offers to unpin or keep it; no gates
 /// offers to declare them; a breaking unit offers migrate now, plan it or
-/// wait, its verdict recommended; anything else, take it or wait.
+/// wait, its verdict recommended; anything else, take it or wait. A breaking
+/// unit whose crate is named nowhere also offers to remove it.
 pub struct QuestionWriter;
 
 impl QuestionWriter {
@@ -38,7 +40,10 @@ impl QuestionWriter {
         if decision.outcome != Outcome::Ask {
             return None;
         }
-        let (recommendation, answers) = Self::answers(decision, facts);
+        let (recommendation, mut answers) = Self::answers(decision, facts);
+        if NamedNowhere.fits(facts) {
+            answers.push(Answer::Remove);
+        }
         let options = OptionWriter::new(&unit.id, facts, concerns);
         let title = match (unit.kind, &unit.to) {
             (UnitKind::Advisory, _) => format!(

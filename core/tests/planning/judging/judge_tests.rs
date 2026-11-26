@@ -21,6 +21,49 @@ fn rule_of(facts: &UnitFacts) -> Option<u8> {
 }
 
 #[test]
+fn judge_of_a_breaking_unit_named_nowhere_asks_it_saying_it_may_be_unused() {
+    // Arrange
+    let nowhere = UnitFacts {
+        footprint: Some(Footprint {
+            lines: 0,
+            files: 0,
+            complete: true,
+        }),
+        ..facts(UnitKind::Breaking)
+    };
+    let young = UnitFacts {
+        new_line: Some(standing(2, true, true)),
+        lines_behind: 0,
+        ..nowhere.clone()
+    };
+
+    // Act
+    let decisions = [Judge.judge(&nowhere), Judge.judge(&young)];
+
+    // Assert
+    assert_eq!(
+        decisions.map(|decision| (decision.outcome, decision.rule, decision.reasons)),
+        [
+            (
+                Outcome::Ask,
+                Some(12),
+                vec![String::from(
+                    "migrate now: named nowhere in the sources: possibly an unused dependency"
+                )]
+            ),
+            (
+                Outcome::Ripening,
+                Some(9),
+                vec![
+                    String::from("2.x is young: 1 release, the first on 2026-11-20"),
+                    String::from("named nowhere in the sources: possibly an unused dependency")
+                ]
+            ),
+        ]
+    );
+}
+
+#[test]
 fn judge_of_a_plain_breaking_unit_is_rule_twelve_with_the_verdict() {
     // Arrange & Act
     let decision = Judge.judge(&facts(UnitKind::Breaking));

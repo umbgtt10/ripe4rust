@@ -68,6 +68,15 @@ impl<'a> OptionWriter<'a> {
                 String::from("hold it until a planned migration"),
                 format!("{hold} --review <date>"),
             ),
+            Answer::Remove => (
+                String::from(
+                    "remove the dependency: the sources name it nowhere, though a crate can be needed for its features or side effects",
+                ),
+                format!(
+                    "remove `{}` from every manifest that declares it and run the gates: green, commit it and plan again; red, restore the manifests and put the question again, the failure attached",
+                    self.facts.name
+                ),
+            ),
             Answer::Replace => (
                 String::from("replace the crate"),
                 format!(

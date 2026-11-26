@@ -175,6 +175,25 @@ fn option_of_plan_it_holds_with_a_review_date() {
 }
 
 #[test]
+fn option_of_remove_takes_the_crate_out_where_nothing_needs_it() {
+    // Arrange & Act
+    let option = means_and_then(Answer::Remove, &facts(UnitKind::Breaking));
+
+    // Assert
+    assert_eq!(
+        option,
+        (
+            String::from(
+                "remove the dependency: the sources name it nowhere, though a crate can be needed for its features or side effects"
+            ),
+            String::from(
+                "remove `widget` from every manifest that declares it and run the gates: green, commit it and plan again; red, restore the manifests and put the question again, the failure attached"
+            )
+        )
+    );
+}
+
+#[test]
 fn option_of_replace_names_the_crate() {
     // Arrange & Act
     let (means, then) = means_and_then(Answer::Replace, &facts(UnitKind::Advisory));

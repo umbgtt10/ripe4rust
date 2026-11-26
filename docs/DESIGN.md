@@ -358,7 +358,7 @@ Applied in order to every unit; the first that matches decides.
 | 8 | breaking, and the crate's types are in a published crate's public API, or the unit raises a published crate's `rust-version` | **ask** | the upgrade is a breaking change of ours too |
 | 9 | breaking or toolchain, and the new line is young | **ripening** | until it settles |
 | 10 | compatible or toolchain | **ripe** | -- (a red gate turns it into a hold) |
-| 11 | breaking, footprint under `small-footprint`, and no floor | **ripe** | -- (a red gate turns it into ask) |
+| 11 | breaking, footprint under `small-footprint`, above zero, and no floor | **ripe** | -- (a red gate turns it into ask) |
 | 12 | breaking | **ask** | migrate now / plan it / wait, by the verdict below |
 
 Rules 1 to 3: an upgrade that removes an advisory or a yanked release and stays
@@ -382,10 +382,11 @@ null.
 
 ### The verdict for a breaking unit that needs asking
 
-- **Migrate now**: the line in use is stale while the new one is active, or
+- **Migrate now**: the line in use is stale while the new one is active,
   migrating removes a second copy of the crate from the tree -- the lock
   already holds it on the new line, and nothing outside the workspace's
-  members depends on the copy in use.
+  members depends on the copy in use --, or the sources name the crate
+  nowhere, so the migration has no work list.
 - **Plan it**: the new line has settled and the footprint is under
   `moderate-footprint`.
 - **Wait**: anything else, with the reason.
@@ -422,6 +423,17 @@ first. One that leaves a yanked release is the cure: named, "moves <crate>
 back from the yanked <from> to <to>", its outcome unchanged. A unit that asks
 or ripens for another reason keeps its outcome, the move back among its
 reasons.
+
+### A crate named nowhere
+
+A breaking unit whose crate a complete parse finds named nowhere in the
+sources -- a footprint of zero, with no include the parse could not follow
+-- is possibly an unused dependency: rule 11 does not call it ripe, the
+verdict is "migrate now", and its reasons say "named nowhere in the sources:
+possibly an unused dependency", whatever rule decided it. Its question
+offers `remove` beside its other answers: a person decides, as a crate can be
+needed for its features or side effects, and the gates say whether the build
+still holds without it. Its outcome is what the rules make it.
 
 ## Footprint and exposure
 
@@ -841,6 +853,9 @@ The answers, by the way a unit asks:
 | breaking, overripe | `migrate-now`, `plan-it`, `wait` | `migrate-now` |
 | breaking, otherwise | `migrate-now`, `plan-it`, `wait` | its verdict |
 | anything else | `take-it`, `wait` | `take-it` |
+
+A breaking unit whose crate is named nowhere adds `remove` to its options,
+whichever row they come from.
 
 ### What `check` prints
 
