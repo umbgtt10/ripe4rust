@@ -556,7 +556,8 @@ In slices, each releasable and each held to the family's stages 1 and 2:
 0. **The scaffolding.** `CLAUDE.md`, the `justfile`, the `xtask` gates, the
    score hook, CI.
 1. **The core.** Units, version choice, rules, verdicts, questions, steps,
-   diagnostics and the plan, against fakes; the table and JSON renderers.
+   diagnostics and the plan, against fakes; the table and JSON renderers, in
+   the cli.
 2. **The adapters, and `plan`.** `cargo metadata`, `cargo update --dry-run`,
    the index and the API with the cache, `cargo deny`, the clock, the
    fingerprint: `plan` end to end on recorded fixtures.
