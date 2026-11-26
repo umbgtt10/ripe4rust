@@ -6,4 +6,5 @@ mod diagnostics;
 mod outcome_tests;
 mod planning;
 mod support;
+mod unit_kind_tests;
 mod values;

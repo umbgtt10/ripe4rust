@@ -3,5 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod breaking_choice_tests;
+pub mod histories_tests;
 pub mod maturity_tests;
 pub mod release_history_tests;

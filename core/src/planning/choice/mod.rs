@@ -4,6 +4,7 @@
 
 pub mod breaking_choice;
 pub mod breaking_target;
+pub mod histories;
 pub mod line_stats;
 pub mod maturity;
 pub mod release_history;

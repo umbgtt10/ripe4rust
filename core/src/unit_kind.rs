@@ -2,12 +2,28 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-/// The two kinds of upgrade, each one commit's worth.
+/// The kinds of row a plan holds: the three kinds of upgrade, each one
+/// commit's worth, and the row of an advisory no upgrade clears.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UnitKind {
-    /// One direct dependency to a new major (for `0.x`, a new minor), with what
-    /// the lock file moves along with it.
+    /// An advisory or a yanked release no unit of the plan clears.
+    Advisory,
+    /// One direct dependency to a new major (for `0.x`, a new minor).
     Breaking,
-    /// The semver-compatible lock-file moves one direct dependency pulls in.
+    /// The semver-compatible lock-file moves one direct dependency pulls in,
+    /// or, for the rest, those no unit reaches.
     Compatible,
+    /// `rust-toolchain.toml`'s channel to a newer stable release.
+    Toolchain,
+}
+
+impl UnitKind {
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Advisory => "advisory",
+            Self::Breaking => "breaking",
+            Self::Compatible => "compatible",
+            Self::Toolchain => "toolchain",
+        }
+    }
 }

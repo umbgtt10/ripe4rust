@@ -73,8 +73,10 @@ the workspace's owner has. Everything else it carries out on its own.
     stable release (ADR-TheToolchainIsAUnit).
 - **Unit id** -- `<kind>:<crate>`: `compatible:clap`, `breaking:syn`,
   `toolchain:rust`; `rest` for the last compatible unit; `advisory:<id>` for
-  an advisory no unit clears. A group goes by its first member's name. A
-  compatible unit's single moves, for bisecting it, are `<unit>/<crate>`.
+  an advisory no unit clears, and `advisory:<crate>@<version>` for a yanked
+  release none clears; such a row's kind is `advisory`. A group goes by its
+  first member's name. A compatible unit's single moves, for bisecting it, are
+  `<unit>/<crate>`.
 - **Line** -- every release of one major (`2.x`), or one minor for `0.x`
   (`0.13.x`). For the toolchain, one minor (`1.100.x`).
 - **Group** -- crates released together, moved as one unit
@@ -162,7 +164,10 @@ line young and no line active.
   because applying it moves it for the rest. The moves `cargo update
   --dry-run` makes for the whole workspace and no unit reaches form one last
   unit, **the rest**. A move of a crate pinned with `hold = "all"` is left
-  out of every unit, which then applies its other moves one by one.
+  out of every unit, which then applies its other moves one by one -- unless
+  it clears an advisory or a yanked release, which no pin holds. A unit whose
+  moves all belong to earlier units is no unit. A crate the members use at
+  several versions is judged from the oldest.
 - **Breaking:** the direct crate and its target version. What the lock moves
   with it is known only once the manifest is edited, which ripe4rust never
   does; `check` reports it after the agent has applied it.
@@ -172,9 +177,14 @@ line young and no line active.
 
 An advisory or a yanked release in use is attached to the unit whose moves
 clear it, wherever it sits in the tree -- an advisory on a transitive crate
-lands on the unit of the direct dependency that pulls it. One that no unit
-clears gets a row of its own: **ask**, urgent, "replace the crate, or accept it
-in `deny.toml`'s `[advisories] ignore` with its reason".
+lands on the unit of the direct dependency that pulls it. Where several units
+clear it, it lands on the first in plan order: units by crate name, a crate's
+compatible unit before its breaking one, the toolchain as `rust`, then the
+rest, then the advisory rows. A move clears an advisory when it takes the
+crate off the affected version to one the advisory names patched or
+unaffected; it clears a yanked release when it takes the crate off it. One
+that no unit clears gets a row of its own: **ask**, urgent, "replace the
+crate, or accept it in `deny.toml`'s `[advisories] ignore` with its reason".
 
 ## The rules
 
@@ -255,6 +265,9 @@ in lockstep. They form one unit when
 
 - they share a repository and released the same version on the same day, or
 - one requires an exact version (`=x.y.z`) of the other.
+
+Only units of one kind group: the version is the one each moves to, and the
+exact requirement is read from the lock.
 
 A group is judged as one unit; its footprint and exposure are the members'
 together, and its youth is its youngest member's.

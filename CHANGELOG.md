@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- The units (`ripe4rust_core::planning::units`), from what cargo and the index will hand over -- the lock moves, the
+  workspace's members and lock, the advisories (`ripe4rust_core::inputs`): compatible units, a shared move the
+  first's, the rest from what no unit reaches, a move pinned with `hold = "all"` held out unless it clears an
+  advisory or a yanked release; breaking units on the version choice; the toolchain unit; groups, by a shared
+  repository and the same release on the same day, or an exact requirement; every advisory and yanked release on
+  the first unit that clears it, the rest as `advisory:<id>` rows; and the plan's order. Unit ids as the
+  vocabulary gives them, `UnitKind` gaining `Toolchain` and `Advisory` and a label.
 - The version choice (`ripe4rust_core::planning::choice`), over a crate's or the toolchain's releases as the index
   will hand them over (`ripe4rust_core::inputs::release`): candidates -- neither yanked nor pre-releases, and
   buildable by the toolchain in use --, the versions it holds back that the next toolchain would release, a line's
