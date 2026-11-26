@@ -125,6 +125,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `rust-toolchain.toml`'s `channel`, read by the workspace's files adapter beside the requirement lines it already
   found. The fingerprint tells `check` that the workspace changed; the lines tell it where, so a requirement edited
   by hand is not taken for one a unit wrote.
+- `check`, slice 3's first command: `cargo ripe4rust check <unit> --plan <file> [--format table|json]`, a unit's
+  id or one move of its split, `<unit>/<crate>`. The core (`ripe4rust_core::planning::round`) reads the plan back
+  through a new port, `PlanSource`, the policy again, and the workspace through `WorkspaceFiles`, now also answering
+  `Cargo.lock`'s crates.io packages; then sorts every difference into the units that explain it. A lock move no unit
+  makes is the unit's -- not as planned, exit 1, every difference with its `do` --; a requirement, `rust-version` or
+  channel no unit's edit explains is the plan stale, exit 3, `plan-stale` where it is; as planned is 0, with the
+  units applied and those still to go; a breaking unit applied reports its tail as `transitive`, and a tail move
+  past a pin is a difference. The cli reads the plan document back -- schema 1, `plan`'s, holding units -- and
+  `Cargo.lock` itself rather than through cargo, so a lock a hand-edited manifest no longer matches still reads. Three
+  codes: `plan-unreadable`, `plan-schema-unknown`, `unit-unknown`. The command line reads each command's own
+  options, and the renderers print `check`'s document in JSON and text.
+- The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
+  `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

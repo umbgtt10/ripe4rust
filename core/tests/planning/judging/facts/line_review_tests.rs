@@ -9,10 +9,10 @@ use crate::support::surveyed::toolchain;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
 use crate::support::units::moved;
-use ripe4rust_core::planning::choice::line_stats::LineStats;
 use ripe4rust_core::planning::judging::facts::line_review::LineReview;
 use ripe4rust_core::planning::judging::facts::plan_context::PlanContext;
 use ripe4rust_core::planning::judging::line_standing::LineStanding;
+use ripe4rust_core::planning::units::choice::line_stats::LineStats;
 use ripe4rust_core::values::line::Line;
 
 #[test]

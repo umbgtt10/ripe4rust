@@ -2,7 +2,7 @@
 
 Status: settled 2026-11-26; the agent's contract added the same day. Slices
 0, 1 and 2 of "Delivery" are implemented: the scaffolding, the core with the
-renderers, and the adapters with `plan` end to end. The decisions that were not
+renderers, and the adapters with `plan` end to end; of slice 3, `check`. The decisions that were not
 obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
@@ -472,8 +472,9 @@ Every problem found on the way is a diagnostic (ADR-EveryProblemSaysWhatToDo):
 }
 ```
 
-- **severity** -- `error` stops the command (exit 2); `warning` and `notice`
-  never change the exit code.
+- **severity** -- `error` stops the command (exit 2, or 3 for `plan-stale`,
+  which `check` and `hold` exit with); `warning` and `notice` never change the
+  exit code.
 - **code** -- stable, one per kind of problem; `guide` lists every one with its
   remedy.
 - **where** -- a `file:line` where there is one.
@@ -519,6 +520,9 @@ The problems the design already names, at least:
 | `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
 | `usage-invalid` | error | a command or an option ripe4rust does not know, or an option's value of the wrong kind |
 | `command-unavailable` | error | a command of the design this release does not run yet |
+| `plan-unreadable` | error | the plan file `--plan` names is not there, or is no plan `plan` wrote |
+| `plan-schema-unknown` | error | the plan file is of a `schema` this release does not read |
+| `unit-unknown` | error | `check` or `hold` names an id that is no unit of the plan nor a move of a unit's split, or an advisory row, which applies nothing |
 
 Of these, the policy's own codes, `target-unknown` and `gates-undeclared` need
 a person: each asks for a fact or a decision only the owner has.
@@ -668,6 +672,35 @@ The answers, by the way a unit asks:
 | breaking, otherwise | `migrate-now`, `plan-it`, `wait` | its verdict |
 | anything else | `take-it`, `wait` | `take-it` |
 
+### What `check` prints
+
+```json
+{
+  "schema": 1,
+  "command": "check",
+  "unit": "compatible:itoa",
+  "as_planned": false,
+  "transitive": [],
+  "differences": [
+    { "where": "Cargo.lock",
+      "what": "`memchr` moved 2.5.0 -> 2.6.0, a move no unit of the plan makes",
+      "do": "carry out the unit's `revert`, `git restore -- Cargo.lock`: compatible:itoa becomes ask, with these differences attached" }
+  ],
+  "applied": ["compatible:itoa"],
+  "to_go": ["compatible:memchr"],
+  "diagnostics": []
+}
+```
+
+`transitive` is a breaking unit's tail, the moves its edit made beyond its
+own, each as `moves` writes it; `where` is `Cargo.lock` for a move and a
+manifest's `file:line` for an edit. A check that could not be made, or that
+found the plan stale, prints the failure document -- `schema`, `command` and
+`diagnostics` --, a stale plan's each a `plan-stale` at its `file:line`. In
+text: `check <unit>: as planned` or `not as planned`, the tail as
+`transitive: ...`, each difference as `<where>: <what>. Do: <do>`, the units
+`applied:` and `to go:`, then the diagnostics.
+
 ## Commands
 
 | command | does | exit codes |
@@ -684,8 +717,10 @@ plan reaches none. With no command, the command is `plan`; the name cargo
 passes a subcommand first is skipped, so `cargo ripe4rust` and
 `cargo-ripe4rust` read alike. An option takes its value after it or after `=`.
 A command or an option ripe4rust does not know is `usage-invalid`, and, until
-slice 3 builds them, `check`, `hold` and `guide` are `command-unavailable`:
-both errors, exit 2, the document in the format the line asked for. `main` is
+the rest of slice 3 builds them, `hold` and `guide` are `command-unavailable`:
+both errors, exit 2, the document in the format the line asked for. `--plan`
+names the plan file from the directory the command runs in, or by an absolute
+path; `check` and `hold` take one unit, its id or a split id. `main` is
 a thin shim over the library's entry point, which takes every seam it reaches
 the system through.
 
@@ -712,6 +747,44 @@ workspace into the units it belongs to:
 
 For a breaking unit, `check` reads the moves the edit made, which the plan
 could not know, and reports them.
+
+Where the lines above leave it open, the differences are sorted this way:
+
+- **What is read, in order.** The plan file first: one that is not there, not
+  JSON, not `plan`'s document, or holds no units is `plan-unreadable`, and a
+  `schema` other than 1 is `plan-schema-unknown`. Then the unit: an id that is
+  no unit of the plan nor an id of a unit's `steps.split` is `unit-unknown`, and
+  so is an advisory row, which applies nothing. Then the policy as it stands,
+  whose errors stop the command as they stop `plan` and whose warnings the
+  document carries. Then the workspace: the fingerprint, and where it is the
+  plan's nothing has changed; otherwise `Cargo.lock`'s crates.io packages --
+  read from the file, not from cargo, so a lock a manifest edited by hand no
+  longer matches still reads -- and the lines a unit can edit.
+- **A move shows in the lock** where the version it leaves is gone and the one
+  it takes is there, whatever else the lock holds of the crate: a move to a copy
+  the lock already held shows as the old copy gone.
+- **A line is the same line** where it is the same key, in the same file, in
+  the same place among that key's lines there, so a line an edit above it moved
+  down is still itself. A line rewritten to the value a unit's edit writes there
+  is that unit's.
+- **The lock and the lines are sorted apart**, because they change apart. The
+  lock is what applying a unit moves, and cargo, not the plan, decides what it
+  moves: a lock move no unit of the plan makes -- an extra move, another
+  version, a crate gone -- is the step's doing, and the unit named is not as
+  planned, **1**. The manifests and `rust-toolchain.toml` are written by hand,
+  and a unit edits them only at the lines its `apply` names: a line no unit's
+  edit explains -- rewritten, new or gone -- is a change outside the plan,
+  **3**, one `plan-stale` for each. A change outside those lines -- the pin a
+  `hold` printed, a comment -- is no difference.
+- **A breaking unit's tail.** Where a breaking unit is applied, the lock moves
+  no move of the plan accounts for are its tail: the unit named's `transitive`
+  moves when it is that unit, and otherwise an earlier one's, so a compatible
+  unit checked after a migration is not blamed for it. A tail move of a crate a
+  pin holds -- off its line, or at all with `hold = "all"` -- is a difference.
+- **Applied and still to go**, in plan order, advisory rows left out: a unit
+  every move and edit of which shows is applied; one none of which shows is
+  still to go; one partly applied is listed by the ids of its split where it
+  has one, and as still to go where it has none.
 
 ### hold
 

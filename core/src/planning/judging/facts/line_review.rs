@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::planning::choice::maturity::Maturity;
-use crate::planning::choice::release_history::ReleaseHistory;
 use crate::planning::judging::facts::plan_context::PlanContext;
 use crate::planning::judging::line_standing::LineStanding;
+use crate::planning::units::choice::maturity::Maturity;
+use crate::planning::units::choice::release_history::ReleaseHistory;
 use crate::planning::units::unit::Unit;
 use crate::unit_kind::UnitKind;
 use crate::values::line::Line;

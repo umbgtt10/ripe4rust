@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::release::Release;
-use crate::planning::choice::line_stats::LineStats;
+use crate::planning::units::choice::line_stats::LineStats;
 use crate::values::date::Date;
 use crate::values::line::Line;
 use crate::values::partial_version::PartialVersion;

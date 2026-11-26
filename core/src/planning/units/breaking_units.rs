@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::lock_move::LockMove;
-use crate::planning::choice::breaking_choice::BreakingChoice;
-use crate::planning::choice::histories::Histories;
-use crate::planning::choice::maturity::Maturity;
+use crate::planning::units::choice::breaking_choice::BreakingChoice;
+use crate::planning::units::choice::histories::Histories;
+use crate::planning::units::choice::maturity::Maturity;
 use crate::planning::units::direct_dependency::DirectDependency;
 use crate::planning::units::unit::Unit;
 use crate::planning::units::unit_id::UnitId;

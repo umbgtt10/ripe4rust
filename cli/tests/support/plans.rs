@@ -5,11 +5,11 @@
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::outcome::Outcome;
-use ripe4rust_core::planning::choice::line_stats::LineStats;
 use ripe4rust_core::planning::judging::decision::Decision;
 use ripe4rust_core::planning::judging::suggestion::Suggestion;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::planned_unit::PlannedUnit;
+use ripe4rust_core::planning::units::choice::line_stats::LineStats;
 use ripe4rust_core::planning::units::unit::Unit;
 use ripe4rust_core::planning::units::unit_id::UnitId;
 use ripe4rust_core::planning::workspace_state::WorkspaceState;

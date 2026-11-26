@@ -2,18 +2,28 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::render::document_renderer::DocumentRenderer;
+use crate::render::json::check_json::CheckJson;
 use crate::render::json::diagnostic_json::DiagnosticJson;
 use crate::render::json::documents::diagnostic_document::DiagnosticDocument;
 use crate::render::json::documents::unit_document::UnitDocument;
 use crate::render::json::unit_json::UnitJson;
-use crate::render::plan_renderer::PlanRenderer;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::checking::check_report::CheckReport;
 use serde::Serialize;
 use serde_json::to_string_pretty;
 
 const SCHEMA: u32 = 1;
+
+#[derive(Serialize)]
+struct Enveloped<'a, T: Serialize> {
+    pub schema: u32,
+    pub command: &'a str,
+    #[serde(flatten)]
+    pub body: T,
+}
 
 #[derive(Serialize)]
 struct FailureDocument<'a> {
@@ -51,7 +61,7 @@ struct PlanDocument<'a> {
 
 /// The one document a command prints with `--format json`, on success and
 /// on failure alike: `schema`, which moves when the shape does, the command,
-/// and the diagnostics -- and for a plan, everything it holds. Every object
+/// and the diagnostics -- and for a plan or a check, everything it holds. Every object
 /// is a record of its own, so its keys keep the design's order.
 pub struct JsonRenderer {
     command: String,
@@ -78,7 +88,15 @@ impl JsonRenderer {
     }
 }
 
-impl PlanRenderer for JsonRenderer {
+impl DocumentRenderer for JsonRenderer {
+    fn check(&self, report: &CheckReport) -> String {
+        Self::text(&Enveloped {
+            schema: SCHEMA,
+            command: &self.command,
+            body: CheckJson.document(report),
+        })
+    }
+
     fn failure(&self, failure: &PlanFailure) -> String {
         Self::text(&FailureDocument {
             schema: SCHEMA,

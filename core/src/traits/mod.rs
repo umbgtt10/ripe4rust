@@ -6,6 +6,7 @@ pub mod advisories;
 pub mod clock;
 pub mod index;
 pub mod lock_moves;
+pub mod plan_source;
 pub mod repositories;
 pub mod rule;
 pub mod source_scan;

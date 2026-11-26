@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::planning::choice::release_history::ReleaseHistory;
+use crate::planning::units::choice::release_history::ReleaseHistory;
 use crate::planning::units::unit::Unit;
 use crate::planning::units::unit_id::UnitId;
 use crate::unit_kind::UnitKind;

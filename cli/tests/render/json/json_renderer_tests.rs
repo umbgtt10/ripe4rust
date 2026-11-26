@@ -5,8 +5,9 @@
 use crate::support::plans::breaking;
 use crate::support::plans::compatible;
 use crate::support::plans::plan;
+use crate::support::reports::as_planned;
+use cargo_ripe4rust::render::document_renderer::DocumentRenderer;
 use cargo_ripe4rust::render::json::json_renderer::JsonRenderer;
-use cargo_ripe4rust::render::plan_renderer::PlanRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use serde_json::Value;
@@ -19,6 +20,21 @@ fn compact(text: &str) -> String {
 
 fn parsed(text: &str) -> Value {
     from_str(text).expect("a JSON document")
+}
+
+#[test]
+fn check_prints_schema_and_command_before_the_report() {
+    // Arrange & Act
+    let text = JsonRenderer::new("check").check(&as_planned());
+
+    // Assert
+    assert!(
+        compact(&text).starts_with(
+            r#"{"schema":1,"command":"check","unit":"breaking:gadget","as_planned":true,"#
+        ),
+        "{text}"
+    );
+    assert!(text.ends_with("}\n"));
 }
 
 #[test]

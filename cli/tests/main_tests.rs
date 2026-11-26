@@ -15,7 +15,7 @@ fn run(args: &[&str]) -> Output {
 #[test]
 fn main_of_a_command_not_built_yet_exits_two() {
     // Arrange & Act
-    let output = run(&["ripe4rust", "check"]);
+    let output = run(&["ripe4rust", "hold"]);
 
     // Assert
     assert_eq!(output.status.code(), Some(2));
@@ -24,19 +24,19 @@ fn main_of_a_command_not_built_yet_exits_two() {
 #[test]
 fn main_of_a_command_not_built_yet_prints_its_diagnostic_on_stdout() {
     // Arrange & Act
-    let output = run(&["ripe4rust", "check"]);
+    let output = run(&["ripe4rust", "hold"]);
 
     // Assert
     assert_eq!(
         String::from_utf8_lossy(&output.stdout),
-        "error[command-unavailable] `check` is not in this release of ripe4rust yet. Do: use `cargo ripe4rust plan`, the one command this release runs; `check`, `hold` and `guide` come with a later release\n"
+        "error[command-unavailable] `hold` is not in this release of ripe4rust yet. Do: use `cargo ripe4rust plan` or `cargo ripe4rust check`, the commands this release runs; `hold` and `guide` come with a later release\n"
     );
 }
 
 #[test]
 fn main_of_a_command_not_built_yet_writes_nothing_to_stderr() {
     // Arrange & Act
-    let output = run(&["ripe4rust", "check"]);
+    let output = run(&["ripe4rust", "hold"]);
 
     // Assert
     assert_eq!(String::from_utf8_lossy(&output.stderr), "");

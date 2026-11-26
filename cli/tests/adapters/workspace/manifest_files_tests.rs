@@ -7,6 +7,7 @@ use crate::support::workspace::files;
 use crate::support::workspace::layout;
 use cargo_ripe4rust::adapters::workspace::cargo_layout::CargoLayout;
 use cargo_ripe4rust::adapters::workspace::manifest_files::ManifestFiles;
+use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_entry::PolicyEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::policy_value::PolicyValue;
@@ -78,6 +79,50 @@ fn fingerprint_of_the_recorded_workspace_changes_with_its_lock() {
     // Assert
     assert_eq!(fingerprints[0].as_ref().map(String::len), Ok(16));
     assert_ne!(fingerprints[0], fingerprints[1]);
+}
+
+#[test]
+fn lock_of_a_workspace_without_a_lock_is_unreadable() {
+    // Arrange
+    let runner = layout();
+    let files = files();
+    files.files.borrow_mut().remove("/work/ws/Cargo.lock");
+
+    // Act
+    let lock = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).lock();
+
+    // Assert
+    assert_eq!(
+        lock,
+        Err(PortFailure::WorkspaceUnreadable {
+            file: String::from("Cargo.lock"),
+            detail: String::from("it is not there"),
+        })
+    );
+}
+
+#[test]
+fn lock_of_the_recorded_workspace_is_its_crates_io_packages() {
+    // Arrange
+    let (runner, files) = (layout(), files());
+
+    // Act
+    let lock = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).lock();
+
+    // Assert
+    assert_eq!(
+        lock.map(|entries| entries
+            .iter()
+            .map(|LockEntry { name, version }| format!("{name} {version}"))
+            .collect::<Vec<String>>()),
+        Ok(vec![
+            String::from("either 1.5.0"),
+            String::from("itertools 0.10.0"),
+            String::from("itoa 0.4.7"),
+            String::from("memchr 2.5.0"),
+            String::from("smallvec 1.6.0"),
+        ])
+    );
 }
 
 #[test]

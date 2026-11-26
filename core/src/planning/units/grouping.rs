@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::locked_package::LockedPackage;
-use crate::planning::choice::histories::Histories;
+use crate::planning::units::choice::histories::Histories;
 use crate::planning::units::crate_repository::CrateRepository;
 use crate::planning::units::unit::Unit;
 use alloc::vec;

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 use crate::diagnostics::diagnostic::Diagnostic;
-use crate::diagnostics::severity::Severity;
 use crate::inputs::port_failure::PortFailure;
 use crate::inputs::release::Release;
 use crate::inputs::scan::Scan;
@@ -15,6 +14,7 @@ use crate::planning::pins_and_policy::reading::Reading;
 use crate::planning::pins_and_policy::release_condition::ReleaseCondition;
 use crate::planning::plan_failure::PlanFailure;
 use crate::planning::ports::Ports;
+use crate::planning::stopping::Stopping;
 use crate::planning::surveyed::Surveyed;
 use crate::planning::toolchain_survey::ToolchainSurvey;
 use crate::planning::units::crate_repository::CrateRepository;
@@ -140,17 +140,19 @@ impl<'a> Survey<'a> {
 
     pub fn survey(&self) -> Result<Surveyed, PlanFailure> {
         let today = self.ports.clock.today();
-        let policy = self.policy().map_err(|failure| Self::stop(&[], &failure))?;
+        let policy = self
+            .policy()
+            .map_err(|failure| Stopping.with(&[], &failure))?;
         let mut found = policy.diagnostics;
-        Self::checked(&found)?;
+        Stopping.at_errors(&found)?;
         let policy = policy.value;
         let toolchain = self
             .toolchain(&policy)
-            .map_err(|failure| Self::stop(&found, &failure))?;
+            .map_err(|failure| Stopping.with(&found, &failure))?;
         found.extend(toolchain.diagnostics);
-        Self::checked(&found)?;
+        Stopping.at_errors(&found)?;
         let toolchain = toolchain.value;
-        let stop = |failure: PortFailure| Self::stop(&found, &failure);
+        let stop = |failure: PortFailure| Stopping.with(&found, &failure);
         let workspace = self.ports.metadata.read().map_err(stop)?;
         let advisories = self.ports.advisories.advisories().map_err(stop)?;
         let releases = self.releases(&workspace, &policy).map_err(stop)?;
@@ -261,24 +263,5 @@ impl<'a> Survey<'a> {
             .map(|file| Findings.source_unparsed(file));
         let unscanned = scan.is_none().then(|| Findings.source_unscanned());
         absent.chain(old).chain(unparsed).chain(unscanned).collect()
-    }
-
-    fn checked(found: &[Diagnostic]) -> Result<(), PlanFailure> {
-        if found
-            .iter()
-            .any(|diagnostic| diagnostic.severity == Severity::Error)
-        {
-            Err(PlanFailure {
-                diagnostics: found.to_vec(),
-            })
-        } else {
-            Ok(())
-        }
-    }
-
-    fn stop(found: &[Diagnostic], failure: &PortFailure) -> PlanFailure {
-        let mut diagnostics = found.to_vec();
-        diagnostics.push(failure.diagnostic());
-        PlanFailure { diagnostics }
     }
 }

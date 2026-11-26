@@ -4,7 +4,7 @@
 
 use crate::support::releases::release;
 use crate::support::releases::version;
-use ripe4rust_core::planning::choice::release_history::ReleaseHistory;
+use ripe4rust_core::planning::units::choice::release_history::ReleaseHistory;
 use ripe4rust_core::planning::units::toolchain_unit::ToolchainUnit;
 use ripe4rust_core::planning::units::unit::Unit;
 use ripe4rust_core::planning::units::unit_id::UnitId;

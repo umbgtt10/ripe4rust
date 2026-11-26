@@ -4,6 +4,7 @@
 
 use crate::support::plans::compatible;
 use crate::support::plans::plan;
+use crate::support::reports::as_planned;
 use cargo_ripe4rust::command::document::Document;
 use cargo_ripe4rust::command::format::Format;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
@@ -17,6 +18,32 @@ fn failure() -> PlanFailure {
             String::from("install it"),
         )],
     }
+}
+
+#[test]
+fn check_in_a_table_opens_with_the_unit_and_how_it_stands() {
+    // Arrange & Act
+    let text = Document::new(Format::Table, "check").check(&as_planned());
+
+    // Assert
+    assert!(
+        text.starts_with("check breaking:gadget: as planned\n"),
+        "{text}"
+    );
+}
+
+#[test]
+fn check_in_json_is_the_check_document() {
+    // Arrange & Act
+    let text = Document::new(Format::Json, "check").check(&as_planned());
+
+    // Assert
+    assert!(
+        text.starts_with(
+            "{\n  \"schema\": 1,\n  \"command\": \"check\",\n  \"unit\": \"breaking:gadget\""
+        ),
+        "{text}"
+    );
 }
 
 #[test]

@@ -6,10 +6,10 @@ use crate::support::releases::date;
 use crate::support::releases::needing;
 use crate::support::releases::release;
 use crate::support::releases::version;
-use ripe4rust_core::planning::choice::breaking_choice::BreakingChoice;
-use ripe4rust_core::planning::choice::breaking_target::BreakingTarget;
-use ripe4rust_core::planning::choice::maturity::Maturity;
-use ripe4rust_core::planning::choice::release_history::ReleaseHistory;
+use ripe4rust_core::planning::units::choice::breaking_choice::BreakingChoice;
+use ripe4rust_core::planning::units::choice::breaking_target::BreakingTarget;
+use ripe4rust_core::planning::units::choice::maturity::Maturity;
+use ripe4rust_core::planning::units::choice::release_history::ReleaseHistory;
 use ripe4rust_core::values::line::Line;
 use ripe4rust_core::values::version::Version;
 

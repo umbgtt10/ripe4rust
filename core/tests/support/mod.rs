@@ -5,6 +5,7 @@
 pub mod facts;
 pub mod fakes;
 pub mod policy_trees;
+pub mod recorded;
 pub mod releases;
 pub mod surveyed;
 pub mod units;

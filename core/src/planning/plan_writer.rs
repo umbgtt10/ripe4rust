@@ -2,14 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::planning::choice::histories::Histories;
-use crate::planning::choice::release_history::ReleaseHistory;
 use crate::planning::judging::facts::plan_context::PlanContext;
 use crate::planning::pins_and_policy::hold::Hold;
 use crate::planning::plan::Plan;
 use crate::planning::surveyed::Surveyed;
 use crate::planning::unit_writer::UnitWriter;
 use crate::planning::units::breaking_units::BreakingUnits;
+use crate::planning::units::choice::histories::Histories;
+use crate::planning::units::choice::release_history::ReleaseHistory;
 use crate::planning::units::clearing::Clearing;
 use crate::planning::units::compatible_units::CompatibleUnits;
 use crate::planning::units::concern::Concern;

@@ -2,7 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod check_document;
 pub mod diagnostic_document;
+pub mod difference_document;
 pub mod evidence_document;
 pub mod line_document;
 pub mod move_document;

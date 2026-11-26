@@ -18,6 +18,17 @@ pub enum UnitKind {
 }
 
 impl UnitKind {
+    pub fn parse(label: &str) -> Option<Self> {
+        [
+            Self::Advisory,
+            Self::Breaking,
+            Self::Compatible,
+            Self::Toolchain,
+        ]
+        .into_iter()
+        .find(|kind| kind.label() == label)
+    }
+
     pub fn label(&self) -> &'static str {
         match self {
             Self::Advisory => "advisory",

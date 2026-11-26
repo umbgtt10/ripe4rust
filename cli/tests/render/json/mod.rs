@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod check_json_tests;
 pub mod diagnostic_json_tests;
 pub mod evidence_json_tests;
 pub mod json_renderer_tests;

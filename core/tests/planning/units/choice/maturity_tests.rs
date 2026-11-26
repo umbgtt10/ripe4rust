@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::releases::date;
-use ripe4rust_core::planning::choice::line_stats::LineStats;
-use ripe4rust_core::planning::choice::maturity::Maturity;
+use ripe4rust_core::planning::units::choice::line_stats::LineStats;
+use ripe4rust_core::planning::units::choice::maturity::Maturity;
 use ripe4rust_core::values::line::Line;
 
 fn maturity() -> Maturity {

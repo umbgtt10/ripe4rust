@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::planning::choice::line_stats::LineStats;
+use crate::planning::units::choice::line_stats::LineStats;
 use crate::values::date::Date;
 
 /// Whether a line is young or settled, active or stale, as of today. A

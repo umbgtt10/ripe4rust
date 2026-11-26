@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::planning::choice::histories::Histories;
-use crate::planning::choice::maturity::Maturity;
-use crate::planning::choice::release_history::ReleaseHistory;
 use crate::planning::surveyed::Surveyed;
+use crate::planning::units::choice::histories::Histories;
+use crate::planning::units::choice::maturity::Maturity;
+use crate::planning::units::choice::release_history::ReleaseHistory;
 use crate::planning::units::unit::Unit;
 use crate::unit_kind::UnitKind;
 

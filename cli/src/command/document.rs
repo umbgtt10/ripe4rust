@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: MIT
 
 use crate::command::format::Format;
+use crate::render::document_renderer::DocumentRenderer;
 use crate::render::json::json_renderer::JsonRenderer;
-use crate::render::plan_renderer::PlanRenderer;
 use crate::render::table::table_renderer::TableRenderer;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::checking::check_report::CheckReport;
 
 /// The one document a run prints, in the format asked for, on success and
 /// on failure alike.
@@ -24,6 +25,10 @@ impl Document {
         }
     }
 
+    pub fn check(&self, report: &CheckReport) -> String {
+        self.renderer().check(report)
+    }
+
     pub fn failure(&self, failure: &PlanFailure) -> String {
         self.renderer().failure(failure)
     }
@@ -32,7 +37,7 @@ impl Document {
         self.renderer().plan(plan)
     }
 
-    fn renderer(&self) -> Box<dyn PlanRenderer> {
+    fn renderer(&self) -> Box<dyn DocumentRenderer> {
         match self.format {
             Format::Json => Box::new(JsonRenderer::new(&self.command)),
             Format::Table => Box::new(TableRenderer),

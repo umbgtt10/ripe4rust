@@ -2,9 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::planning::choice::breaking_target::BreakingTarget;
-use crate::planning::choice::maturity::Maturity;
-use crate::planning::choice::release_history::ReleaseHistory;
+use crate::planning::units::choice::breaking_target::BreakingTarget;
+use crate::planning::units::choice::maturity::Maturity;
+use crate::planning::units::choice::release_history::ReleaseHistory;
 use crate::values::version::Version;
 
 /// The version a breaking unit moves to: the newest release of the newest

@@ -61,6 +61,7 @@ impl FakePorts {
             },
             files: FakeFiles {
                 fingerprint: surveyed.fingerprint.clone(),
+                lock: Vec::new(),
                 policy: tree(vec![
                     entry("gates", texts(&["just stage1", "just stage2"]), 31),
                     entry("published", texts(&["app-core"]), 32),

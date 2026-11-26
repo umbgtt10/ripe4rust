@@ -7,7 +7,7 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::diagnostics::severity::Severity;
 use ripe4rust_core::values::location::Location;
 
-const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
+const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 29] = [
     (
         DiagnosticCode::CargoDenyFailed,
         "cargo-deny-failed",
@@ -76,8 +76,20 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
         true,
     ),
     (
+        DiagnosticCode::PlanSchemaUnknown,
+        "plan-schema-unknown",
+        Severity::Error,
+        false,
+    ),
+    (
         DiagnosticCode::PlanStale,
         "plan-stale",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::PlanUnreadable,
+        "plan-unreadable",
         Severity::Error,
         false,
     ),
@@ -156,6 +168,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 26] = [
     (
         DiagnosticCode::UsageInvalid,
         "usage-invalid",
+        Severity::Error,
+        false,
+    ),
+    (
+        DiagnosticCode::UnitUnknown,
+        "unit-unknown",
         Severity::Error,
         false,
     ),

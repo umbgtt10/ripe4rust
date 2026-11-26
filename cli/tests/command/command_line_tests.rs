@@ -8,6 +8,7 @@ use cargo_ripe4rust::command::request::Request;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::values::date::Date;
 
+const CHECK_USAGE: &str = "run `cargo ripe4rust check <unit> --plan <file> [--format table|json]`";
 const USAGE: &str =
     "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]`";
 
@@ -21,13 +22,26 @@ fn plan(format: Format, date: Option<&str>, offline: bool) -> Request {
         format,
         date: date.map(|date| Date::parse(date).expect("a date")),
         offline,
+        unit: None,
+        plan: None,
+        because: None,
+        review: None,
     }
+}
+
+fn refused(words: &[&str]) -> (DiagnosticCode, String, String) {
+    let refusal = CommandLine.read(&args(words)).expect_err("a refusal");
+    (
+        refusal.diagnostic.code,
+        refusal.diagnostic.what,
+        refusal.diagnostic.action,
+    )
 }
 
 #[test]
 fn read_of_a_command_not_built_yet_is_unavailable() {
     // Arrange & Act
-    let refusals = ["check", "hold", "guide"].map(|command| {
+    let refusals = ["hold", "guide"].map(|command| {
         CommandLine.read(&args(&[
             "ripe4rust",
             command,
@@ -38,7 +52,7 @@ fn read_of_a_command_not_built_yet_is_unavailable() {
     });
 
     // Assert
-    for (refusal, command) in refusals.iter().zip(["check", "hold", "guide"]) {
+    for (refusal, command) in refusals.iter().zip(["hold", "guide"]) {
         let refusal = refusal.as_ref().expect_err("a refusal");
         assert_eq!(refusal.command, command);
         assert_eq!(refusal.diagnostic.code, DiagnosticCode::CommandUnavailable);
@@ -48,7 +62,7 @@ fn read_of_a_command_not_built_yet_is_unavailable() {
         );
         assert_eq!(
             refusal.diagnostic.action,
-            "use `cargo ripe4rust plan`, the one command this release runs; `check`, `hold` and `guide` come with a later release"
+            "use `cargo ripe4rust plan` or `cargo ripe4rust check`, the commands this release runs; `hold` and `guide` come with a later release"
         );
     }
 }
@@ -143,6 +157,102 @@ fn read_of_an_unknown_command_is_usage_invalid_and_answers_in_the_format_asked()
             DiagnosticCode::UsageInvalid,
             String::from("`frobnicate` is not a command of ripe4rust")
         )
+    );
+}
+
+#[test]
+fn read_of_check_given_an_option_of_plan_is_usage_invalid() {
+    // Arrange & Act
+    let refusal = refused(&[
+        "check",
+        "compatible:itoa",
+        "--plan",
+        "plan.json",
+        "--offline",
+    ]);
+
+    // Assert
+    assert_eq!(
+        refusal,
+        (
+            DiagnosticCode::UsageInvalid,
+            String::from("`--offline` is not an option of `check`"),
+            String::from(CHECK_USAGE)
+        )
+    );
+}
+
+#[test]
+fn read_of_check_given_two_units_is_usage_invalid() {
+    // Arrange & Act
+    let refusal = refused(&[
+        "check",
+        "compatible:itoa",
+        "breaking:itoa",
+        "--plan",
+        "plan.json",
+    ]);
+
+    // Assert
+    assert_eq!(
+        refusal.1,
+        "`breaking:itoa` is a second unit, and `check` takes one"
+    );
+}
+
+#[test]
+fn read_of_check_takes_its_unit_and_its_plan() {
+    // Arrange & Act
+    let request = CommandLine.read(&args(&[
+        "ripe4rust",
+        "check",
+        "compatible:itoa/itoa",
+        "--plan=plans/today.json",
+        "--format",
+        "json",
+    ]));
+
+    // Assert
+    assert_eq!(
+        request,
+        Ok(Request {
+            command: String::from("check"),
+            format: Format::Json,
+            date: None,
+            offline: false,
+            unit: Some(String::from("compatible:itoa/itoa")),
+            plan: Some(String::from("plans/today.json")),
+            because: None,
+            review: None,
+        })
+    );
+}
+
+#[test]
+fn read_of_check_without_a_plan_is_usage_invalid() {
+    // Arrange & Act
+    let refusal = refused(&["check", "compatible:itoa"]);
+
+    // Assert
+    assert_eq!(
+        refusal,
+        (
+            DiagnosticCode::UsageInvalid,
+            String::from("`check` takes `--plan <file>`, and was given none"),
+            String::from(CHECK_USAGE)
+        )
+    );
+}
+
+#[test]
+fn read_of_check_without_a_unit_is_usage_invalid() {
+    // Arrange & Act
+    let refusal = refused(&["check", "--plan", "plan.json"]);
+
+    // Assert
+    assert_eq!(
+        refusal.1,
+        "`check` takes the id of a unit, and was given none"
     );
 }
 

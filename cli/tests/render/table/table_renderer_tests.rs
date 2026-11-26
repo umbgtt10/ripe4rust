@@ -7,10 +7,23 @@ use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use crate::support::plans::rest;
 use crate::support::plans::toolchain;
-use cargo_ripe4rust::render::plan_renderer::PlanRenderer;
+use crate::support::reports::not_as_planned;
+use cargo_ripe4rust::render::document_renderer::DocumentRenderer;
 use cargo_ripe4rust::render::table::table_renderer::TableRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+
+#[test]
+fn check_prints_the_report() {
+    // Arrange & Act
+    let text = TableRenderer.check(&not_as_planned());
+
+    // Assert
+    assert!(
+        text.starts_with("check compatible:widget: not as planned\n"),
+        "{text}"
+    );
+}
 
 #[test]
 fn failure_prints_each_diagnostic_on_a_line() {

@@ -5,7 +5,9 @@
 pub mod cargo_layout_tests;
 pub mod fingerprint_tests;
 pub mod layout_reader_tests;
+pub mod lock_reader_tests;
 pub mod manifest_files_tests;
+pub mod plan;
 pub mod policy_section_tests;
 pub mod requirement_finder_tests;
 pub mod rust_version_finder_tests;

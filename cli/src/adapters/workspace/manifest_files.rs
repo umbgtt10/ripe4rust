@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::adapters::workspace::fingerprint::Fingerprint;
+use crate::adapters::workspace::lock_reader::LockReader;
 use crate::adapters::workspace::policy_section::PolicySection;
 use crate::adapters::workspace::requirement_finder::RequirementFinder;
 use crate::adapters::workspace::rust_version_finder::RustVersionFinder;
@@ -11,6 +12,7 @@ use crate::system::model::file_failure::FileFailure;
 use crate::system::model::layout::Layout;
 use crate::system::traits::file_system::FileSystem;
 use crate::system::traits::layout_source::LayoutSource;
+use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
@@ -35,6 +37,11 @@ pub struct ManifestFiles<'a> {
 impl<'a> ManifestFiles<'a> {
     pub fn new(source: &'a dyn LayoutSource, files: &'a dyn FileSystem) -> Self {
         Self { source, files }
+    }
+
+    fn at_root(&self, file: &str) -> Result<String, PortFailure> {
+        let layout = self.source.layout()?;
+        self.required(&layout, &layout.root.join(file))
     }
 
     fn manifests(layout: &Layout) -> Vec<PathBuf> {
@@ -88,9 +95,12 @@ impl WorkspaceFiles for ManifestFiles<'_> {
         Ok(Fingerprint.of(&files))
     }
 
+    fn lock(&self) -> Result<Vec<LockEntry>, PortFailure> {
+        LockReader.entries(&self.at_root(LOCK)?)
+    }
+
     fn policy(&self) -> Result<PolicyTree, PortFailure> {
-        let layout = self.source.layout()?;
-        PolicySection.tree(&self.required(&layout, &layout.root.join(MANIFEST))?)
+        PolicySection.tree(&self.at_root(MANIFEST)?)
     }
 
     fn requirement_lines(&self, name: &str) -> Result<Vec<Location>, PortFailure> {

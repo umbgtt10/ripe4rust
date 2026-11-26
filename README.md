@@ -21,9 +21,11 @@ it is safe and asked where it is not.
 **In development.** `cargo ripe4rust plan [--format table|json] [--date
 YYYY-MM-DD] [--offline]` reads a real workspace -- cargo, cargo-deny, rustc,
 and the crates.io registry through `curl`, cached for the day -- and prints the
-plan. The parse of the sources and the toolchain's releases are still to come:
-until then the plan reads them conservatively and says so; `check`, `hold` and
-`guide` come after. Version 0.0.1, on crates.io, holds the vocabulary only. The
+plan. `cargo ripe4rust check <unit> --plan <file>` reads the plan back and the
+workspace again, and says whether the unit applied is as planned -- exit 0, or
+1 with every difference and what to do -- or the plan is stale, 3. The parse of
+the sources and the toolchain's releases are still to come: until then the plan
+reads them conservatively and says so; `hold` and `guide` come after. Version 0.0.1, on crates.io, holds the vocabulary only. The
 design is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License

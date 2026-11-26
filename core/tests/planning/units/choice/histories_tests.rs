@@ -6,8 +6,8 @@ use crate::support::releases::date;
 use crate::support::releases::release;
 use crate::support::releases::version;
 use crate::support::releases::yanked;
-use ripe4rust_core::planning::choice::histories::Histories;
-use ripe4rust_core::planning::choice::release_history::ReleaseHistory;
+use ripe4rust_core::planning::units::choice::histories::Histories;
+use ripe4rust_core::planning::units::choice::release_history::ReleaseHistory;
 use ripe4rust_core::values::version::Version;
 
 fn histories() -> Histories {
