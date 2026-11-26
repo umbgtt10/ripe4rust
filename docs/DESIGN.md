@@ -301,7 +301,11 @@ named `rust` holds the toolchain unit. A pin on a crate that is not in the
 tree any more is a warning: remove it.
 
 A key the policy does not know is an error, not ignored: a misspelt threshold
-would otherwise apply its default without a word.
+would otherwise apply its default without a word. A value of the wrong kind --
+a threshold in words, a date that is no date, a `hold` other than `line` or
+`all` -- is the error `policy-invalid-value`; every problem the policy has is
+reported at once, before any rule runs. An empty `reason` is no reason, and
+`gates = []` declares no gates.
 
 ## What a run prints
 
@@ -356,6 +360,14 @@ The problems the design already names, at least:
 | `source-unparsed` | warning | a source file the parse could not read |
 | `plan-stale` | error | `check` or `hold` against a workspace changed outside the plan |
 | `internal` | error | a failure of ripe4rust's own |
+| `policy-invalid-value` | error | a key in `[workspace.metadata.ripe4rust]` whose value is not the kind it must be |
+| `cargo-update-failed` | error | `cargo update --dry-run` could not run |
+| `cargo-metadata-failed` | error | `cargo metadata` could not run |
+| `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
+| `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
+
+Of these, the policy's own codes, `target-unknown` and `gates-undeclared` need
+a person: each asks for a fact or a decision only the owner has.
 
 ### The plan
 

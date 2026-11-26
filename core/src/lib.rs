@@ -11,6 +11,9 @@
 
 extern crate alloc;
 
+pub mod diagnostics;
+pub mod inputs;
 pub mod outcome;
+pub mod planning;
 pub mod unit_kind;
 pub mod values;

@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- Diagnostics (`ripe4rust_core::diagnostics`): `Diagnostic` -- severity, code, where, what, do, needs a person --
+  and `DiagnosticCode`, every code `docs/DESIGN.md` names with its stable label, its severity and whether only the
+  owner can fix it, five added to the table for failures it left without one: `policy-invalid-value`,
+  `cargo-update-failed`, `cargo-metadata-failed`, `workspace-unreadable` and `toolchain-unreachable`.
+- The policy read and validated before any rule runs (`ripe4rust_core::planning::pins_and_policy`), from the raw
+  tree with locations a port will hand over (`ripe4rust_core::inputs::policy_tree`): `gates`, `published`,
+  `validate-beyond-gates`, `freeze-until`, `exposure`, the seven thresholds with their defaults, and the pins with
+  `reason`, `review`, `until` -- a crate and a version requirement, or words -- and `hold`. An unknown key is
+  `policy-unknown-key`, a value of the wrong kind `policy-invalid-value`, a pin without a reason
+  `pin-without-reason`, one with neither a review date nor a checkable condition `pin-without-release`, and no gates
+  `gates-undeclared`, each at its `file:line`.
 - `ripe4rust_core::values`, the arithmetic the rules are written in, by hand since the core takes no crate: `Version`
   with semver's order and its line (the major, or the minor for `0.x` and the toolchain); `PartialVersion`, a version
   as a requirement or a `rust-version` writes it; `Requirement`, cargo's comparators joined by commas, which reads a
