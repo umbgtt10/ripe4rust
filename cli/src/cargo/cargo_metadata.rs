@@ -2,16 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::cargo::complaint::Complaint;
+use crate::cargo::cargo_command::CargoCommand;
 use crate::cargo::metadata_reader::MetadataReader;
-use crate::seams::invocation::Invocation;
 use crate::traits::command_runner::CommandRunner;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::workspace::Workspace;
 use ripe4rust_core::traits::workspace_metadata::WorkspaceMetadata;
 use std::path::PathBuf;
-
-const CARGO: &str = "cargo";
 
 /// `cargo metadata --format-version 1 --locked`: the members and the lock,
 /// and with `--filter-platform` which crates a target's build resolves.
@@ -40,23 +37,9 @@ impl<'a> CargoMetadata<'a> {
             args.push(String::from("--offline"));
         }
         args.extend(filter.iter().map(|word| String::from(*word)));
-        let output = self
-            .runner
-            .run(&Invocation {
-                program: String::from(CARGO),
-                args,
-                dir: self.dir.clone(),
-            })
-            .map_err(|failure| PortFailure::CargoMetadataFailed {
-                detail: Complaint.unlaunched(&failure),
-            })?;
-        if output.status == Some(0) {
-            Ok(output.stdout)
-        } else {
-            Err(PortFailure::CargoMetadataFailed {
-                detail: Complaint.of(&output),
-            })
-        }
+        let output = CargoCommand::new(self.runner, self.dir.clone())
+            .run(args, |detail| PortFailure::CargoMetadataFailed { detail })?;
+        Ok(output.stdout)
     }
 }
 

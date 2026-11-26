@@ -147,6 +147,16 @@ Where the sections above are silent, the adapters read the inputs this way:
   and any kind of dependency: the conservative reading, so a crate only a host
   tool uses still asks. A failure is `cargo-metadata-failed`, with cargo's
   error on one line; output it cannot read is `internal`.
+- **`cargo update --dry-run`** runs as `--recursive -p <crate>@<version>` for
+  a direct dependency, the version naming the copy in use, and with
+  `--offline` in an offline plan. Every line of what it prints must be a move
+  -- `Updating` or `Downgrading <crate> v<from> -> v<to>`, `Adding <crate>
+  v<to>`, `Removing <crate> v<from>`, with no note or one of cargo's own,
+  `(available: v...)`, `(latest: v...)`, `(requires Rust ...)` -- or a line
+  that moves nothing: the index or a git source updated, the `Locking` summary,
+  a wait for cargo's file lock, an `Unchanged` crate, a `note:` or a
+  `warning:`. Anything else is `cargo-update-unrecognised`, quoting the line;
+  a failure is `cargo-update-failed`.
 
 ## Which version a unit moves to
 

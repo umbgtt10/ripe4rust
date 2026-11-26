@@ -1,0 +1,6 @@
+    Updating crates.io index
+     Locking 2 packages to highest Rust 1.85 compatible versions
+    Updating either v1.5.0 -> v1.19.0
+    Updating itertools v0.10.0 -> v0.10.5 (available: v0.15.0)
+note: pass `--verbose` to see 3 unchanged dependencies behind latest
+warning: not updating lockfile due to --dry-run

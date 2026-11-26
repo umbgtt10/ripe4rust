@@ -1,0 +1,5 @@
+    Updating crates.io index
+     Locking 1 package to highest Rust 1.85 compatible version
+    Updating memchr v2.5.0 -> v2.8.3
+note: pass `--verbose` to see 4 unchanged dependencies behind latest
+warning: not updating lockfile due to --dry-run

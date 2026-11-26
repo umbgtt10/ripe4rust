@@ -1,0 +1,5 @@
+    Updating crates.io index
+     Locking 1 package to highest Rust 1.85 compatible version
+    Updating itoa v0.4.7 -> v0.4.8 (available: v1.0.19)
+note: pass `--verbose` to see 4 unchanged dependencies behind latest
+warning: not updating lockfile due to --dry-run

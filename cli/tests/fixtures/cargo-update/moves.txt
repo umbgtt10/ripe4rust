@@ -1,0 +1,43 @@
+    Updating crates.io index
+     Locking 34 packages to highest Rust 1.85 compatible versions
+      Adding android_system_properties v0.1.6
+      Adding bumpalo v3.20.4
+      Adding cc v1.11.3
+      Adding cfg-if v1.0.5
+    Updating chrono v0.4.19 -> v0.4.45
+      Adding core-foundation-sys v0.8.7
+      Adding find-msvc-tools v0.1.15
+      Adding futures-core v0.3.34
+      Adding futures-task v0.3.34
+      Adding futures-util v0.3.34
+      Adding iana-time-zone v0.1.65
+      Adding iana-time-zone-haiku v0.1.2
+      Adding js-sys v0.3.107
+      Adding log v0.4.35
+    Updating memchr v2.7.0 -> v2.8.3
+    Removing num-integer v0.1.47
+      Adding pin-project-lite v0.2.18
+      Adding proc-macro2 v1.0.107
+      Adding quote v1.0.47
+      Adding rustversion v1.0.23
+      Adding shlex v2.0.1
+      Adding slab v0.4.12
+      Adding syn v2.0.119
+      Adding syn v3.0.10
+    Removing time v0.1.45
+      Adding unicode-ident v1.0.27
+    Removing wasi v0.10.0+wasi-snapshot-preview1
+      Adding wasm-bindgen v0.2.130
+      Adding wasm-bindgen-macro v0.2.130
+      Adding wasm-bindgen-macro-support v0.2.130
+      Adding wasm-bindgen-shared v0.2.130
+    Removing winapi v0.3.9
+    Removing winapi-i686-pc-windows-gnu v0.4.0
+    Removing winapi-x86_64-pc-windows-gnu v0.4.0
+      Adding windows-core v0.62.2
+      Adding windows-implement v0.60.2
+      Adding windows-interface v0.59.3
+      Adding windows-link v0.2.1
+      Adding windows-result v0.4.1
+      Adding windows-strings v0.5.1
+warning: not updating lockfile due to --dry-run

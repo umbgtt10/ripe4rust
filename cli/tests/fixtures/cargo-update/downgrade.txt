@@ -1,0 +1,4 @@
+    Updating crates.io index
+ Downgrading memchr v2.7.0 -> v2.5.0
+note: pass `--verbose` to see 2 unchanged dependencies behind latest
+warning: not updating lockfile due to --dry-run

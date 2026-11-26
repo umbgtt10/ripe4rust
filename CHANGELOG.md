@@ -83,6 +83,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `cargo metadata --format-version 1 --locked`; the crates a `validate-beyond-gates` target reaches, from the same
   with `--filter-platform`. `--locked` leaves the lock file alone; `--offline` follows an offline plan. A failure is
   `cargo-metadata-failed` with cargo's error on one line, output that does not read `internal`.
+- `cargo update --dry-run`, read strictly (`cargo_ripe4rust::cargo::cargo_update`): a direct dependency's moves
+  with `--recursive -p <crate>@<version>`, the workspace's without. Every line is a move -- updated, downgraded,
+  added, removed, with no note or one of cargo's own -- or a status that moves nothing; any other line is
+  `cargo-update-unrecognised`, quoting it, and a failure `cargo-update-failed`. Tested on cargo 1.99.1's own
+  output, recorded from scratch workspaces.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

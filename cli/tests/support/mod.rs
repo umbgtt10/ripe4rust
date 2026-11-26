@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod json;
+pub mod moves;
 pub mod outputs;
 pub mod plans;
 pub mod replay_runner;
