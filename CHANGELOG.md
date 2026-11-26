@@ -22,6 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   holds still writes `held`. Nothing else about the unit changes: it groups, and its evidence names the
   `rust-version`, by the version in use (`ripe4rust_core::planning::units::own_move::OwnMove`); `guide`'s
   description of `units[].to` says when it is null.
+- A move to a lower version inside a unit was silent: a compatible unit of over a hundred moves took one crate back
+  from 0.1.7 to 0.1.6, a release not yanked, and read as ripe. Every move back is now named among the unit's reasons,
+  "moves <crate> back from <from> to <to>", and listed in its evidence as `downgrades`; one leaving a release that
+  is not yanked makes a unit the rules call ripe ask, rule and urgency kept, with the new suggestion `moves-back`.
+  One leaving a yanked release is the cure, named "back from the yanked ...", its outcome unchanged
+  (`ADR-AMoveBackIsAsked`).
 
 ## [0.1.0] — 2026-11-26
 

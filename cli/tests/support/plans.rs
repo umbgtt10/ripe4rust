@@ -98,6 +98,7 @@ pub fn breaking() -> PlannedUnit {
             footprint: vec![at("src/net.rs", 4)],
             held_back: Vec::new(),
             held: Vec::new(),
+            downgrades: Vec::new(),
         },
     }
 }
@@ -156,6 +157,7 @@ pub fn compatible() -> PlannedUnit {
             footprint: Vec::new(),
             held_back: Vec::new(),
             held: Vec::new(),
+            downgrades: Vec::new(),
         },
     }
 }

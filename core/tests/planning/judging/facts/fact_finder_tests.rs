@@ -10,6 +10,7 @@ use crate::support::surveyed::toolchain;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
 use crate::support::units::moved;
+use ripe4rust_core::planning::judging::downgrade::Downgrade;
 use ripe4rust_core::planning::judging::facts::fact_finder::FactFinder;
 use ripe4rust_core::planning::judging::facts::plan_context::PlanContext;
 use ripe4rust_core::planning::judging::footprint::Footprint;
@@ -76,6 +77,31 @@ fn facts_of_a_unit_clearing_a_concern_name_it() {
 
     // Assert
     assert_eq!(facts.concerns, vec![String::from("the yanked gizmo 2.7.5")]);
+}
+
+#[test]
+fn facts_of_a_unit_moving_a_crate_back_name_the_move() {
+    // Arrange
+    let surveyed = surveyed();
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let facts = FactFinder::new(&context).facts(
+        &compatible("widget", vec![moved("gizmo", "2.7.6", "2.7.5")]),
+        &[],
+    );
+
+    // Assert
+    assert_eq!(
+        facts.downgrades,
+        vec![Downgrade {
+            name: String::from("gizmo"),
+            from: version("2.7.6"),
+            to: version("2.7.5"),
+            yanked: false,
+        }]
+    );
 }
 
 #[test]

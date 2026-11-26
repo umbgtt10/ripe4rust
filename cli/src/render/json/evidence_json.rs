@@ -29,6 +29,11 @@ impl EvidenceJson {
                 .iter()
                 .map(|held| MoveJson.document(held))
                 .collect(),
+            downgrades: evidence
+                .downgrades
+                .iter()
+                .map(|downgrade| MoveJson.document(downgrade))
+                .collect(),
         }
     }
 }

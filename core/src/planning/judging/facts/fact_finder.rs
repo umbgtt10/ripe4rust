@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::planning::judging::facts::copies::Copies;
+use crate::planning::judging::facts::downgrade_finder::DowngradeFinder;
 use crate::planning::judging::facts::exposure::Exposure;
 use crate::planning::judging::facts::footprints::Footprints;
 use crate::planning::judging::facts::held_back::HeldBack;
@@ -40,6 +41,7 @@ impl<'a> FactFinder<'a> {
             name: self.name(unit),
             rest: unit.name.is_none().then(|| count(unit.moves.len())),
             concerns: concerns.iter().map(Concern::label).collect(),
+            downgrades: DowngradeFinder::new(self.context).of(unit),
             reaches: Reach::new(surveyed).targets(unit),
             fully_held: pins.fully_held(unit, &standings),
             pins: standings,

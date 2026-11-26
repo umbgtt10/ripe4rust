@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::inputs::lock_move::LockMove;
+use crate::planning::judging::facts::downgrade_finder::DowngradeFinder;
 use crate::planning::judging::facts::footprints::Footprints;
 use crate::planning::judging::facts::held_back::HeldBack;
 use crate::planning::judging::facts::line_review::LineReview;
@@ -51,6 +53,15 @@ impl<'a> EvidenceWriter<'a> {
             footprint,
             held_back: HeldBack::new(self.context).versions(unit),
             held: unit.held.clone(),
+            downgrades: DowngradeFinder::new(self.context)
+                .of(unit)
+                .into_iter()
+                .map(|downgrade| LockMove {
+                    name: downgrade.name,
+                    from: Some(downgrade.from),
+                    to: Some(downgrade.to),
+                })
+                .collect(),
         }
     }
 }

@@ -5,6 +5,7 @@
 pub mod drift_tests;
 pub mod facts;
 pub mod judge_tests;
+pub mod moved_back_tests;
 pub mod no_gates_tests;
 pub mod rules;
 pub mod suggestion_tests;

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::planning::judging::downgrade::Downgrade;
 use crate::planning::judging::footprint::Footprint;
 use crate::planning::judging::line_standing::LineStanding;
 use crate::planning::judging::pin_standing::PinStanding;
@@ -25,6 +26,7 @@ pub struct UnitFacts {
     pub name: String,
     pub rest: Option<u32>,
     pub concerns: Vec<String>,
+    pub downgrades: Vec<Downgrade>,
     pub reaches: Vec<String>,
     pub pins: Vec<PinStanding>,
     pub fully_held: bool,

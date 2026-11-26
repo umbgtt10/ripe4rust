@@ -6,8 +6,10 @@ use crate::support::facts::facts;
 use crate::support::facts::pinned;
 use crate::support::facts::standing;
 use crate::support::releases::date;
+use crate::support::releases::version;
 use ripe4rust_core::outcome::Outcome;
 use ripe4rust_core::planning::judging::decision::Decision;
+use ripe4rust_core::planning::judging::downgrade::Downgrade;
 use ripe4rust_core::planning::judging::footprint::Footprint;
 use ripe4rust_core::planning::judging::judge::Judge;
 use ripe4rust_core::planning::judging::suggestion::Suggestion;
@@ -36,6 +38,52 @@ fn judge_of_a_plain_compatible_unit_is_rule_ten_ripe() {
     // Assert
     assert_eq!(decision.outcome, Outcome::Ripe);
     assert_eq!(decision.rule, Some(10));
+}
+
+#[test]
+fn judge_of_a_ripe_unit_moving_a_crate_back_asks_it_and_without_gates_asks_for_them() {
+    // Arrange
+    let downgrades = vec![Downgrade {
+        name: String::from("crypto-common"),
+        from: version("0.1.7"),
+        to: version("0.1.6"),
+        yanked: false,
+    }];
+    let gated = UnitFacts {
+        downgrades: downgrades.clone(),
+        ..facts(UnitKind::Compatible)
+    };
+    let ungated = UnitFacts {
+        gates: 0,
+        ..gated.clone()
+    };
+
+    // Act
+    let decisions = [Judge.judge(&gated), Judge.judge(&ungated)];
+
+    // Assert
+    assert_eq!(
+        decisions.map(|decision| (decision.outcome, decision.suggestion, decision.reasons)),
+        [
+            (
+                Outcome::Ask,
+                Some(Suggestion::MovesBack),
+                vec![
+                    String::from("compatible"),
+                    String::from("moves crypto-common back from 0.1.7 to 0.1.6")
+                ]
+            ),
+            (
+                Outcome::Ask,
+                Some(Suggestion::DeclareTheGates),
+                vec![
+                    String::from("compatible"),
+                    String::from("no gates declared"),
+                    String::from("moves crypto-common back from 0.1.7 to 0.1.6")
+                ]
+            ),
+        ]
+    );
 }
 
 #[test]

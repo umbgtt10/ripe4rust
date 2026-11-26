@@ -401,6 +401,20 @@ and the toolchain -- among the candidates newer than the line in use, and "a
 newer line" is any of them; the unit keeps the number of the rule whose hold
 it overrides, 4 or 9.
 
+### A move back
+
+cargo's resolver may take a crate to a lower version inside a unit: a newer
+release of one crate can require an older one of another. Every such move is
+named among the unit's reasons, "moves <crate> back from <from> to <to>", and
+listed in its evidence as `downgrades` (ADR-AMoveBackIsAsked). One that
+leaves a release that is not yanked turns a unit the rules call ripe into
+**ask**, its rule and urgency kept, with the suggestion "moves back" -- after
+the no-gates downgrade, so an ungated workspace is still asked for its gates
+first. One that leaves a yanked release is the cure: named, "moves <crate>
+back from the yanked <from> to <to>", its outcome unchanged. A unit that asks
+or ripens for another reason keeps its outcome, the move back among its
+reasons.
+
 ## Footprint and exposure
 
 One `syn` parse of the workspace's sources answers both
@@ -724,15 +738,16 @@ for the toolchain -- and its `reasons`, the table's last column; an `apply`
 step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
-release and the moves a pin holds out of the unit. The workspace's `lines` are
+release, the moves a pin holds out of the unit, and the moves to a lower
+version it makes. The workspace's `lines` are
 every line a unit's `apply` can edit, as the plan found it written: each
 crates.io dependency's requirement in every manifest, `key` the crate; each
 member's `rust-version`, its own or the one it inherits; and
 `rust-toolchain.toml`'s `channel` -- what `check` compares the manifests and
 the toolchain file with. Every object's keys come in the order shown, at
 every depth: a unit's `members` after `crate` and its
-`reasons` after `suggestion`; the evidence's `footprint`, `held_back` and
-`held` after `yanked_in_use`; the line in use as `line`, `first_release`,
+`reasons` after `suggestion`; the evidence's `footprint`, `held_back`,
+`held` and `downgrades` after `yanked_in_use`; the line in use as `line`, `first_release`,
 `last_release`, `releases`. A document for a failure carries `schema`,
 `command` and `diagnostics` alone.
 

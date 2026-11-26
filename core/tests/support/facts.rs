@@ -20,6 +20,7 @@ pub fn facts(kind: UnitKind) -> UnitFacts {
         name: String::from("widget"),
         rest: None,
         concerns: Vec::new(),
+        downgrades: Vec::new(),
         reaches: Vec::new(),
         pins: Vec::new(),
         fully_held: false,

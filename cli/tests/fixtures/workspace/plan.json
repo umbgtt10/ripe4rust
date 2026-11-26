@@ -148,7 +148,8 @@
         "yanked_in_use": false,
         "footprint": [],
         "held_back": [],
-        "held": []
+        "held": [],
+        "downgrades": []
       }
     },
     {
@@ -232,7 +233,8 @@
           "app/src/main.rs:1"
         ],
         "held_back": [],
-        "held": []
+        "held": [],
+        "downgrades": []
       }
     },
     {
@@ -290,7 +292,8 @@
         "yanked_in_use": false,
         "footprint": [],
         "held_back": [],
-        "held": []
+        "held": [],
+        "downgrades": []
       }
     },
     {
@@ -380,7 +383,8 @@
           "app-core/src/lib.rs:7"
         ],
         "held_back": [],
-        "held": []
+        "held": [],
+        "downgrades": []
       }
     },
     {
@@ -438,7 +442,8 @@
         "yanked_in_use": false,
         "footprint": [],
         "held_back": [],
-        "held": []
+        "held": [],
+        "downgrades": []
       }
     },
     {
@@ -508,7 +513,8 @@
         "yanked_in_use": false,
         "footprint": [],
         "held_back": [],
-        "held": []
+        "held": [],
+        "downgrades": []
       }
     },
     {
@@ -585,7 +591,8 @@
         "yanked_in_use": false,
         "footprint": [],
         "held_back": [],
-        "held": []
+        "held": [],
+        "downgrades": []
       }
     }
   ]

@@ -54,6 +54,7 @@ fn evidence_of_a_breaking_unit_carries_its_work_list() {
             ],
             held_back: Vec::new(),
             held: Vec::new(),
+            downgrades: Vec::new(),
         }
     );
 }
@@ -88,6 +89,27 @@ fn evidence_of_a_compatible_unit_names_what_it_clears_and_holds() {
     assert!(evidence.yanked_in_use);
     assert_eq!(evidence.held, vec![moved("gizmo", "2.7.5", "2.7.6")]);
     assert_eq!(evidence.footprint, Vec::new());
+}
+
+#[test]
+fn evidence_of_a_unit_moving_a_crate_back_lists_the_move() {
+    // Arrange
+    let surveyed = surveyed();
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+    let unit = compatible(
+        "widget",
+        vec![
+            moved("widget", "1.4.0", "1.4.1"),
+            moved("gizmo", "2.7.6", "2.7.5"),
+        ],
+    );
+
+    // Act
+    let evidence = EvidenceWriter::new(&context).evidence(&unit, &[]);
+
+    // Assert
+    assert_eq!(evidence.downgrades, vec![moved("gizmo", "2.7.6", "2.7.5")]);
 }
 
 #[test]

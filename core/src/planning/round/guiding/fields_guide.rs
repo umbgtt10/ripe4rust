@@ -6,7 +6,7 @@ use crate::planning::round::guiding::field_guide::FieldGuide;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-const FIELDS: [(&str, &str, &str); 115] = [
+const FIELDS: [(&str, &str, &str); 119] = [
     (
         "every",
         "schema",
@@ -316,6 +316,26 @@ const FIELDS: [(&str, &str, &str); 115] = [
         "plan",
         "units[].evidence.held[].to",
         "the version it would take",
+    ),
+    (
+        "plan",
+        "units[].evidence.downgrades",
+        "the moves to a lower version the unit makes, each named among its reasons; one leaving a release that is not yanked makes the unit ask",
+    ),
+    (
+        "plan",
+        "units[].evidence.downgrades[].crate",
+        "the crate moved back",
+    ),
+    (
+        "plan",
+        "units[].evidence.downgrades[].from",
+        "the version it leaves",
+    ),
+    (
+        "plan",
+        "units[].evidence.downgrades[].to",
+        "the lower version it takes",
     ),
     ("check", "unit", "the unit, or the move of a split, checked"),
     (
