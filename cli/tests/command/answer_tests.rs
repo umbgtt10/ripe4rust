@@ -12,6 +12,7 @@ use cargo_ripe4rust::command::format::Format;
 use cargo_ripe4rust::command::ran::Ran;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::guiding::guide::Guide;
 
 fn stale() -> PlanFailure {
     PlanFailure {
@@ -51,6 +52,20 @@ fn failed_prints_the_failure_and_exits_by_its_diagnostics() {
             output: String::from("error[plan-stale] the lock moved. Do: plan again\n"),
             code: 3,
         }
+    );
+}
+
+#[test]
+fn guided_of_the_guide_exits_zero() {
+    // Arrange & Act
+    let ran = Answer::new(Format::Json, "guide").guided(&Guide::new("0.0.1").text());
+
+    // Assert
+    assert_eq!(ran.code, 0);
+    assert!(
+        ran.output.contains("\"version\": \"0.0.1\""),
+        "{}",
+        ran.output
     );
 }
 

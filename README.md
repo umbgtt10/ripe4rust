@@ -26,9 +26,10 @@ workspace again, and says whether the unit applied is as planned -- exit 0, or
 1 with every difference and what to do -- or the plan is stale, 3. `cargo
 ripe4rust hold <unit> --plan <file> --because <text>` prints the pin that holds
 a unit whose gates went red, or that a person said to wait on, and where it
-goes; ripe4rust still writes no file. The parse of the sources and the
-toolchain's releases are still to come: until then the plan reads them
-conservatively and says so; `guide` comes after. Version 0.0.1, on crates.io, holds the vocabulary only. The
+goes; ripe4rust still writes no file. `cargo ripe4rust guide` prints the round,
+every command, every diagnostic code with its remedy and the documents' fields.
+The parse of the sources and the toolchain's releases are still to come: until
+then the plan reads them conservatively and says so. Version 0.0.1, on crates.io, holds the vocabulary only. The
 design is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License

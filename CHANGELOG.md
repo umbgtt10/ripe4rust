@@ -114,7 +114,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   YYYY-MM-DD] [--offline]`, every port's adapter set up over the seams `main` passes in -- `main` a thin shim over
   `Ripe4rust`, the library's entry point -- and the one document on stdout: exit 0 where a plan was produced, 2 where
   none could be. `--date` stands for today, `--offline` keeps every adapter off the network. A command or an
-  option it does not know is `usage-invalid`; `check`, `hold` and `guide`, until slice 3, `command-unavailable`.
+  option it does not know is `usage-invalid`; `check`, `hold` and `guide`, until slice 3, `command-unavailable`,
+  retired with slice 3.
   Tested through the entry point on a workspace recorded whole -- cargo, cargo-deny, rustc and the registry --
   against the JSON document and the table, an offline plan from its cache, and the plan's failures; the binary's
   own tests now run a command line that needs no network.
@@ -146,6 +147,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the plan's date; a crate pinned already keeps its reason, its condition and the sooner review. The line goes under
   the pins table's line, or in that table added at the end of `Cargo.toml`. A test reads a printed pin back through
   the policy's own reader.
+- `guide`: `cargo ripe4rust guide [--format table|json]` prints the round, every command with what it takes and the
+  codes it exits with, every diagnostic code with its severity, whether it needs a person, what it means and its
+  remedy, and every field of the documents of schema 1, versioned with the binary. It is generated in the core
+  (`ripe4rust_core::planning::round::guiding`) from the catalogue the diagnostics come from: `DiagnosticCode` gains
+  `ALL` and `entry`, a `CodeEntry` of what it means and its remedy, a test holds `ALL` to the enum as its source
+  declares it, and another holds every key each document prints to a field of the guide. The round gains what to do
+  when `check` exits 2.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from

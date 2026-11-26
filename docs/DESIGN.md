@@ -2,8 +2,8 @@
 
 Status: settled 2026-11-26; the agent's contract added the same day. Slices
 0, 1 and 2 of "Delivery" are implemented: the scaffolding, the core with the
-renderers, and the adapters with `plan` end to end; of slice 3, `check` and
-`hold`. The decisions that were not
+renderers, the adapters with `plan` end to end, and the round's commands,
+`check`, `hold` and `guide`. The decisions that were not
 obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
@@ -520,7 +520,6 @@ The problems the design already names, at least:
 | `source-unscanned` | notice | the sources are not parsed yet: no footprint or exposure is known |
 | `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
 | `usage-invalid` | error | a command or an option ripe4rust does not know, or an option's value of the wrong kind |
-| `command-unavailable` | error | a command of the design this release does not run yet |
 | `plan-unreadable` | error | the plan file `--plan` names is not there, or is no plan `plan` wrote |
 | `plan-schema-unknown` | error | the plan file is of a `schema` this release does not read |
 | `unit-unknown` | error | `check` or `hold` names an id that is no unit of the plan nor a move of a unit's split, or an advisory row, which applies nothing |
@@ -719,9 +718,10 @@ only -- and to keep cargo and cargo-deny off the network too, so an offline
 plan reaches none. With no command, the command is `plan`; the name cargo
 passes a subcommand first is skipped, so `cargo ripe4rust` and
 `cargo-ripe4rust` read alike. An option takes its value after it or after `=`.
-A command or an option ripe4rust does not know is `usage-invalid`, and, until
-the rest of slice 3 builds it, `guide` is `command-unavailable`:
-both errors, exit 2, the document in the format the line asked for. `--plan`
+A command or an option ripe4rust does not know is `usage-invalid`, an error,
+exit 2, the document in the format the line asked for; an unknown command's
+`do` points at `guide`. Every command of the design runs, so the transitional
+`command-unavailable` of slices 1 and 2 is gone. `--plan`
 names the plan file from the directory the command runs in, or by an absolute
 path; `check` and `hold` take one unit, its id or a split id. `main` is
 a thin shim over the library's entry point, which takes every seam it reaches
@@ -847,6 +847,46 @@ a line takes the place of. In text: `hold <unit>: under <section> at
 <file:line>`, or `in a new <section> at the end of Cargo.toml` followed by the
 section's header, then each pin's line and `Do: ...`.
 
+### guide
+
+`guide` prints, for the release it is part of: the round below; every command
+with its usage, what it does, what it takes and the codes it exits with; every
+diagnostic code with its severity, whether it needs a person, what it means and
+its remedy; and every field of the documents of schema 1, document by document
+-- `every` for those all of them carry, then `plan`'s, `check`'s, `hold`'s and
+`guide`'s, an array's items written `[]`. It reads nothing and exits 0.
+
+The codes come from the catalogue the diagnostics come from: `DiagnosticCode`
+gives each its label, severity and whether it needs a person, which
+`diagnose` stamps on every diagnostic, and its entry -- what it means and its
+remedy --, which only `guide` prints: a diagnostic's own `do` is that remedy
+said of the case at hand. `DiagnosticCode::ALL` holds every code, in the order of its label; a
+test reads the enum's declaration from its source and holds `ALL` to it, so a
+code cannot be added without a guide entry, and another prints every
+document's keys and holds each to a field of the guide.
+
+```json
+{
+  "schema": 1,
+  "command": "guide",
+  "version": "0.0.1",
+  "round": ["1. Run `cargo ripe4rust plan --format json > plan.json`.", "..."],
+  "commands": [
+    { "usage": "cargo ripe4rust check <unit> --plan <file> [--format table|json]",
+      "does": "compares the workspace with what the unit should have done, ...",
+      "options": [{ "option": "<unit>", "means": "..." }, "..."],
+      "exits": [{ "code": 0, "means": "as planned: ..." }, "..."] }
+  ],
+  "codes": [
+    { "code": "plan-stale", "severity": "error", "needs_person": false,
+      "means": "the workspace changed outside the plan: a change no unit of it explains",
+      "do": "plan again -- `cargo ripe4rust plan --format json > plan.json` -- and go on with the new plan" }
+  ],
+  "fields": [{ "document": "check", "field": "as_planned", "means": "..." }],
+  "diagnostics": []
+}
+```
+
 ## The round
 
 What `guide` prints, and what the agent does, every time:
@@ -869,6 +909,7 @@ What `guide` prints, and what the agent does, every time:
         held, as holding it would keep what it clears.
       - `1`: carry out `revert`; the unit becomes **ask**, with `check`'s
         differences attached.
+      - `2`: carry out each error's `do`, then run `check` again.
       - `3`: plan again, and go on with the new plan.
 4. Report every **ripening** unit, with what will release it.
 5. Put every **ask** unit's question to the person in one message. Carry out

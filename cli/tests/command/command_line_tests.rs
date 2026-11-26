@@ -40,35 +40,6 @@ fn refused(words: &[&str]) -> (DiagnosticCode, String, String) {
 }
 
 #[test]
-fn read_of_a_command_not_built_yet_is_unavailable() {
-    // Arrange & Act
-    let refusals = ["guide"].map(|command| {
-        CommandLine.read(&args(&[
-            "ripe4rust",
-            command,
-            "compatible:itoa",
-            "--plan",
-            "plan.json",
-        ]))
-    });
-
-    // Assert
-    for (refusal, command) in refusals.iter().zip(["guide"]) {
-        let refusal = refusal.as_ref().expect_err("a refusal");
-        assert_eq!(refusal.command, command);
-        assert_eq!(refusal.diagnostic.code, DiagnosticCode::CommandUnavailable);
-        assert_eq!(
-            refusal.diagnostic.what,
-            format!("`{command}` is not in this release of ripe4rust yet")
-        );
-        assert_eq!(
-            refusal.diagnostic.action,
-            "use `cargo ripe4rust plan`, `check` or `hold`, the commands this release runs; `guide` comes with a later release"
-        );
-    }
-}
-
-#[test]
 fn read_of_a_date_that_is_no_date_is_usage_invalid() {
     // Arrange & Act
     let refusal = CommandLine
@@ -158,6 +129,14 @@ fn read_of_an_unknown_command_is_usage_invalid_and_answers_in_the_format_asked()
             DiagnosticCode::UsageInvalid,
             String::from("`frobnicate` is not a command of ripe4rust")
         )
+    );
+    assert_eq!(
+        CommandLine
+            .read(&args(&["frobnicate"]))
+            .expect_err("a refusal")
+            .diagnostic
+            .action,
+        "run `cargo ripe4rust guide`, which names every command and what each takes"
     );
 }
 
@@ -271,6 +250,38 @@ fn read_of_every_option_takes_each() {
 
     // Assert
     assert_eq!(request, Ok(plan(Format::Json, Some("2026-10-30"), true)));
+}
+
+#[test]
+fn read_of_guide_takes_its_format_and_nothing_else() {
+    // Arrange & Act
+    let (request, refusal) = (
+        CommandLine.read(&args(&["ripe4rust", "guide", "--format", "json"])),
+        refused(&["guide", "compatible:itoa"]),
+    );
+
+    // Assert
+    assert_eq!(
+        request,
+        Ok(Request {
+            command: String::from("guide"),
+            format: Format::Json,
+            date: None,
+            offline: false,
+            unit: None,
+            plan: None,
+            because: None,
+            review: None,
+        })
+    );
+    assert_eq!(
+        refusal,
+        (
+            DiagnosticCode::UsageInvalid,
+            String::from("`compatible:itoa` is not an option of `guide`"),
+            String::from("run `cargo ripe4rust guide [--format table|json]`")
+        )
+    );
 }
 
 #[test]

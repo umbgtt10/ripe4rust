@@ -10,6 +10,7 @@ use cargo_ripe4rust::command::document::Document;
 use cargo_ripe4rust::command::format::Format;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::guiding::guide::Guide;
 
 fn failure() -> PlanFailure {
     PlanFailure {
@@ -67,6 +68,29 @@ fn failure_in_json_is_the_failure_document() {
     // Assert
     assert!(
         text.starts_with("{\n  \"schema\": 1,\n  \"command\": \"check\",\n  \"diagnostics\": ["),
+        "{text}"
+    );
+}
+
+#[test]
+fn guide_in_a_table_opens_with_the_release() {
+    // Arrange & Act
+    let text = Document::new(Format::Table, "guide").guide(&Guide::new("0.0.1").text());
+
+    // Assert
+    assert!(text.starts_with("ripe4rust 0.0.1: the guide\n"), "{text}");
+}
+
+#[test]
+fn guide_in_json_is_the_guide_document() {
+    // Arrange & Act
+    let text = Document::new(Format::Json, "guide").guide(&Guide::new("0.0.1").text());
+
+    // Assert
+    assert!(
+        text.starts_with(
+            "{\n  \"schema\": 1,\n  \"command\": \"guide\",\n  \"version\": \"0.0.1\""
+        ),
         "{text}"
     );
 }

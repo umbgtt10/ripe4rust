@@ -6,6 +6,7 @@ pub mod check_document;
 pub mod diagnostic_document;
 pub mod difference_document;
 pub mod evidence_document;
+pub mod guide;
 pub mod hold_document;
 pub mod line_document;
 pub mod move_document;

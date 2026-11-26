@@ -13,6 +13,7 @@ use cargo_ripe4rust::render::document_renderer::DocumentRenderer;
 use cargo_ripe4rust::render::table::table_renderer::TableRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::guiding::guide::Guide;
 
 #[test]
 fn check_prints_the_report() {
@@ -45,6 +46,15 @@ fn failure_prints_each_diagnostic_on_a_line() {
         text,
         "error[cargo-deny-missing] cargo-deny is not installed. Do: install it\n"
     );
+}
+
+#[test]
+fn guide_prints_the_guide() {
+    // Arrange & Act
+    let text = TableRenderer.guide(&Guide::new("0.0.1").text());
+
+    // Assert
+    assert!(text.starts_with("ripe4rust 0.0.1: the guide\n"), "{text}");
 }
 
 #[test]

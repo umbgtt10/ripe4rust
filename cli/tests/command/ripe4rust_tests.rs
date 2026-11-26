@@ -96,29 +96,6 @@ fn seams<'a>(
 }
 
 #[test]
-fn run_of_a_command_not_built_yet_exits_two_saying_so() {
-    // Arrange
-    let (runner, files, pause, clock) = (
-        ReplayRunner::new(),
-        MemoryFiles::new(),
-        CountingPause::new(),
-        clock(),
-    );
-
-    // Act
-    let ran =
-        Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&args(&["ripe4rust", "guide"]));
-
-    // Assert
-    assert_eq!(ran.code, 2);
-    assert_eq!(
-        ran.output,
-        "error[command-unavailable] `guide` is not in this release of ripe4rust yet. Do: use `cargo ripe4rust plan`, `check` or `hold`, the commands this release runs; `guide` comes with a later release\n"
-    );
-    assert_eq!(runner.commands(), Vec::<String>::new());
-}
-
-#[test]
 fn run_of_a_policy_in_error_reads_nothing_beyond_it() {
     // Arrange
     let runner = recorded(false);
@@ -309,6 +286,33 @@ fn run_of_check_on_a_unit_the_plan_does_not_hold_exits_two() {
         parsed(&ran.output)["diagnostics"][0]["code"],
         "unit-unknown"
     );
+}
+
+#[test]
+fn run_of_guide_prints_the_guide_reading_nothing_and_exits_zero() {
+    // Arrange
+    let (runner, files, pause, clock) = (
+        ReplayRunner::new(),
+        MemoryFiles::new(),
+        CountingPause::new(),
+        clock(),
+    );
+
+    // Act
+    let ran =
+        Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&args(&["ripe4rust", "guide"]));
+
+    // Assert
+    assert_eq!(ran.code, 0);
+    assert!(
+        ran.output.starts_with(&format!(
+            "ripe4rust {}: the guide\n\nThe round\n1. Run `cargo ripe4rust plan --format json > plan.json`.\n",
+            env!("CARGO_PKG_VERSION")
+        )),
+        "{}",
+        ran.output
+    );
+    assert_eq!(runner.commands(), Vec::<String>::new());
 }
 
 #[test]

@@ -13,36 +13,6 @@ fn run(args: &[&str]) -> Output {
 }
 
 #[test]
-fn main_of_a_command_not_built_yet_exits_two() {
-    // Arrange & Act
-    let output = run(&["ripe4rust", "guide"]);
-
-    // Assert
-    assert_eq!(output.status.code(), Some(2));
-}
-
-#[test]
-fn main_of_a_command_not_built_yet_prints_its_diagnostic_on_stdout() {
-    // Arrange & Act
-    let output = run(&["ripe4rust", "guide"]);
-
-    // Assert
-    assert_eq!(
-        String::from_utf8_lossy(&output.stdout),
-        "error[command-unavailable] `guide` is not in this release of ripe4rust yet. Do: use `cargo ripe4rust plan`, `check` or `hold`, the commands this release runs; `guide` comes with a later release\n"
-    );
-}
-
-#[test]
-fn main_of_a_command_not_built_yet_writes_nothing_to_stderr() {
-    // Arrange & Act
-    let output = run(&["ripe4rust", "guide"]);
-
-    // Assert
-    assert_eq!(String::from_utf8_lossy(&output.stderr), "");
-}
-
-#[test]
 fn main_of_an_unknown_command_in_json_prints_the_failure_document() {
     // Arrange & Act
     let output = run(&["ripe4rust", "frobnicate", "--format", "json"]);
@@ -54,4 +24,38 @@ fn main_of_an_unknown_command_in_json_prints_the_failure_document() {
         "{}",
         String::from_utf8_lossy(&output.stdout)
     );
+}
+
+#[test]
+fn main_of_guide_exits_zero() {
+    // Arrange & Act
+    let output = run(&["ripe4rust", "guide"]);
+
+    // Assert
+    assert_eq!(output.status.code(), Some(0));
+}
+
+#[test]
+fn main_of_guide_prints_the_guide_on_stdout() {
+    // Arrange & Act
+    let output = run(&["ripe4rust", "guide"]);
+
+    // Assert
+    assert!(
+        String::from_utf8_lossy(&output.stdout).starts_with(&format!(
+            "ripe4rust {}: the guide\n",
+            env!("CARGO_PKG_VERSION")
+        )),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+}
+
+#[test]
+fn main_of_guide_writes_nothing_to_stderr() {
+    // Arrange & Act
+    let output = run(&["ripe4rust", "guide"]);
+
+    // Assert
+    assert_eq!(String::from_utf8_lossy(&output.stderr), "");
 }

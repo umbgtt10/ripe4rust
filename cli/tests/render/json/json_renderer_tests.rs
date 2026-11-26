@@ -11,6 +11,7 @@ use cargo_ripe4rust::render::document_renderer::DocumentRenderer;
 use cargo_ripe4rust::render::json::json_renderer::JsonRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
+use ripe4rust_core::planning::round::guiding::guide::Guide;
 use serde_json::Value;
 use serde_json::from_str;
 use serde_json::json;
@@ -67,6 +68,18 @@ fn failure_prints_schema_command_and_diagnostics() {
                 "needs_person": false,
             }],
         })
+    );
+}
+
+#[test]
+fn guide_prints_schema_and_command_before_the_guide() {
+    // Arrange & Act
+    let text = JsonRenderer::new("guide").guide(&Guide::new("0.0.1").text());
+
+    // Assert
+    assert!(
+        compact(&text).starts_with(r#"{"schema":1,"command":"guide","version":"0.0.1","round":["#),
+        "{text}"
     );
 }
 

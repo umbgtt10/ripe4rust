@@ -12,8 +12,7 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 
 const SUBCOMMAND: &str = "ripe4rust";
 const PLAN: &str = "plan";
-const LATER: [&str; 1] = ["guide"];
-const COMMANDS: [CommandSpec; 3] = [
+const COMMANDS: [CommandSpec; 4] = [
     CommandSpec {
         name: PLAN,
         usage: "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]`",
@@ -35,14 +34,22 @@ const COMMANDS: [CommandSpec; 3] = [
         unit: true,
         required: &["--plan", "--because"],
     },
+    CommandSpec {
+        name: "guide",
+        usage: "run `cargo ripe4rust guide [--format table|json]`",
+        options: &["--format"],
+        unit: false,
+        required: &[],
+    },
 ];
 
 /// The command line: `cargo ripe4rust [plan] [--format table|json] [--date
 /// YYYY-MM-DD] [--offline]`, `cargo ripe4rust check <unit> --plan <file>
-/// [--format table|json]` or `cargo ripe4rust hold <unit> --plan <file>
-/// --because <text> [--review YYYY-MM-DD] [--format table|json]`, the
-/// subcommand's own name cargo passes first skipped. A command this release does not run yet, or anything it does
-/// not know, is refused with a diagnostic, in the format the line asked for.
+/// [--format table|json]`, `cargo ripe4rust hold <unit> --plan <file>
+/// --because <text> [--review YYYY-MM-DD] [--format table|json]` or `cargo
+/// ripe4rust guide [--format table|json]`, the subcommand's own name cargo
+/// passes first skipped. Anything it does not know is refused with a
+/// diagnostic, in the format the line asked for.
 pub struct CommandLine;
 
 impl CommandLine {
@@ -59,23 +66,17 @@ impl CommandLine {
             format,
             diagnostic,
         };
-        if LATER.contains(&command) {
-            return Err(refused(DiagnosticCode::CommandUnavailable.diagnose(
-                None,
-                format!("`{command}` is not in this release of ripe4rust yet"),
-                String::from(
-                    "use `cargo ripe4rust plan`, `check` or `hold`, the commands this release runs; `guide` comes with a later release",
-                ),
-            )));
-        }
         let spec = COMMANDS
             .iter()
             .find(|spec| spec.name == command)
             .ok_or_else(|| {
-                refused(
-                    OptionReader::new(COMMANDS[0])
-                        .usage(format!("`{command}` is not a command of ripe4rust")),
-                )
+                refused(DiagnosticCode::UsageInvalid.diagnose(
+                    None,
+                    format!("`{command}` is not a command of ripe4rust"),
+                    String::from(
+                        "run `cargo ripe4rust guide`, which names every command and what each takes",
+                    ),
+                ))
             })?;
         OptionReader::new(*spec)
             .read(options, format)

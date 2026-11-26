@@ -7,12 +7,14 @@ use crate::render::json::check_json::CheckJson;
 use crate::render::json::diagnostic_json::DiagnosticJson;
 use crate::render::json::documents::diagnostic_document::DiagnosticDocument;
 use crate::render::json::documents::unit_document::UnitDocument;
+use crate::render::json::guide_json::GuideJson;
 use crate::render::json::hold_json::HoldJson;
 use crate::render::json::unit_json::UnitJson;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use ripe4rust_core::planning::round::checking::check_report::CheckReport;
+use ripe4rust_core::planning::round::guiding::guide_text::GuideText;
 use ripe4rust_core::planning::round::holding::hold_report::HoldReport;
 use serde::Serialize;
 use serde_json::to_string_pretty;
@@ -63,8 +65,8 @@ struct PlanDocument<'a> {
 
 /// The one document a command prints with `--format json`, on success and
 /// on failure alike: `schema`, which moves when the shape does, the command,
-/// and the diagnostics -- and for a plan, a check or a hold, everything it
-/// holds. Every object
+/// and the diagnostics -- and for a plan, a check, a hold or the guide,
+/// everything it holds. Every object
 /// is a record of its own, so its keys keep the design's order.
 pub struct JsonRenderer {
     command: String,
@@ -110,6 +112,10 @@ impl DocumentRenderer for JsonRenderer {
             command: &self.command,
             diagnostics: Self::diagnostics(&failure.diagnostics),
         })
+    }
+
+    fn guide(&self, text: &GuideText) -> String {
+        self.enveloped(GuideJson.document(text))
     }
 
     fn hold(&self, report: &HoldReport) -> String {

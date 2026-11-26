@@ -9,6 +9,7 @@ use crate::render::table::table_renderer::TableRenderer;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use ripe4rust_core::planning::round::checking::check_report::CheckReport;
+use ripe4rust_core::planning::round::guiding::guide_text::GuideText;
 use ripe4rust_core::planning::round::holding::hold_report::HoldReport;
 
 /// The one document a run prints, in the format asked for, on success and
@@ -32,6 +33,10 @@ impl Document {
 
     pub fn failure(&self, failure: &PlanFailure) -> String {
         self.renderer().failure(failure)
+    }
+
+    pub fn guide(&self, text: &GuideText) -> String {
+        self.renderer().guide(text)
     }
 
     pub fn hold(&self, report: &HoldReport) -> String {
