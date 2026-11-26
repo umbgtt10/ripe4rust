@@ -64,6 +64,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the JSON document -- `schema`, `command`, `date`, `registry_read`, `workspace`, `gates`, `diagnostics` and
   `units`, each unit with its moves, outcome, rule, suggestion, reasons, summary, steps, question and evidence; on
   failure, `schema`, `command` and `diagnostics` -- and the table for a person, the diagnostics after it in text.
+- What a plan does not know yet, said rather than guessed: the source scan's port answers `None` while the sources
+  are not parsed, and the toolchain's releases `None` while the channel manifests are not read. A footprint not
+  known is never small -- rule 11 calls nothing ripe, the verdict waits -- and a breaking unit a published member
+  uses asks under rule 8, its exposure not yet known; with no releases no toolchain unit is offered. The plan says
+  so in two notices, `source-unscanned` and `toolchain-releases-unknown`.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

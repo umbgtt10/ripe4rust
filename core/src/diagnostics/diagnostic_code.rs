@@ -26,7 +26,9 @@ pub enum DiagnosticCode {
     RegistryCacheOld,
     RegistryUnreachable,
     SourceUnparsed,
+    SourceUnscanned,
     TargetUnknown,
+    ToolchainReleasesUnknown,
     ToolchainUnpinned,
     ToolchainUnreachable,
     WorkspaceUnreadable,
@@ -62,7 +64,9 @@ impl DiagnosticCode {
             Self::RegistryCacheOld => "registry-cache-old",
             Self::RegistryUnreachable => "registry-unreachable",
             Self::SourceUnparsed => "source-unparsed",
+            Self::SourceUnscanned => "source-unscanned",
             Self::TargetUnknown => "target-unknown",
+            Self::ToolchainReleasesUnknown => "toolchain-releases-unknown",
             Self::ToolchainUnpinned => "toolchain-unpinned",
             Self::ToolchainUnreachable => "toolchain-unreachable",
             Self::WorkspaceUnreadable => "workspace-unreadable",
@@ -87,7 +91,9 @@ impl DiagnosticCode {
             | Self::PinForAbsentCrate
             | Self::RegistryCacheOld
             | Self::SourceUnparsed => Severity::Warning,
-            Self::ToolchainUnpinned => Severity::Notice,
+            Self::SourceUnscanned | Self::ToolchainReleasesUnknown | Self::ToolchainUnpinned => {
+                Severity::Notice
+            }
             _ => Severity::Error,
         }
     }

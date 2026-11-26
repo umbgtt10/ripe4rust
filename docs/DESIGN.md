@@ -151,6 +151,11 @@ published crate that is rule 8's question. It raises the `rust-version` of
 every member that uses the crate and declares a lower one; a member that
 declares none promises nothing, and is not raised.
 
+Until the channel manifests are read (slice 5 of "Delivery"), the toolchain
+answers that it knows no releases: no toolchain unit is offered, no version is
+named as held back for it, and the plan carries the notice
+`toolchain-releases-unknown` at the channel's line.
+
 The toolchain's youth is judged by `toolchain-young-days` alone: a minor
 rarely has three releases. Its evidence names, for each direct dependency, the
 newest release the toolchain in use cannot build and the new one can.
@@ -277,6 +282,14 @@ A parse can be wrong about exposure (a type alias, a macro that expands to a
 public item). The policy can override it, crate by crate: `public` exposes the
 crate in every published member that uses it, `private` in none. A source file
 the parse cannot read is a warning: the footprint may be low.
+
+Until the parse is built (slice 4 of "Delivery"), the scan answers that it
+knows neither, and the plan reads that conservatively. A footprint not known
+is never small, so rule 11 calls no unit ripe, and the verdict is "wait:
+footprint not yet known". A crate the policy is silent on may be in the public
+API of any published member that uses it, so its breaking unit asks under rule
+8, "exposure in <member>'s public API not yet known". The plan carries the
+notice `source-unscanned`, and an override in the policy still decides.
 
 ## Groups
 
@@ -410,6 +423,8 @@ The problems the design already names, at least:
 | `cargo-metadata-failed` | error | `cargo metadata` could not run |
 | `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
 | `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
+| `source-unscanned` | notice | the sources are not parsed yet: no footprint or exposure is known |
+| `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
 
 Of these, the policy's own codes, `target-unknown` and `gates-undeclared` need
 a person: each asks for a fact or a decision only the owner has.

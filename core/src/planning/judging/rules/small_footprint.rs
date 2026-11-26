@@ -12,13 +12,14 @@ use alloc::format;
 use alloc::vec;
 
 /// Rule 11: a breaking unit whose footprint is under `small-footprint` --
-/// ripe; a red gate turns it into ask.
+/// ripe; a red gate turns it into ask. A footprint not yet known is never
+/// small.
 pub struct SmallFootprint;
 
 impl Rule for SmallFootprint {
     fn decide(&self, facts: &UnitFacts) -> Option<Decision> {
-        let small =
-            facts.kind == UnitKind::Breaking && facts.footprint.lines < facts.small_footprint;
+        let footprint = facts.footprint?;
+        let small = facts.kind == UnitKind::Breaking && footprint.lines < facts.small_footprint;
         small.then(|| Decision {
             outcome: Outcome::Ripe,
             urgent: false,
@@ -26,8 +27,8 @@ impl Rule for SmallFootprint {
             suggestion: None,
             reasons: vec![format!(
                 "footprint {} in {}",
-                Wording.count(facts.footprint.lines, "line"),
-                Wording.count(facts.footprint.files, "file")
+                Wording.count(footprint.lines, "line"),
+                Wording.count(footprint.files, "file")
             )],
             why: None,
         })

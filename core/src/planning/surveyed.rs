@@ -23,7 +23,8 @@ use alloc::vec::Vec;
 /// it pins one; `toolchain` the toolchain in use; `releases` the index's
 /// answer for every crate read; `reached` the crates each target needing
 /// more than the gates reaches; the lines are where each direct
-/// dependency's requirement and each member's `rust-version` are written.
+/// dependency's requirement and each member's `rust-version` are written;
+/// `scan` is `None` while the sources are not parsed.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Surveyed {
     pub today: Date,
@@ -42,7 +43,7 @@ pub struct Surveyed {
     pub workspace_moves: Vec<LockMove>,
     pub repositories: Vec<CrateRepository>,
     pub reached: Vec<(String, Vec<String>)>,
-    pub scan: Scan,
+    pub scan: Option<Scan>,
     pub requirement_lines: Vec<(String, Vec<Location>)>,
     pub rust_version_lines: Vec<(String, Location)>,
     pub diagnostics: Vec<Diagnostic>,

@@ -13,10 +13,19 @@ fn footprint_counts_lines_and_files() {
     let surveyed = surveyed();
 
     // Act
-    let footprint = Footprints::new(&surveyed.scan).footprint(&[String::from("widget")]);
+    let footprint = Footprints::new(surveyed.scan.as_ref()).footprint(&[String::from("widget")]);
 
     // Assert
-    assert_eq!(footprint, Footprint { lines: 3, files: 2 });
+    assert_eq!(footprint, Some(Footprint { lines: 3, files: 2 }));
+}
+
+#[test]
+fn footprint_of_sources_not_yet_scanned_is_unknown() {
+    // Arrange & Act
+    let footprint = Footprints::new(None).footprint(&[String::from("widget")]);
+
+    // Assert
+    assert_eq!(footprint, None);
 }
 
 #[test]
@@ -25,7 +34,7 @@ fn locations_of_a_group_are_its_members_together_in_order() {
     let surveyed = surveyed();
 
     // Act
-    let locations = Footprints::new(&surveyed.scan)
+    let locations = Footprints::new(surveyed.scan.as_ref())
         .locations(&[String::from("widget"), String::from("gadget")]);
 
     // Assert
@@ -38,4 +47,13 @@ fn locations_of_a_group_are_its_members_together_in_order() {
             at("src/net.rs", 4)
         ]
     );
+}
+
+#[test]
+fn locations_of_sources_not_yet_scanned_are_none() {
+    // Arrange & Act
+    let locations = Footprints::new(None).locations(&[String::from("widget")]);
+
+    // Assert
+    assert_eq!(locations, Vec::new());
 }

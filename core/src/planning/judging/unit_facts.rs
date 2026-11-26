@@ -16,7 +16,9 @@ use alloc::vec::Vec;
 /// advisories and yanked releases it clears; `reaches` the targets needing
 /// more than the gates it reaches; `pins` the pins holding what it moves,
 /// `fully_held` whether they hold all of it; `freeze` the end of an open
-/// freeze; `gates` how many are declared.
+/// freeze; `exposure_unknown_in` the published members using it whose public
+/// API is not parsed yet; `footprint` `None` while the sources are not
+/// parsed; `gates` how many are declared.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UnitFacts {
     pub kind: UnitKind,
@@ -28,12 +30,13 @@ pub struct UnitFacts {
     pub fully_held: bool,
     pub freeze: Option<Date>,
     pub exposed_in: Vec<String>,
+    pub exposure_unknown_in: Vec<String>,
     pub raises: Vec<Raise>,
     pub in_use_line: Option<LineStanding>,
     pub new_line: Option<LineStanding>,
     pub newer_active: bool,
     pub lines_behind: u32,
-    pub footprint: Footprint,
+    pub footprint: Option<Footprint>,
     pub removes_copy: bool,
     pub held_back: u32,
     pub gates: u32,

@@ -206,7 +206,7 @@ pub fn surveyed() -> Surveyed {
         ],
         repositories: Vec::new(),
         reached: Vec::new(),
-        scan: scan(),
+        scan: Some(scan()),
         requirement_lines: vec![
             (String::from("gadget"), vec![at("Cargo.toml", 22)]),
             (String::from("widget"), vec![at("Cargo.toml", 21)]),

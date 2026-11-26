@@ -78,6 +78,26 @@ fn source_unparsed_names_the_file_and_why() {
 }
 
 #[test]
+fn source_unscanned_is_a_notice_of_what_is_not_known() {
+    // Arrange & Act
+    let diagnostic = Findings.source_unscanned();
+
+    // Assert
+    assert_eq!(
+        (diagnostic.code, diagnostic.severity, diagnostic.at),
+        (DiagnosticCode::SourceUnscanned, Severity::Notice, None)
+    );
+    assert_eq!(
+        diagnostic.what,
+        "the workspace's sources are not parsed yet, so no breaking unit's footprint or exposure is known: none is ripe by its footprint (rule 11), and one a published member uses is asked (rule 8)"
+    );
+    assert_eq!(
+        diagnostic.action,
+        "nothing is needed; until a release of ripe4rust parses the sources, size each breaking unit's migration by hand"
+    );
+}
+
+#[test]
 fn target_unknown_needs_a_person() {
     // Arrange & Act
     let diagnostic = Findings.target_unknown("thumbv7em-none-eabihff", Some(at("Cargo.toml", 33)));
@@ -88,6 +108,30 @@ fn target_unknown_needs_a_person() {
     assert_eq!(
         diagnostic.what,
         "`thumbv7em-none-eabihff` in `validate-beyond-gates` is a target the toolchain does not know"
+    );
+}
+
+#[test]
+fn toolchain_releases_unknown_is_a_notice_at_the_channel() {
+    // Arrange & Act
+    let diagnostic = Findings.toolchain_releases_unknown(at("rust-toolchain.toml", 9));
+
+    // Assert
+    assert_eq!(
+        (diagnostic.code, diagnostic.severity, diagnostic.at),
+        (
+            DiagnosticCode::ToolchainReleasesUnknown,
+            Severity::Notice,
+            Some(at("rust-toolchain.toml", 9))
+        )
+    );
+    assert_eq!(
+        diagnostic.what,
+        "the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named"
+    );
+    assert_eq!(
+        diagnostic.action,
+        "nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand"
     );
 }
 

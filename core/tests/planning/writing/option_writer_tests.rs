@@ -121,6 +121,24 @@ fn option_of_migrate_now_names_the_work_list() {
 }
 
 #[test]
+fn option_of_migrate_now_with_an_unknown_footprint_says_the_build_is_the_work_list() {
+    // Arrange
+    let unknown = UnitFacts {
+        footprint: None,
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let (_, then) = means_and_then(Answer::MigrateNow, &unknown);
+
+    // Assert
+    assert_eq!(
+        then,
+        "apply it as a ripe unit; the footprint is not yet known, so the build's errors are the work list"
+    );
+}
+
+#[test]
 fn option_of_plan_it_holds_with_a_review_date() {
     // Arrange & Act
     let (means, then) = means_and_then(Answer::PlanIt, &facts(UnitKind::Breaking));

@@ -78,7 +78,7 @@ impl FakePorts {
                 failure: None,
             },
             toolchain: FakeToolchain {
-                releases: surveyed.toolchain_releases.clone(),
+                releases: Some(surveyed.toolchain_releases.clone()),
                 rustc: surveyed.toolchain.clone(),
                 targets: vec![String::from("thumbv7em-none-eabihf")],
             },

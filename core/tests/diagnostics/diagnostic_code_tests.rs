@@ -7,7 +7,7 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::diagnostics::severity::Severity;
 use ripe4rust_core::values::location::Location;
 
-const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
+const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 22] = [
     (
         DiagnosticCode::CargoDenyFailed,
         "cargo-deny-failed",
@@ -100,6 +100,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
         false,
     ),
     (
+        DiagnosticCode::SourceUnscanned,
+        "source-unscanned",
+        Severity::Notice,
+        false,
+    ),
+    (
         DiagnosticCode::TargetUnknown,
         "target-unknown",
         Severity::Error,
@@ -108,6 +114,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 20] = [
     (
         DiagnosticCode::ToolchainUnpinned,
         "toolchain-unpinned",
+        Severity::Notice,
+        false,
+    ),
+    (
+        DiagnosticCode::ToolchainReleasesUnknown,
+        "toolchain-releases-unknown",
         Severity::Notice,
         false,
     ),

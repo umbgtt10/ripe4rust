@@ -30,7 +30,7 @@ impl<'a> EvidenceWriter<'a> {
             .filter(|_| unit.kind != UnitKind::Toolchain)
             .and_then(|(name, to)| self.context.histories().get(name)?.rust_version_of(to));
         let footprint = if unit.kind == UnitKind::Breaking {
-            Footprints::new(&self.context.surveyed().scan).locations(&unit.members)
+            Footprints::new(self.context.surveyed().scan.as_ref()).locations(&unit.members)
         } else {
             Vec::new()
         };

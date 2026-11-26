@@ -8,13 +8,13 @@ use ripe4rust_core::traits::toolchain::Toolchain;
 use ripe4rust_core::values::version::Version;
 
 pub struct FakeToolchain {
-    pub releases: Vec<Release>,
+    pub releases: Option<Vec<Release>>,
     pub rustc: Version,
     pub targets: Vec<String>,
 }
 
 impl Toolchain for FakeToolchain {
-    fn releases(&self) -> Result<Vec<Release>, PortFailure> {
+    fn releases(&self) -> Result<Option<Vec<Release>>, PortFailure> {
         Ok(self.releases.clone())
     }
 

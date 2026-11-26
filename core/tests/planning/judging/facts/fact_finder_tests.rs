@@ -35,7 +35,7 @@ fn facts_of_a_breaking_unit_gather_what_the_rules_read() {
     assert_eq!(facts.exposed_in, vec![String::from("app-core")]);
     assert_eq!(facts.raises.len(), 2);
     assert_eq!(facts.lines_behind, 1);
-    assert_eq!(facts.footprint, Footprint { lines: 3, files: 2 });
+    assert_eq!(facts.footprint, Some(Footprint { lines: 3, files: 2 }));
     assert_eq!(facts.gates, 2);
     assert_eq!(facts.freeze, None);
     assert!(!facts.fully_held);
@@ -91,6 +91,23 @@ fn facts_of_an_open_freeze_carry_its_end() {
 
     // Assert
     assert_eq!(facts.freeze, Some(date("2027-01-15")));
+}
+
+#[test]
+fn facts_of_sources_not_yet_scanned_know_no_footprint_and_no_exposure() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.scan = None;
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let facts = FactFinder::new(&context).facts(&breaking("widget", "1.4.0", "2.1.0"), &[]);
+
+    // Assert
+    assert_eq!(facts.footprint, None);
+    assert_eq!(facts.exposed_in, Vec::<String>::new());
+    assert_eq!(facts.exposure_unknown_in, vec![String::from("app-core")]);
 }
 
 #[test]
