@@ -101,6 +101,24 @@ fn of_crate_offline_asks_cargo_to_stay_offline() {
 }
 
 #[test]
+fn of_source_asks_cargo_for_the_git_crate_at_its_version_alone() {
+    // Arrange
+    let runner = ReplayRunner::new().reply(
+        &["cargo", "update", "--dry-run", "-p", "gitcore@0.1.0"],
+        printed("", include_str!("../../fixtures/cargo-update/git-rev.txt")),
+    );
+
+    // Act
+    let moves = CargoUpdate::new(&runner, root(), false).of_source("gitcore", &version("0.1.0"));
+
+    // Assert
+    assert_eq!(
+        moves.map(|moves| (moves.registry.len(), moves.git.len())),
+        Ok((1, 2))
+    );
+}
+
+#[test]
 fn of_workspace_asks_cargo_for_every_move() {
     // Arrange
     let runner = ReplayRunner::new().reply(
@@ -115,7 +133,10 @@ fn of_workspace_asks_cargo_for_every_move() {
     let moves = CargoUpdate::new(&runner, root(), false).of_workspace();
 
     // Assert
-    assert_eq!(moves.map(|moves| moves.len()), Ok(5));
+    assert_eq!(
+        moves.map(|moves| (moves.registry.len(), moves.git.len())),
+        Ok((5, 0))
+    );
     assert_eq!(
         runner.commands(),
         vec![String::from("cargo update --dry-run")]

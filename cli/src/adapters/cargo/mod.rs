@@ -7,6 +7,7 @@ pub mod cargo_metadata;
 pub mod cargo_update;
 pub mod crates_io;
 pub mod deny;
+pub mod git_move_line;
 pub mod metadata_failure;
 pub mod metadata_reader;
 pub mod move_line;

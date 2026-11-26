@@ -16,6 +16,7 @@ use crate::support::policy_trees::texts;
 use crate::support::policy_trees::tree;
 use crate::support::surveyed::at;
 use crate::support::surveyed::surveyed;
+use ripe4rust_core::inputs::git::moves::Moves;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
 use ripe4rust_core::planning::ports::Ports;
 use std::cell::RefCell;
@@ -53,7 +54,11 @@ impl FakePorts {
                     .iter()
                     .map(|each| (each.dependency.name.clone(), each.moves.clone()))
                     .collect(),
-                of_workspace: surveyed.workspace_moves.clone(),
+                of_source: Vec::new(),
+                of_workspace: Moves {
+                    registry: surveyed.workspace_moves.clone(),
+                    git: Vec::new(),
+                },
                 failure: None,
             },
             metadata: FakeMetadata {
@@ -75,6 +80,7 @@ impl FakePorts {
                 requirement_lines: surveyed.requirement_lines.clone(),
                 rust_version_lines: surveyed.rust_version_lines.clone(),
                 written: surveyed.written.clone(),
+                git: surveyed.git.clone(),
                 failure: None,
             },
             advisories: FakeAdvisories {

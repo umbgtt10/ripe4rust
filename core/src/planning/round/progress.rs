@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::recorded_unit::RecordedUnit;
+use crate::planning::round::git_changes::GitChanges;
 use crate::planning::round::line_changes::LineChanges;
 use crate::planning::round::lock_changes::LockChanges;
 use alloc::format;
@@ -10,17 +11,18 @@ use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
-/// How far a unit is applied: wholly, every move in the lock and every edit
-/// written; not at all; or partly, listed by the ids of its split where it
+/// How far a unit is applied: wholly, every move in the lock, every edit
+/// written and a git unit's source at the rev it takes; not at all; or partly, listed by the ids of its split where it
 /// has one, and as still to go where it has none.
 pub struct Progress<'a> {
     lock: &'a LockChanges,
     lines: &'a LineChanges,
+    git: &'a GitChanges,
 }
 
 impl<'a> Progress<'a> {
-    pub fn new(lock: &'a LockChanges, lines: &'a LineChanges) -> Self {
-        Self { lock, lines }
+    pub fn new(lock: &'a LockChanges, lines: &'a LineChanges, git: &'a GitChanges) -> Self {
+        Self { lock, lines, git }
     }
 
     pub fn applied(&self, unit: &RecordedUnit) -> Vec<String> {
@@ -51,6 +53,7 @@ impl<'a> Progress<'a> {
             .iter()
             .map(|lock_move| self.lock.applied(lock_move))
             .chain(unit.edits.iter().map(|edit| self.lines.made(edit)))
+            .chain(unit.git.iter().map(|source| self.git.applied(source)))
             .collect()
     }
 

@@ -7,6 +7,7 @@ use crate::support::recorded::lines_with;
 use crate::support::recorded::lock;
 use crate::support::recorded::plan;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
+use ripe4rust_core::planning::round::git_changes::GitChanges;
 use ripe4rust_core::planning::round::line_changes::LineChanges;
 use ripe4rust_core::planning::round::lock_changes::LockChanges;
 use ripe4rust_core::planning::round::progress::Progress;
@@ -28,7 +29,8 @@ fn applied_of_a_unit_partly_applied_is_the_split_ids_of_its_moves_applied() {
         ]),
     );
     let line_changes = LineChanges::new(&lines(), &lines());
-    let progress = Progress::new(&lock_changes, &line_changes);
+    let git_changes = GitChanges::new(&[], &[]);
+    let progress = Progress::new(&lock_changes, &line_changes, &git_changes);
 
     // Act
     let listed = (
@@ -59,7 +61,8 @@ fn applied_of_a_unit_wholly_applied_is_its_id() {
         ]),
     );
     let line_changes = LineChanges::new(&lines(), &lines_with(&[(22, "0.14.0")]));
-    let progress = Progress::new(&lock_changes, &line_changes);
+    let git_changes = GitChanges::new(&[], &[]);
+    let progress = Progress::new(&lock_changes, &line_changes, &git_changes);
 
     // Act
     let listed = (
@@ -76,7 +79,8 @@ fn to_go_of_a_unit_partly_applied_without_a_split_is_its_id() {
     // Arrange
     let lock_changes = LockChanges::new(&base_lock(), &base_lock());
     let line_changes = LineChanges::new(&lines(), &lines_with(&[(22, "0.14.0")]));
-    let progress = Progress::new(&lock_changes, &line_changes);
+    let git_changes = GitChanges::new(&[], &[]);
+    let progress = Progress::new(&lock_changes, &line_changes, &git_changes);
 
     // Act
     let listed = (
@@ -93,7 +97,8 @@ fn to_go_of_a_unit_untouched_is_its_id() {
     // Arrange
     let lock_changes = LockChanges::new(&base_lock(), &base_lock());
     let line_changes = LineChanges::new(&lines(), &lines());
-    let progress = Progress::new(&lock_changes, &line_changes);
+    let git_changes = GitChanges::new(&[], &[]);
+    let progress = Progress::new(&lock_changes, &line_changes, &git_changes);
 
     // Act
     let listed = (
@@ -119,10 +124,12 @@ fn whole_of_a_unit_is_every_move_and_edit_of_it_applied() {
     );
     let made = LineChanges::new(&lines(), &lines_with(&[(22, "0.14.0")]));
     let unmade = LineChanges::new(&lines(), &lines());
+    let git_changes = GitChanges::new(&[], &[]);
 
     // Act
-    let whole = [&made, &unmade]
-        .map(|line_changes| Progress::new(&lock_changes, line_changes).whole(&plan().units[0]));
+    let whole = [&made, &unmade].map(|line_changes| {
+        Progress::new(&lock_changes, line_changes, &git_changes).whole(&plan().units[0])
+    });
 
     // Assert
     assert_eq!(whole, [true, false]);

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::adapters::workspace::plan::plan_text::PlanText;
+use ripe4rust_core::inputs::git::git_source::GitSource;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::recorded_unit::RecordedUnit;
@@ -21,6 +22,8 @@ struct UnitFields {
     pub members: Vec<String>,
     pub from: Option<String>,
     pub to: Option<String>,
+    #[serde(default)]
+    pub source: Option<String>,
     pub moves: Vec<MoveFields>,
     pub urgent: bool,
     pub steps: Option<StepsFields>,
@@ -59,7 +62,7 @@ struct EditFields {
 }
 
 /// One unit of a plan document read back: its id, kind, crates and
-/// versions, its moves, whether it is urgent, the edits its `apply` makes,
+/// versions -- a git unit's source and revs --, its moves, whether it is urgent, the edits its `apply` makes,
 /// the ids of its split and its `revert` -- none for an advisory row, which
 /// has no steps. An `apply` step that runs a command is read as nothing:
 /// what it moves is the unit's moves.
@@ -106,12 +109,34 @@ impl<'a> UnitReader<'a> {
                 })
             })
             .collect::<Result<Vec<WrittenLine>, PortFailure>>()?;
+        let git = match (kind, &unit.source, &unit.from, &unit.to) {
+            (UnitKind::Git, Some(source), Some(from), Some(to)) => Some(GitSource {
+                source: source.clone(),
+                from: from.clone(),
+                to: to.clone(),
+            }),
+            (UnitKind::Git, ..) => {
+                return Err(read.unreadable(&format!(
+                    "`{}` is a git unit with no source and revs",
+                    unit.id
+                )));
+            }
+            _ => None,
+        };
+        let (from, to) = if git.is_some() {
+            (None, None)
+        } else {
+            (
+                read.optional_version(unit.from.as_deref())?,
+                read.optional_version(unit.to.as_deref())?,
+            )
+        };
         Ok(RecordedUnit {
             kind,
             name: unit.name,
             members: unit.members,
-            from: read.optional_version(unit.from.as_deref())?,
-            to: read.optional_version(unit.to.as_deref())?,
+            from,
+            to,
             moves,
             urgent: unit.urgent,
             edits,
@@ -121,6 +146,7 @@ impl<'a> UnitReader<'a> {
                 .flat_map(|steps| steps.split.iter().map(|split| split.id.clone()))
                 .collect(),
             revert: unit.steps.map(|steps| steps.revert.run),
+            git,
             id: unit.id,
         })
     }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::port_failure::PortFailure;
@@ -18,12 +19,17 @@ pub struct FakeFiles {
     pub requirement_lines: Vec<(String, Vec<Location>)>,
     pub rust_version_lines: Vec<(String, Location)>,
     pub written: Vec<WrittenLine>,
+    pub git: Vec<GitEntry>,
     pub failure: Option<PortFailure>,
 }
 
 impl WorkspaceFiles for FakeFiles {
     fn fingerprint(&self) -> Result<String, PortFailure> {
         Ok(self.fingerprint.clone())
+    }
+
+    fn git(&self) -> Result<Vec<GitEntry>, PortFailure> {
+        Ok(self.git.clone())
     }
 
     fn lock(&self) -> Result<Vec<LockEntry>, PortFailure> {

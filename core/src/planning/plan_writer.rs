@@ -93,6 +93,11 @@ impl<'a> PlanWriter<'a> {
                 fingerprint: surveyed.fingerprint.clone(),
                 lock,
                 lines: surveyed.written.clone(),
+                git: surveyed
+                    .git
+                    .iter()
+                    .map(|entry| format!("{} {}#{}", entry.name, entry.source, entry.rev))
+                    .collect(),
             },
             gates: surveyed.policy.gates.clone(),
             diagnostics: surveyed.diagnostics.clone(),
@@ -134,8 +139,9 @@ impl<'a> PlanWriter<'a> {
             .filter(|pin| pin.hold == Hold::All)
             .map(|pin| pin.name.clone())
             .collect();
-        let compatible = CompatibleUnits::new(held, concerns.to_vec()).build(
+        let compatible = CompatibleUnits::new(held, concerns.to_vec()).build_with_sources(
             surveyed.dependency_moves.clone(),
+            surveyed.source_moves.clone(),
             surveyed.workspace_moves.clone(),
         );
         let maturity = context.maturity();

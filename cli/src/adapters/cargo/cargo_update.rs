@@ -5,6 +5,7 @@
 use crate::adapters::cargo::cargo_command::CargoCommand;
 use crate::adapters::cargo::update_reader::UpdateReader;
 use crate::system::traits::command_runner::CommandRunner;
+use ripe4rust_core::inputs::git::moves::Moves;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::traits::lock_moves::LockMoves;
@@ -12,8 +13,9 @@ use ripe4rust_core::values::version::Version;
 use std::path::PathBuf;
 
 /// `cargo update --dry-run`, which writes nothing: for one direct
-/// dependency at its version with `--recursive -p <crate>@<version>`, and
-/// for the whole workspace; `--offline` in an offline plan. What it prints
+/// dependency at its version with `--recursive -p <crate>@<version>`, for a
+/// git source by one of its crates with `-p <crate>@<version>`, which moves
+/// the source as a whole, and for the whole workspace; `--offline` in an offline plan. What it prints
 /// is read strictly.
 pub struct CargoUpdate<'a> {
     runner: &'a dyn CommandRunner,
@@ -30,7 +32,7 @@ impl<'a> CargoUpdate<'a> {
         }
     }
 
-    fn moves(&self, package: &[String]) -> Result<Vec<LockMove>, PortFailure> {
+    fn moves(&self, package: &[String]) -> Result<Moves, PortFailure> {
         let mut args = ["update", "--dry-run"].map(String::from).to_vec();
         if self.offline {
             args.push(String::from("--offline"));
@@ -38,20 +40,26 @@ impl<'a> CargoUpdate<'a> {
         args.extend(package.iter().cloned());
         let output = CargoCommand::new(self.runner, self.dir.clone())
             .run(args, |detail| PortFailure::CargoUpdateFailed { detail })?;
-        UpdateReader.moves(&output.stderr)
+        UpdateReader.read(&output.stderr)
     }
 }
 
 impl LockMoves for CargoUpdate<'_> {
     fn of_crate(&self, name: &str, version: &Version) -> Result<Vec<LockMove>, PortFailure> {
-        self.moves(&[
-            String::from("--recursive"),
-            String::from("-p"),
-            format!("{name}@{version}"),
-        ])
+        Ok(self
+            .moves(&[
+                String::from("--recursive"),
+                String::from("-p"),
+                format!("{name}@{version}"),
+            ])?
+            .registry)
     }
 
-    fn of_workspace(&self) -> Result<Vec<LockMove>, PortFailure> {
+    fn of_source(&self, name: &str, version: &Version) -> Result<Moves, PortFailure> {
+        self.moves(&[String::from("-p"), format!("{name}@{version}")])
+    }
+
+    fn of_workspace(&self) -> Result<Moves, PortFailure> {
         self.moves(&[])
     }
 }

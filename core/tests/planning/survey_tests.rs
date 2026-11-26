@@ -14,6 +14,11 @@ use crate::support::surveyed::direct;
 use crate::support::surveyed::surveyed;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
+use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::git::git_move::GitMove;
+use ripe4rust_core::inputs::git::git_source::GitSource;
+use ripe4rust_core::inputs::git::moves::Moves;
+use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::policy_value::PolicyValue;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
@@ -23,6 +28,7 @@ use ripe4rust_core::planning::pins_and_policy::pin::Pin;
 use ripe4rust_core::planning::pins_and_policy::release_condition::ReleaseCondition;
 use ripe4rust_core::planning::survey::Survey;
 use ripe4rust_core::planning::units::crate_repository::CrateRepository;
+use ripe4rust_core::planning::units::source_moves::SourceMoves;
 use ripe4rust_core::values::requirement::Requirement;
 
 fn codes(diagnostics: &[Diagnostic]) -> Vec<DiagnosticCode> {
@@ -187,6 +193,56 @@ fn rust_version_lines_are_read_for_each_member() {
 
     // Assert
     assert_eq!(lines, Ok(surveyed().rust_version_lines));
+}
+
+#[test]
+fn source_moves_ask_cargo_for_each_git_source_moving_by_its_first_crate_in_the_lock() {
+    // Arrange
+    let mut fakes = FakePorts::new();
+    let pulled = Moves {
+        registry: vec![LockMove {
+            name: String::from("itoa"),
+            from: Some(version("1.0.10")),
+            to: Some(version("1.0.19")),
+        }],
+        git: Vec::new(),
+    };
+    fakes.lock_moves.of_source = vec![(String::from("gitextra"), pulled.clone())];
+    let git = |name: &str, from: Option<&str>, to: Option<&str>| GitMove {
+        name: String::from(name),
+        source: String::from("https://github.com/example/upstream?branch=main"),
+        version: version("0.1.0"),
+        from: from.map(String::from),
+        to: to.map(String::from),
+    };
+    let moves = [
+        git("gitmacros", Some("9625c3d2"), Some("b52bc079")),
+        git("gitcore", None, Some("b52bc079")),
+        git("gitextra", Some("9625c3d2"), None),
+    ];
+
+    // Act
+    let sources = Survey::new(fakes.ports()).source_moves(&moves);
+
+    // Assert
+    assert_eq!(
+        sources,
+        Ok(vec![SourceMoves {
+            source: GitSource {
+                source: String::from("https://github.com/example/upstream?branch=main"),
+                from: String::from("9625c3d2"),
+                to: String::from("b52bc079"),
+            },
+            name: String::from("gitextra"),
+            version: version("0.1.0"),
+            crates: vec![
+                String::from("gitcore"),
+                String::from("gitextra"),
+                String::from("gitmacros")
+            ],
+            moves: pulled.registry,
+        }])
+    );
 }
 
 #[test]
@@ -397,6 +453,7 @@ fn warnings_name_absent_pins_an_old_cache_and_unparsed_files() {
     let warnings = Survey::new(fakes.ports()).warnings(
         &surveyed.policy,
         &surveyed.workspace,
+        &[],
         Some(&scan),
         date("2026-11-20"),
         surveyed.today,
@@ -411,4 +468,30 @@ fn warnings_name_absent_pins_an_old_cache_and_unparsed_files() {
             DiagnosticCode::SourceUnparsed,
         ]
     );
+}
+
+#[test]
+fn warnings_of_a_pin_on_a_crate_of_a_git_source_are_none() {
+    // Arrange
+    let fakes = FakePorts::new();
+    let mut surveyed = surveyed();
+    surveyed.policy.pins = vec![pin("gitcore")];
+    let git = [GitEntry {
+        name: String::from("gitcore"),
+        source: String::from("https://github.com/example/upstream?branch=main"),
+        rev: String::from("9625c3d2"),
+    }];
+
+    // Act
+    let warnings = Survey::new(fakes.ports()).warnings(
+        &surveyed.policy,
+        &surveyed.workspace,
+        &git,
+        surveyed.scan.as_ref(),
+        surveyed.today,
+        surveyed.today,
+    );
+
+    // Assert
+    assert_eq!(warnings, Vec::new());
 }

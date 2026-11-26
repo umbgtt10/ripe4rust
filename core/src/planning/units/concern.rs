@@ -81,6 +81,7 @@ impl Concern {
             to: None,
             moves: Vec::new(),
             held: Vec::new(),
+            git: None,
         }
     }
 }

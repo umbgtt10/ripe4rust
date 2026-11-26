@@ -4,6 +4,7 @@
 
 use crate::support::plans::breaking;
 use crate::support::plans::compatible;
+use crate::support::plans::git_unit;
 use crate::support::plans::rest;
 use cargo_ripe4rust::render::table::row_label::RowLabel;
 
@@ -23,6 +24,15 @@ fn unit_of_a_compatible_unit_counts_what_it_pulls_in() {
 
     // Assert
     assert_eq!(label, "widget (+1 transitive)");
+}
+
+#[test]
+fn unit_of_a_git_unit_counts_the_crates_of_its_source_and_what_it_pulls_in() {
+    // Arrange & Act
+    let label = RowLabel.unit(&git_unit());
+
+    // Assert
+    assert_eq!(label, "gitcore (+1 from its source, +1 transitive)");
 }
 
 #[test]

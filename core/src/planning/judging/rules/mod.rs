@@ -6,6 +6,7 @@ pub mod beyond_gates;
 pub mod breaking_change_of_ours;
 pub mod compatible_or_toolchain;
 pub mod freeze_open;
+pub mod git_unit;
 pub mod pin_due;
 pub mod pin_holds;
 pub mod small_footprint;

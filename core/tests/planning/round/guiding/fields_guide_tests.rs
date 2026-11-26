@@ -31,7 +31,7 @@ fn fields_of_a_unit_s_target_say_when_it_is_null() {
             .find(|field| field.field == "units[].to")
             .map(|field| field.means.as_str()),
         Some(
-            "the version it takes its own crate to; null for the rest, for a compatible unit whose own move a pin holds -- `evidence.held` names that move, and the table writes `held` --, and for one whose crate does not move, only what it pulls in -- the table writes `stays`"
+            "the version it takes its own crate to, a git unit's the short rev it takes its source to; null for the rest, for a compatible unit whose own move a pin holds -- `evidence.held` names that move, and the table writes `held` --, and for one whose crate does not move, only what it pulls in -- the table writes `stays`"
         )
     );
 }

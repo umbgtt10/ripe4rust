@@ -17,7 +17,8 @@ const RUST: &str = "rust";
 /// breaking unit's crate on its line, which holds a group by its first
 /// member; every crate a compatible unit or a split move moves, whole, since a
 /// pin otherwise holds only a new line; the toolchain as `rust`, on its line
-/// for a new minor and whole for a patch release.
+/// for a new minor and whole for a patch release; a git unit by its crate,
+/// whole, as a pin on any crate of its source holds it.
 pub struct HeldCrates;
 
 impl HeldCrates {
@@ -59,6 +60,14 @@ impl HeldCrates {
                     hold,
                 }]
             }
+            UnitKind::Git => unit
+                .name
+                .iter()
+                .map(|name| HeldCrate {
+                    name: name.clone(),
+                    hold: Hold::All,
+                })
+                .collect(),
             UnitKind::Advisory => Vec::new(),
         }
     }

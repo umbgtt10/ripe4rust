@@ -5,6 +5,7 @@
 use crate::support::units::added;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
+use crate::support::units::git;
 use crate::support::units::moved;
 use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::planning::units::unit::Unit;
@@ -172,6 +173,7 @@ fn steps_of_a_crate_the_lock_holds_twice_name_its_version() {
             added("unicode-ident", "1.0.20"),
         ],
         held: Vec::new(),
+        git: None,
     };
 
     // Act
@@ -184,6 +186,38 @@ fn steps_of_a_crate_the_lock_holds_twice_name_its_version() {
         vec![run("cargo update -p syn@2.0.119 --precise 2.0.120")]
     );
     assert_eq!(steps.check, "cargo ripe4rust check rest --plan plan.json");
+}
+
+#[test]
+fn steps_of_a_git_unit_update_its_source_by_one_crate_and_never_split() {
+    // Arrange
+    let unit = git(
+        "gitcore",
+        &["gitcore", "gitmacros"],
+        vec![
+            moved("itoa", "1.0.10", "1.0.19"),
+            moved("ryu", "1.0.1", "1.0.2"),
+        ],
+    );
+
+    // Act
+    let steps = writer().steps(&unit, &[]).expect("steps");
+
+    // Assert
+    assert_eq!(
+        (
+            steps.apply,
+            steps.check,
+            steps.revert.run,
+            steps.split.len()
+        ),
+        (
+            vec![run("cargo update -p gitcore")],
+            String::from("cargo ripe4rust check git:gitcore --plan plan.json"),
+            String::from("git restore -- Cargo.lock"),
+            0
+        )
+    );
 }
 
 #[test]
@@ -267,6 +301,7 @@ fn steps_of_the_toolchain_write_its_channel() {
         to: Some(Version::new(1, 100, 0)),
         moves: Vec::new(),
         held: Vec::new(),
+        git: None,
     };
     let edits = vec![Step::Edit {
         at: at("rust-toolchain.toml", 9),

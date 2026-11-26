@@ -51,6 +51,14 @@ impl QuestionWriter {
                 Wording.list(&facts.concerns),
                 facts.name
             ),
+            (UnitKind::Git, _) => format!(
+                "Move {} to git rev {}?",
+                facts.name,
+                unit.git
+                    .as_ref()
+                    .map(|git| git.to.as_str())
+                    .unwrap_or_default()
+            ),
             (_, Some(to)) => format!("Move {} to {to}?", facts.name),
             (_, None) if OwnMove.stays(unit) => {
                 let pulled = unit

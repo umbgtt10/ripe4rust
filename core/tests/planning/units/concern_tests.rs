@@ -150,6 +150,7 @@ fn row_of_an_advisory_is_an_advisory_row_for_its_crate() {
             to: None,
             moves: Vec::new(),
             held: Vec::new(),
+            git: None,
         }
     );
 }

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use cargo_ripe4rust::adapters::workspace::plan::plan_text::PlanText;
+use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::date::Date;
@@ -49,6 +50,33 @@ fn entry_of_a_crate_and_its_version_is_the_lock_s_entry() {
             name: String::from("itoa"),
             version: Version::parse("0.4.7").expect("a version"),
         })
+    );
+}
+
+#[test]
+fn git_entry_of_a_crate_at_its_source_s_rev_is_the_lock_s_git_entry() {
+    // Arrange
+    let text = PlanText::new("plan.json");
+
+    // Act
+    let read = [
+        text.git_entry("gitcore https://github.com/example/upstream?branch=main#9625c3d2"),
+        text.git_entry("gitcore https://github.com/example/upstream?branch=main"),
+    ];
+
+    // Assert
+    assert_eq!(
+        read,
+        [
+            Ok(GitEntry {
+                name: String::from("gitcore"),
+                source: String::from("https://github.com/example/upstream?branch=main"),
+                rev: String::from("9625c3d2"),
+            }),
+            Err(text.unreadable(
+                "`gitcore https://github.com/example/upstream?branch=main` in the lock is not a crate of a git source at its rev"
+            )),
+        ]
     );
 }
 

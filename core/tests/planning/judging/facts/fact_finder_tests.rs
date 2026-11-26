@@ -158,6 +158,7 @@ fn facts_of_the_rest_count_its_moves() {
         to: None,
         moves: vec![moved("libc", "0.2.177", "0.2.178")],
         held: Vec::new(),
+        git: None,
     };
 
     // Act

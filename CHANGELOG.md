@@ -53,6 +53,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   its own, answering in the batch's order, so the plan and the cache are the same as before: for a workspace of 461
   locked crates, 163 s became 71 s. The core's `Index` port is asked once for every crate, and the cli's
   `CommandRunner` and `Http` seams take a batch (`run_all`, `get_all`); the API keeps its one request a second.
+- A git dependency moving stopped the plan: `cargo update --dry-run` prints a git source's move as `Updating
+  <crate> v<version> (<source>#<rev>) -> #<rev>`, which the strict reader answered `cargo-update-unrecognised`, and a
+  workspace depending on a git branch got no plan. The reader now reads git lines strictly as what they are --
+  moved, moved back, added or removed, the source and the short revs, and no version for a moved crate, which cargo
+  does not print -- and a git source moving is a unit of the new kind `git`, `git:<crate>`: every crate of the source
+  at once, from rev to rev, with the registry's moves `cargo update --dry-run -p <crate>@<version>` says it pulls in,
+  claimed in plan order. Its `apply` is one `cargo update -p <crate>`; it never splits. It is always asked, by the new
+  rule 13 -- a git source makes no version promise --, urgent by rule 3 where it clears an advisory or a yanked
+  release, and held by a pin on any crate of its source. `check` reads the lock's git sources by their revs, `hold`
+  pins the unit's first crate with `hold = "all"`, and a pin on a crate of a git source is no absent crate. The plan
+  document gains `workspace.git` and a unit's `source`, a git unit's `from` and `to` are its revs, and `guide` names
+  them; older plans still read (`ADR-AGitSourceIsAsked`).
 
 ## [0.1.0] — 2026-11-26
 

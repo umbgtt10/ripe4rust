@@ -1,0 +1,5 @@
+    Updating git repository `https://github.com/example/upstream`
+    Updating crates.io index
+     Locking 2 packages to highest Rust 1.99.1 compatible versions
+ Downgrading gitcore v0.2.0 (https://github.com/example/upstream?branch=main#b52bc079) -> #dcc49c57
+    Updating gitextra v0.1.0 (https://github.com/example/upstream?branch=main#b52bc079) -> #dcc49c57

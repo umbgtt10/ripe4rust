@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::inputs::git::git_entry::GitEntry;
 use crate::inputs::lock_entry::LockEntry;
 use crate::inputs::policy_tree::PolicyTree;
 use crate::inputs::port_failure::PortFailure;
@@ -12,12 +13,14 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 /// The workspace's own files: the policy as written, `rust-toolchain.toml`,
-/// the crates.io packages `Cargo.lock` holds, the lines that state a
+/// the crates.io packages `Cargo.lock` holds and the crates of its git
+/// sources at their revs, the lines that state a
 /// dependency's requirement or a member's `rust-version`, every line a unit's
 /// `apply` can edit with what it says, and the fingerprint of the lock, the
 /// manifests and the toolchain file.
 pub trait WorkspaceFiles {
     fn fingerprint(&self) -> Result<String, PortFailure>;
+    fn git(&self) -> Result<Vec<GitEntry>, PortFailure>;
     fn lock(&self) -> Result<Vec<LockEntry>, PortFailure>;
     fn policy(&self) -> Result<PolicyTree, PortFailure>;
     fn requirement_lines(&self, name: &str) -> Result<Vec<Location>, PortFailure>;

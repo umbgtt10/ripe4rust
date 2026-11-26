@@ -7,11 +7,13 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 /// The workspace a plan was made from: the fingerprint of its lock, its
-/// manifests and `rust-toolchain.toml`, the lock's packages, and every line a
-/// unit's `apply` can edit, as written then.
+/// manifests and `rust-toolchain.toml`, the lock's packages, every line a
+/// unit's `apply` can edit, as written then, and every crate of a git source
+/// at its rev, `<crate> <source>#<rev>`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WorkspaceState {
     pub fingerprint: String,
     pub lock: Vec<String>,
     pub lines: Vec<WrittenLine>,
+    pub git: Vec<String>,
 }

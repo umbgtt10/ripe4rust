@@ -75,6 +75,12 @@ impl<'a> Holder<'a> {
                     .map(|lock_move| StaleFindings.lock(lock_move)),
             );
         }
+        stale.extend(
+            sorted
+                .unexplained_git
+                .iter()
+                .map(|moved| StaleFindings.git(moved)),
+        );
         if !stale.is_empty() {
             let mut diagnostics = inputs.diagnostics;
             diagnostics.extend(stale);

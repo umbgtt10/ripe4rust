@@ -6,6 +6,7 @@ pub mod beyond_gates_tests;
 pub mod breaking_change_of_ours_tests;
 pub mod compatible_or_toolchain_tests;
 pub mod freeze_open_tests;
+pub mod git_unit_tests;
 pub mod pin_due_tests;
 pub mod pin_holds_tests;
 pub mod small_footprint_tests;

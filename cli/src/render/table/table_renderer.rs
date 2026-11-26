@@ -18,7 +18,6 @@ use ripe4rust_core::planning::round::guiding::guide_text::GuideText;
 use ripe4rust_core::planning::round::holding::hold_report::HoldReport;
 
 const FINGERPRINT_SHOWN: usize = 8;
-const NONE: &str = "--";
 
 /// The plan for a person: the date, the registry's day and the workspace,
 /// one row per unit, then every diagnostic in text.
@@ -59,11 +58,7 @@ impl DocumentRenderer for TableRenderer {
             .collect::<String>();
         let mut rows = vec![["unit", "kind", "from", "to", "outcome", "reasons"].map(String::from)];
         rows.extend(plan.units.iter().map(|planned| {
-            let from = planned
-                .unit
-                .from
-                .as_ref()
-                .map_or_else(|| String::from(NONE), ToString::to_string);
+            let from = TargetCell.origin(&planned.unit);
             let decision = &planned.decision;
             let urgency = if decision.urgent { ", urgent" } else { "" };
             [

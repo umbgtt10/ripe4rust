@@ -3,9 +3,32 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::plans::compatible;
+use crate::support::plans::git_unit;
 use crate::support::plans::moved;
 use crate::support::plans::rest;
 use cargo_ripe4rust::render::table::target_cell::TargetCell;
+
+#[test]
+fn origin_of_a_git_unit_is_the_rev_it_leaves_and_of_any_other_its_version() {
+    // Arrange & Act
+    let origins = [
+        TargetCell.origin(&git_unit().unit),
+        TargetCell.origin(&compatible().unit),
+        TargetCell.origin(&rest().unit),
+    ];
+
+    // Assert
+    assert_eq!(origins, ["9625c3d2", "4.6.6", "--"]);
+}
+
+#[test]
+fn text_of_a_git_unit_is_the_rev_it_takes() {
+    // Arrange & Act
+    let text = TargetCell.text(&git_unit().unit);
+
+    // Assert
+    assert_eq!(text, "ce129c85");
+}
 
 #[test]
 fn text_of_a_unit_moving_its_crate_is_the_version_it_takes() {

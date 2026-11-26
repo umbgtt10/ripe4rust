@@ -23,7 +23,11 @@ const GADGET_REVERT: &str = "carry out the unit's `revert`, `git restore -- Carg
 
 fn found(unit: &str, lock: Vec<LockEntry>, lines: Vec<WrittenLine>, pins: &[Pin]) -> Vec<String> {
     let plan = plan();
-    let current = CurrentState { lock, lines };
+    let current = CurrentState {
+        lock,
+        lines,
+        git: Vec::new(),
+    };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan).find(unit).expect("a unit");
     DifferenceFinder::new(&target, &sorting, pins)
@@ -200,6 +204,7 @@ fn differences_say_each_time_what_to_do() {
     let current = CurrentState {
         lock: plan.lock.clone(),
         lines: lines(),
+        git: Vec::new(),
     };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan)
@@ -226,6 +231,7 @@ fn transitive_of_a_breaking_unit_applied_is_every_move_no_unit_explains() {
     let current = CurrentState {
         lock: gadget_moved(&[("gizmo", "2.7.5"), ("tiny", "1.0.0")]),
         lines: lines_with(&[(22, "0.14.0")]),
+        git: Vec::new(),
     };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan)
@@ -251,6 +257,7 @@ fn transitive_of_a_compatible_unit_is_none() {
             ("widget", "1.4.1"),
         ]),
         lines: lines(),
+        git: Vec::new(),
     };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan)

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use cargo_ripe4rust::adapters::workspace::lock_reader::LockReader;
+use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::version::Version;
@@ -72,4 +73,24 @@ fn entries_of_the_sparse_registry_are_crates_io_s_too() {
 
     // Assert
     assert_eq!(entries, Ok(vec![entry("zeta", "1.0.0")]));
+}
+
+#[test]
+fn git_of_a_lock_is_every_git_package_at_its_source_s_short_rev() {
+    // Arrange & Act
+    let git = LockReader.git(
+        "version = 4\n\n[[package]]\nname = \"gitmacros\"\nversion = \"0.1.0\"\nsource = \"git+https://github.com/example/upstream?branch=main#9625c3d283b3313139f8aad4ebbb0dfd3bdb09c7\"\n\n[[package]]\nname = \"itoa\"\nversion = \"1.0.10\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\n\n[[package]]\nname = \"gitcore\"\nversion = \"0.1.0\"\nsource = \"git+https://github.com/example/upstream?branch=main#9625c3d283b3313139f8aad4ebbb0dfd3bdb09c7\"\n",
+    );
+
+    // Assert
+    assert_eq!(
+        git,
+        Ok(["gitcore", "gitmacros"]
+            .map(|name| GitEntry {
+                name: String::from(name),
+                source: String::from("https://github.com/example/upstream?branch=main"),
+                rev: String::from("9625c3d2"),
+            })
+            .to_vec())
+    );
 }

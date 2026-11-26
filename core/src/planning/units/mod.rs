@@ -4,6 +4,7 @@
 
 pub mod breaking_units;
 pub mod choice;
+pub mod claimant;
 pub mod clearing;
 pub mod compatible_units;
 pub mod concern;
@@ -14,6 +15,7 @@ pub mod direct_dependency;
 pub mod grouping;
 pub mod own_move;
 pub mod plan_order;
+pub mod source_moves;
 pub mod toolchain_unit;
 pub mod unit;
 pub mod unit_id;

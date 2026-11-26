@@ -5,10 +5,13 @@
 use crate::support::releases::version;
 use crate::support::surveyed::surveyed;
 use ripe4rust_core::inputs::advisory::Advisory;
+use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::git::git_source::GitSource;
 use ripe4rust_core::inputs::locked_package::LockedPackage;
 use ripe4rust_core::outcome::Outcome;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_writer::PlanWriter;
+use ripe4rust_core::planning::units::source_moves::SourceMoves;
 use ripe4rust_core::planning::writing::step::Step;
 use ripe4rust_core::values::requirement::Requirement;
 
@@ -91,6 +94,52 @@ fn plan_names_a_crate_the_lock_holds_twice_at_its_version() {
         vec![Step::Run {
             command: String::from("cargo update -p gizmo@2.7.5 --precise 2.7.6"),
         }]
+    );
+}
+
+#[test]
+fn plan_of_a_git_source_moving_asks_it_as_a_unit_of_its_own() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.source_moves = vec![SourceMoves {
+        source: GitSource {
+            source: String::from("https://github.com/example/upstream?branch=main"),
+            from: String::from("9625c3d2"),
+            to: String::from("ce129c85"),
+        },
+        name: String::from("gitcore"),
+        version: version("0.1.0"),
+        crates: vec![String::from("gitcore")],
+        moves: Vec::new(),
+    }];
+    surveyed.git = vec![GitEntry {
+        name: String::from("gitcore"),
+        source: String::from("https://github.com/example/upstream?branch=main"),
+        rev: String::from("9625c3d2"),
+    }];
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    let git = plan
+        .units
+        .iter()
+        .find(|planned| planned.unit.id.to_string() == "git:gitcore")
+        .expect("a git unit");
+    assert_eq!(
+        (git.decision.outcome, git.decision.rule, &git.summary),
+        (
+            Outcome::Ask,
+            Some(13),
+            &String::from("Move gitcore to git rev ce129c85")
+        )
+    );
+    assert_eq!(
+        plan.workspace.git,
+        vec![String::from(
+            "gitcore https://github.com/example/upstream?branch=main#9625c3d2"
+        )]
     );
 }
 

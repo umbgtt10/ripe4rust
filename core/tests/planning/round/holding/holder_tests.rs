@@ -14,6 +14,8 @@ use crate::support::recorded::lines;
 use crate::support::recorded::lines_with;
 use crate::support::recorded::lock;
 use crate::support::recorded::plan;
+use crate::support::recorded::plan_with_git;
+use crate::support::recorded::with_git;
 use crate::support::releases::date;
 use crate::support::surveyed::at;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
@@ -175,6 +177,27 @@ fn hold_of_a_compatible_unit_pins_each_move_reviewed_hold_days_after_the_plan() 
             ),
             diagnostics: Vec::new(),
         })
+    );
+}
+
+#[test]
+fn hold_of_a_git_unit_pins_its_crate_whole() {
+    // Arrange
+    let files = with_git("9625c3d2");
+
+    // Act
+    let report = hold(plan_with_git(), &files, "git:gitcore").expect("a pin");
+
+    // Assert
+    assert_eq!(
+        report
+            .pins
+            .iter()
+            .map(|pin| pin.line.clone())
+            .collect::<Vec<String>>(),
+        vec![String::from(
+            "gitcore = { reason = \"2.7.6 broke stage 2\", review = \"2026-12-10\", hold = \"all\" }"
+        )]
     );
 }
 

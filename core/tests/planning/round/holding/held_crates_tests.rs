@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::recorded::plan;
+use crate::support::recorded::plan_with_git;
 use crate::support::releases::version;
 use ripe4rust_core::planning::pins_and_policy::hold::Hold;
 use ripe4rust_core::planning::round::holding::held_crate::HeldCrate;
@@ -43,6 +44,20 @@ fn of_a_compatible_unit_holds_every_crate_it_moves_whole() {
             vec![held("libc", Hold::All)]
         )
     );
+}
+
+#[test]
+fn of_a_git_unit_holds_its_crate_whole() {
+    // Arrange
+    let plan = plan_with_git();
+
+    // Act
+    let crates = HeldCrates.of(&TargetFinder::new(&plan)
+        .find("git:gitcore")
+        .expect("a unit"));
+
+    // Assert
+    assert_eq!(crates, vec![held("gitcore", Hold::All)]);
 }
 
 #[test]

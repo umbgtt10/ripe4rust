@@ -51,11 +51,13 @@ impl<'a> RoundReader<'a> {
             return Ok(CurrentState {
                 lock: plan.lock.clone(),
                 lines: plan.lines.clone(),
+                git: plan.git.clone(),
             });
         }
         Ok(CurrentState {
             lock: self.files.lock()?,
             lines: self.files.written()?,
+            git: self.files.git()?,
         })
     }
 }

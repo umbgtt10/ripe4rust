@@ -12,6 +12,7 @@ use crate::planning::judging::rules::beyond_gates::BeyondGates;
 use crate::planning::judging::rules::breaking_change_of_ours::BreakingChangeOfOurs;
 use crate::planning::judging::rules::compatible_or_toolchain::CompatibleOrToolchain;
 use crate::planning::judging::rules::freeze_open::FreezeOpen;
+use crate::planning::judging::rules::git_unit::GitUnit;
 use crate::planning::judging::rules::pin_due::PinDue;
 use crate::planning::judging::rules::pin_holds::PinHolds;
 use crate::planning::judging::rules::small_footprint::SmallFootprint;
@@ -28,8 +29,8 @@ use crate::unit_kind::UnitKind;
 use alloc::format;
 use alloc::vec;
 
-/// The rules, in order, the first that matches deciding; rule 12 takes
-/// every breaking unit the others leave. Then against drift, then the
+/// The rules, in order, the first that matches deciding; rule 13 takes a
+/// git unit the others leave, and rule 12 every breaking unit. Then against drift, then the
 /// no-gates downgrade, then the moves back to a lower version, then a crate
 /// named nowhere. An advisory row is asked, urgent, by no rule.
 pub struct Judge;
@@ -50,7 +51,7 @@ impl Judge {
                 )),
             };
         }
-        let rules: [&dyn Rule; 11] = [
+        let rules: [&dyn Rule; 12] = [
             &UrgentBeyondGates,
             &UrgentCompatible,
             &UrgentBreaking,
@@ -62,6 +63,7 @@ impl Judge {
             &YoungLine,
             &CompatibleOrToolchain,
             &SmallFootprint,
+            &GitUnit,
         ];
         let decided = rules
             .iter()

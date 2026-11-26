@@ -9,7 +9,7 @@ use crate::render::json::documents::steps_document::StepsDocument;
 use serde::Serialize;
 
 /// One row of the plan, in the design's order: `members` beside `crate`,
-/// `reasons` before `summary`.
+/// `source` after `to`, `reasons` before `summary`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct UnitDocument<'a> {
     pub id: String,
@@ -19,6 +19,7 @@ pub struct UnitDocument<'a> {
     pub members: &'a [String],
     pub from: Option<String>,
     pub to: Option<String>,
+    pub source: Option<&'a str>,
     pub moves: Vec<MoveDocument<'a>>,
     pub outcome: &'a str,
     pub urgent: bool,

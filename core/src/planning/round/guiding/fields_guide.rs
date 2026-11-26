@@ -6,7 +6,7 @@ use crate::planning::round::guiding::field_guide::FieldGuide;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-const FIELDS: [(&str, &str, &str); 120] = [
+const FIELDS: [(&str, &str, &str); 122] = [
     (
         "every",
         "schema",
@@ -71,6 +71,11 @@ const FIELDS: [(&str, &str, &str); 120] = [
     ),
     (
         "plan",
+        "workspace.git",
+        "the lock's crates of git sources, each `<crate> <source>#<rev>`, the rev short as cargo prints it",
+    ),
+    (
+        "plan",
         "workspace.lines",
         "every line a unit's `apply` can edit, as the plan found it",
     ),
@@ -99,7 +104,7 @@ const FIELDS: [(&str, &str, &str); 120] = [
     (
         "plan",
         "units[].kind",
-        "`compatible`, `breaking`, `toolchain` or `advisory`",
+        "`compatible`, `breaking`, `git`, `toolchain` or `advisory`",
     ),
     (
         "plan",
@@ -111,11 +116,20 @@ const FIELDS: [(&str, &str, &str); 120] = [
         "units[].members",
         "the crates it moves directly: a group's members, `rust` for the toolchain",
     ),
-    ("plan", "units[].from", "the version it leaves"),
+    (
+        "plan",
+        "units[].from",
+        "the version it leaves; a git unit's, the short rev its source leaves",
+    ),
     (
         "plan",
         "units[].to",
-        "the version it takes its own crate to; null for the rest, for a compatible unit whose own move a pin holds -- `evidence.held` names that move, and the table writes `held` --, and for one whose crate does not move, only what it pulls in -- the table writes `stays`",
+        "the version it takes its own crate to, a git unit's the short rev it takes its source to; null for the rest, for a compatible unit whose own move a pin holds -- `evidence.held` names that move, and the table writes `held` --, and for one whose crate does not move, only what it pulls in -- the table writes `stays`",
+    ),
+    (
+        "plan",
+        "units[].source",
+        "a git unit's source, its URL and its branch, tag or rev spec as cargo writes it, moved as a whole; null for every other kind",
     ),
     (
         "plan",

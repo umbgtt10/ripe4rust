@@ -12,6 +12,8 @@ use crate::support::surveyed::at;
 use crate::support::surveyed::written;
 use crate::support::units::added;
 use crate::support::units::moved;
+use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::git::git_source::GitSource;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::recorded_plan::RecordedPlan;
@@ -21,6 +23,7 @@ use ripe4rust_core::unit_kind::UnitKind;
 
 pub const FINGERPRINT: &str = "9f2c41d0e3b5a7c9";
 pub const LOCK_ONLY: &str = "git restore -- Cargo.lock";
+pub const SOURCE: &str = "https://github.com/example/upstream?branch=main";
 
 /// The workspace the recorded plan was made from, its lock and its lines,
 /// as the files hold them unchanged.
@@ -38,6 +41,7 @@ pub fn base() -> FakeFiles {
         requirement_lines: Vec::new(),
         rust_version_lines: Vec::new(),
         written: lines(),
+        git: Vec::new(),
         failure: None,
     }
 }
@@ -58,6 +62,17 @@ pub fn entry_of(name: &str, at: &str) -> LockEntry {
         name: String::from(name),
         version: version(at),
     }
+}
+
+/// The git source of the plan with a git unit, every crate of it at `rev`.
+pub fn git_at(rev: &str) -> Vec<GitEntry> {
+    ["gitcore", "gitmacros"]
+        .map(|name| GitEntry {
+            name: String::from(name),
+            source: String::from(SOURCE),
+            rev: String::from(rev),
+        })
+        .to_vec()
 }
 
 pub fn lines() -> Vec<WrittenLine> {
@@ -100,6 +115,7 @@ pub fn plan() -> RecordedPlan {
         fingerprint: String::from(FINGERPRINT),
         lock: base().lock,
         lines: lines(),
+        git: Vec::new(),
         units: vec![
             unit(
                 UnitKind::Breaking,
@@ -160,6 +176,27 @@ pub fn plan() -> RecordedPlan {
     }
 }
 
+/// The recorded plan with a git unit after its first: `gitcore`'s source
+/// from 9625c3d2 to ce129c85, its workspace and its files holding the source
+/// at 9625c3d2.
+pub fn plan_with_git() -> RecordedPlan {
+    let mut plan = plan();
+    plan.git = git_at("9625c3d2");
+    plan.units.insert(
+        1,
+        RecordedUnit {
+            members: vec![String::from("gitcore"), String::from("gitmacros")],
+            git: Some(GitSource {
+                source: String::from(SOURCE),
+                from: String::from("9625c3d2"),
+                to: String::from("ce129c85"),
+            }),
+            ..unit(UnitKind::Git, "gitcore", Vec::new(), Vec::new())
+        },
+    );
+    plan
+}
+
 pub fn transitive(name: &str, to: &str) -> LockMove {
     added(name, to)
 }
@@ -183,5 +220,20 @@ fn unit(kind: UnitKind, name: &str, moves: Vec<LockMove>, edits: Vec<WrittenLine
         edits,
         splits: Vec::new(),
         revert: Some(revert),
+        git: None,
+    }
+}
+
+/// The base workspace with the git source at `rev`, its fingerprint another
+/// where the source moved.
+pub fn with_git(rev: &str) -> FakeFiles {
+    FakeFiles {
+        fingerprint: if rev == "9625c3d2" {
+            String::from(FINGERPRINT)
+        } else {
+            String::from("0000000000000002")
+        },
+        git: git_at(rev),
+        ..base()
     }
 }

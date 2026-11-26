@@ -52,6 +52,7 @@ impl<'a> BreakingUnits<'a> {
                         to: Some(target.to),
                     }],
                     held: Vec::new(),
+                    git: None,
                 })
             })
             .collect()

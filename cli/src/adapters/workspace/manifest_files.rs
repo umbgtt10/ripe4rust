@@ -13,6 +13,7 @@ use crate::system::model::file_failure::FileFailure;
 use crate::system::model::layout::Layout;
 use crate::system::traits::file_system::FileSystem;
 use crate::system::traits::layout_source::LayoutSource;
+use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::port_failure::PortFailure;
@@ -89,6 +90,10 @@ impl WorkspaceFiles for ManifestFiles<'_> {
             .map(|path| Ok((Self::named(&layout, path), self.read(&layout, path)?)))
             .collect::<Result<Vec<(String, Option<String>)>, PortFailure>>()?;
         Ok(Fingerprint.of(&files))
+    }
+
+    fn git(&self) -> Result<Vec<GitEntry>, PortFailure> {
+        LockReader.git(&self.at_root(LOCK)?)
     }
 
     fn lock(&self) -> Result<Vec<LockEntry>, PortFailure> {

@@ -67,7 +67,7 @@ impl<'a> EditFinder<'a> {
                 .map(|(at, to)| Edits.set(at, "channel", to.to_string()))
                 .into_iter()
                 .collect(),
-            UnitKind::Compatible | UnitKind::Advisory => Vec::new(),
+            UnitKind::Compatible | UnitKind::Advisory | UnitKind::Git => Vec::new(),
         }
     }
 }

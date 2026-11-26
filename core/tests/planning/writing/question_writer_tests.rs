@@ -8,6 +8,7 @@ use crate::support::facts::standing;
 use crate::support::releases::version;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
+use crate::support::units::git;
 use crate::support::units::moved;
 use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::planning::judging::footprint::Footprint;
@@ -168,6 +169,37 @@ fn question_of_a_due_pin_offers_unpin_or_keep_it() {
     assert_eq!(
         answers,
         Some((Answer::Unpin, vec![Answer::Unpin, Answer::KeepPinned]))
+    );
+}
+
+#[test]
+fn question_of_a_git_unit_moves_it_to_its_rev_take_it_or_wait() {
+    // Arrange
+    let unit = git("gitcore", &["gitcore"], Vec::new());
+    let facts = UnitFacts {
+        name: String::from("gitcore"),
+        ..facts(UnitKind::Git)
+    };
+
+    // Act
+    let question = asked(&unit, &facts, &[]).expect("a question");
+
+    // Assert
+    assert_eq!(
+        (
+            question.title,
+            question.recommendation,
+            question
+                .options
+                .iter()
+                .map(|option| option.answer)
+                .collect::<Vec<Answer>>()
+        ),
+        (
+            String::from("Move gitcore to git rev ce129c85?"),
+            Answer::TakeIt,
+            vec![Answer::TakeIt, Answer::Wait]
+        )
     );
 }
 

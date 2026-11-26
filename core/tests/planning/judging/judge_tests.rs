@@ -64,6 +64,34 @@ fn judge_of_a_breaking_unit_named_nowhere_asks_it_saying_it_may_be_unused() {
 }
 
 #[test]
+fn judge_of_a_git_unit_asks_it_held_by_a_pin_and_urgent_where_it_clears() {
+    // Arrange
+    let plain = facts(UnitKind::Git);
+    let urgent = UnitFacts {
+        concerns: vec![String::from("RUSTSEC-2026-0097")],
+        ..facts(UnitKind::Git)
+    };
+    let pinned = UnitFacts {
+        pins: vec![pinned(None)],
+        fully_held: true,
+        ..facts(UnitKind::Git)
+    };
+
+    // Act
+    let decisions = [plain, urgent, pinned].map(|facts| Judge.judge(&facts));
+
+    // Assert
+    assert_eq!(
+        decisions.map(|decision| (decision.outcome, decision.urgent, decision.rule)),
+        [
+            (Outcome::Ask, false, Some(13)),
+            (Outcome::Ask, true, Some(3)),
+            (Outcome::Ripening, false, Some(4)),
+        ]
+    );
+}
+
+#[test]
 fn judge_of_a_plain_breaking_unit_is_rule_twelve_with_the_verdict() {
     // Arrange & Act
     let decision = Judge.judge(&facts(UnitKind::Breaking));

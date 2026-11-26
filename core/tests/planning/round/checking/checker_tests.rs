@@ -11,7 +11,9 @@ use crate::support::recorded::lines;
 use crate::support::recorded::lines_with;
 use crate::support::recorded::lock;
 use crate::support::recorded::plan;
+use crate::support::recorded::plan_with_git;
 use crate::support::recorded::transitive;
+use crate::support::recorded::with_git;
 use crate::support::surveyed::at;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
@@ -99,6 +101,58 @@ fn check_of_a_compatible_unit_after_a_breaking_one_leaves_its_tail_to_it() {
 }
 
 #[test]
+fn check_of_a_git_unit_applied_finds_its_source_at_the_rev_it_takes() {
+    // Arrange
+    let source = FakePlan {
+        plan: Ok(plan_with_git()),
+    };
+    let files = with_git("ce129c85");
+
+    // Act
+    let report = Checker::new(&source, &files)
+        .check("git:gitcore")
+        .expect("a check");
+
+    // Assert
+    assert!(report.as_planned, "{report:?}");
+    assert_eq!(report.applied, ids(&["git:gitcore"]));
+}
+
+#[test]
+fn check_of_a_git_unit_not_applied_names_its_source_still_at_its_rev() {
+    // Arrange
+    let source = FakePlan {
+        plan: Ok(plan_with_git()),
+    };
+    let files = FakeFiles {
+        fingerprint: String::from("0000000000000003"),
+        ..with_git("9625c3d2")
+    };
+
+    // Act
+    let report = Checker::new(&source, &files)
+        .check("git:gitcore")
+        .expect("a check");
+
+    // Assert
+    assert_eq!(
+        (report.as_planned, report.differences),
+        (
+            false,
+            vec![Difference {
+                at: String::from("Cargo.lock"),
+                what: String::from(
+                    "`https://github.com/example/upstream?branch=main` is still at 9625c3d2, where the unit moves it to ce129c85"
+                ),
+                action: String::from(
+                    "carry out the unit's `revert`, `git restore -- Cargo.lock`: git:gitcore becomes ask, with these differences attached"
+                ),
+            }]
+        )
+    );
+}
+
+#[test]
 fn check_of_a_move_no_unit_makes_is_not_as_planned_with_what_to_do() {
     // Arrange
     let mut moved = widget_applied();
@@ -161,6 +215,35 @@ fn check_of_a_split_move_applied_is_as_planned_and_lists_its_other_move_to_go() 
             "breaking:widget",
             "rest"
         ])
+    );
+}
+
+#[test]
+fn check_of_a_unit_after_a_git_source_moved_where_no_unit_takes_it_names_the_move() {
+    // Arrange
+    let source = FakePlan {
+        plan: Ok(plan_with_git()),
+    };
+    let files = FakeFiles {
+        lock: widget_applied(),
+        ..with_git("deadbeef")
+    };
+
+    // Act
+    let report = Checker::new(&source, &files)
+        .check("compatible:widget")
+        .expect("a check");
+
+    // Assert
+    assert_eq!(
+        report
+            .differences
+            .iter()
+            .map(|difference| difference.what.clone())
+            .collect::<Vec<String>>(),
+        vec![String::from(
+            "`https://github.com/example/upstream?branch=main` moved 9625c3d2 -> deadbeef, a move no unit of the plan makes"
+        )]
     );
 }
 

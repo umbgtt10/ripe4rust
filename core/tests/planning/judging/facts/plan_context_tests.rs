@@ -27,6 +27,7 @@ fn toolchain_unit() -> Unit {
         to: Some(version("1.100.0")),
         moves: Vec::new(),
         held: Vec::new(),
+        git: None,
     }
 }
 

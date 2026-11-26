@@ -11,6 +11,7 @@ use crate::support::surveyed::surveyed;
 use crate::support::surveyed::toolchain;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
+use crate::support::units::git;
 use crate::support::units::moved;
 use ripe4rust_core::planning::judging::facts::pin_review::PinReview;
 use ripe4rust_core::planning::judging::facts::plan_context::PlanContext;
@@ -50,6 +51,7 @@ fn rust(from: &str, to: &str) -> Unit {
         to: Some(version(to)),
         moves: Vec::new(),
         held: Vec::new(),
+        git: None,
     }
 }
 
@@ -120,6 +122,30 @@ fn pins_of_a_compatible_unit_are_the_all_pins_on_its_held_moves() {
             .map(|standing| standing.pin.name.clone())
             .collect::<Vec<_>>(),
         vec![String::from("gizmo")]
+    );
+}
+
+#[test]
+fn pins_of_a_git_unit_are_those_on_any_of_its_crates_whatever_they_hold() {
+    // Arrange
+    let surveyed = pinned(vec![pin("gitmacros", Hold::Line), pin("widget", Hold::All)]);
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+    let unit = git("gitcore", &["gitcore", "gitmacros"], Vec::new());
+    let review = PinReview::new(&context);
+
+    // Act
+    let pins = review.pins(&unit);
+
+    // Assert
+    assert_eq!(
+        (
+            pins.iter()
+                .map(|standing| standing.pin.name.clone())
+                .collect::<Vec<String>>(),
+            review.fully_held(&unit, &pins)
+        ),
+        (vec![String::from("gitmacros")], true)
     );
 }
 

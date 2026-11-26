@@ -4,6 +4,7 @@
 
 use cargo_ripe4rust::adapters::workspace::plan::plan_text::PlanText;
 use cargo_ripe4rust::adapters::workspace::plan::unit_reader::UnitReader;
+use ripe4rust_core::inputs::git::git_source::GitSource;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::recorded_unit::RecordedUnit;
@@ -59,6 +60,7 @@ fn unit_of_a_breaking_unit_is_its_moves_its_edits_and_its_revert() {
             }],
             splits: Vec::new(),
             revert: Some(String::from("git restore -- Cargo.lock Cargo.toml")),
+            git: None,
         })
     );
 }
@@ -78,6 +80,46 @@ fn unit_of_a_compatible_unit_is_the_ids_of_its_split() {
             String::from("compatible:itertools/either"),
             String::from("compatible:itertools/itertools"),
         ])
+    );
+}
+
+#[test]
+fn unit_of_a_git_unit_is_its_source_moved_between_its_revs() {
+    // Arrange
+    let text = PlanText::new("plan.json");
+    let value = json!({
+        "id": "git:gitcore",
+        "kind": "git",
+        "crate": "gitcore",
+        "members": ["gitcore", "gitmacros"],
+        "from": "9625c3d2",
+        "to": "ce129c85",
+        "source": "https://github.com/example/upstream?branch=main",
+        "moves": [{ "crate": "itoa", "from": "1.0.10", "to": "1.0.19" }],
+        "urgent": false,
+        "steps": {
+            "apply": [{ "run": "cargo update -p gitcore" }],
+            "revert": { "run": "git restore -- Cargo.lock" },
+            "split": []
+        }
+    });
+
+    // Act
+    let unit = UnitReader::new(&text).unit(&value).expect("a unit");
+
+    // Assert
+    assert_eq!(
+        (unit.kind, unit.from, unit.to, unit.git),
+        (
+            UnitKind::Git,
+            None,
+            None,
+            Some(GitSource {
+                source: String::from("https://github.com/example/upstream?branch=main"),
+                from: String::from("9625c3d2"),
+                to: String::from("ce129c85"),
+            })
+        )
     );
 }
 

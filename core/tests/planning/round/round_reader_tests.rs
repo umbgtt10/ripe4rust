@@ -29,6 +29,7 @@ fn read_of_a_changed_workspace_is_its_lock_and_lines_now() {
         Ok(CurrentState {
             lock: lock(&[("widget", "1.4.1")]),
             lines: lines_with(&[(21, "1.5")]),
+            git: Vec::new(),
         })
     );
 }
@@ -74,6 +75,7 @@ fn read_of_a_workspace_with_the_plan_s_fingerprint_is_the_plan_s_lock_and_lines(
         Ok(CurrentState {
             lock: plan().lock,
             lines: plan().lines,
+            git: Vec::new(),
         })
     );
 }

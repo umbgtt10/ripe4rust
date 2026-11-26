@@ -4,6 +4,7 @@
 
 use crate::diagnostics::diagnostic::Diagnostic;
 use crate::inputs::advisory::Advisory;
+use crate::inputs::git::git_entry::GitEntry;
 use crate::inputs::lock_move::LockMove;
 use crate::inputs::release::Release;
 use crate::inputs::scan::Scan;
@@ -13,6 +14,7 @@ use crate::planning::pins_and_policy::policy::Policy;
 use crate::planning::units::crate_repository::CrateRepository;
 use crate::planning::units::dependency_moves::DependencyMoves;
 use crate::planning::units::direct_dependency::DirectDependency;
+use crate::planning::units::source_moves::SourceMoves;
 use crate::values::date::Date;
 use crate::values::location::Location;
 use crate::values::version::Version;
@@ -43,6 +45,8 @@ pub struct Surveyed {
     pub advisories: Vec<Advisory>,
     pub dependency_moves: Vec<DependencyMoves>,
     pub workspace_moves: Vec<LockMove>,
+    pub source_moves: Vec<SourceMoves>,
+    pub git: Vec<GitEntry>,
     pub repositories: Vec<CrateRepository>,
     pub reached: Vec<(String, Vec<String>)>,
     pub scan: Option<Scan>,

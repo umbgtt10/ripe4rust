@@ -28,8 +28,9 @@ impl PlanOrder {
         match kind {
             UnitKind::Compatible => 0,
             UnitKind::Breaking => 1,
-            UnitKind::Toolchain => 2,
-            UnitKind::Advisory => 3,
+            UnitKind::Git => 2,
+            UnitKind::Toolchain => 3,
+            UnitKind::Advisory => 4,
         }
     }
 
