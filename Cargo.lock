@@ -15,6 +15,7 @@ dependencies = [
  "ripe4rust-core",
  "serde",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]

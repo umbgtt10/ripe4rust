@@ -73,6 +73,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   (`cargo_ripe4rust::render::json::documents`), serialized as declared -- where the nested objects were written
   with their keys sorted. serde_json's `preserve_order` stays off: it would bring a crate under a licence
   `deny.toml` refuses.
+- The seams every adapter reaches the system through, in the cli (`cargo_ripe4rust::traits`): `CommandRunner`, a
+  program run to its end with what it printed, `FileSystem`, a file's text, a directory's entries and a file written
+  whole, and `Pause`, a wait between requests; their real implementations (`cargo_ripe4rust::system`) run a child
+  process without colour, write a file beside its place and rename it, and sleep the thread. A program not
+  installed is `LaunchFailure::Missing`, a file not there `FileFailure::Missing`.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the
