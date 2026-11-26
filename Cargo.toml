@@ -23,11 +23,13 @@ tempfile = "3"
 toml = { version = "1.2", default-features = false, features = ["parse", "std"] }
 
 # ripe4rust plans this workspace too: the gates that validate a change, the
-# same two every commit passes, and the members on crates.io, whose public API
-# a breaking upgrade can break (rule 8).
+# same two every commit passes, and the library others depend on, whose public
+# API a breaking upgrade can break (rule 8). `cargo-ripe4rust` is on crates.io
+# too, but it is installed as a subcommand: its library is there for its own
+# tests, and no one builds against it.
 [workspace.metadata.ripe4rust]
 gates = ["just stage1", "just stage2"]
-published = ["ripe4rust-core", "cargo-ripe4rust"]
+published = ["ripe4rust-core"]
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

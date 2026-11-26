@@ -508,6 +508,9 @@ tokio = { reason = "the runtime the service ships on; a release is load-tested f
 memchr = { reason = "2.7.6 broke stage 2: <the gate's failure>", review = "2026-12-10", hold = "all" }
 ```
 
+`published` names the crates others depend on as libraries; a subcommand's
+library, kept for its own tests, is not one.
+
 A pin without a reason, or without a review date or a release condition, is
 an error, reported before any rule runs. A pin is released on its review date
 or after it, or once the index holds a release, not yanked, that meets its

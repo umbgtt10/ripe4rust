@@ -222,6 +222,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `docs/DESIGN.md`'s "Delivery" puts slice 1's table and JSON renderers in the cli, where "Architecture" has them.
 - `xtask` states its own `rust-version`, 1.88, which its let-chain needs, instead of inheriting the workspace's 1.85.
 - `CLAUDE.md`, the README and `docs/DESIGN.md`'s status say slice 1 is in place, and where its code lives.
+- ripe4rust's own `published` names `ripe4rust-core` alone: `cargo-ripe4rust` is installed as a subcommand, and its
+  library is there for its own tests, so its plan no longer asks `breaking:syn` under rule 8. `docs/DESIGN.md`'s
+  policy says so: `published` names the crates others depend on as libraries.
 
 ### Fixed
 - A compatible unit whose own move a pin holds (`hold = "all"`) no longer reads as a move to the version in use,
