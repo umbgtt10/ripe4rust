@@ -1,0 +1,15 @@
+[package]
+name = "app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+app-core = { path = "../app-core" }
+itertools.workspace = true
+smallvec = "1.6.0"
+
+[target.'cfg(unix)'.dependencies]
+memchr = "2.5"

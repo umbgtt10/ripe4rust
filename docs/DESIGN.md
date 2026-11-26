@@ -157,6 +157,18 @@ Where the sections above are silent, the adapters read the inputs this way:
   a wait for cargo's file lock, an `Unchanged` crate, a `note:` or a
   `warning:`. Anything else is `cargo-update-unrecognised`, quoting the line;
   a failure is `cargo-update-failed`.
+- **`cargo deny`** runs as `cargo deny --format json --locked --workspace
+  check --audit-compatible-output advisories`, with `--offline` in an offline
+  plan. The advisories in force are the advisory diagnostics of its log, on
+  stderr -- `vulnerability`, `unmaintained`, `unsound`, `notice`, one for each
+  crate and version it names -- which leaves out what `deny.toml` ignores;
+  the ranges each is clear in, `patched` and `unaffected`, come from the audit
+  report on stdout, which the log does not carry. An advisory the report does
+  not hold is cleared by no version. It exits 1 when it found advisories, so
+  0 and 1 are a check made; an error in its log, or any other end, is
+  `cargo-deny-failed` with that error on one line, and cargo answering `no such
+  command` is `cargo-deny-missing`. Yanked releases are read from the index,
+  not from cargo-deny's own yanked check.
 
 ## Which version a unit moves to
 

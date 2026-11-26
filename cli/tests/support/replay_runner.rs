@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use cargo_ripe4rust::seams::command_output::CommandOutput;
-use cargo_ripe4rust::seams::invocation::Invocation;
-use cargo_ripe4rust::seams::launch_failure::LaunchFailure;
-use cargo_ripe4rust::traits::command_runner::CommandRunner;
+use cargo_ripe4rust::system::model::command_output::CommandOutput;
+use cargo_ripe4rust::system::model::invocation::Invocation;
+use cargo_ripe4rust::system::model::launch_failure::LaunchFailure;
+use cargo_ripe4rust::system::traits::command_runner::CommandRunner;
 use std::cell::RefCell;
 
 /// A runner that replays recorded outputs, each for the command line it was

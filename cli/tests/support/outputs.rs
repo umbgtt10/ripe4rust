@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use cargo_ripe4rust::seams::command_output::CommandOutput;
+use cargo_ripe4rust::system::model::command_output::CommandOutput;
 
 pub fn failed(status: i32, stderr: &str) -> CommandOutput {
     CommandOutput {

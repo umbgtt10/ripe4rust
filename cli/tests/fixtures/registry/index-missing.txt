@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><Key>no/-s/no-such-crate-here</Key><RequestId>47YYDB52GSAGF3J2</RequestId><HostId>kvz3tBRLgbIv5EAbm3xWXg3AED96yOHT5l2QR+DICKEuX/u68RWLjnRRVZDyHsCcq48/nEKnsr0+wEPn89e1ZVmWALIG/g29</HostId></Error>
+404

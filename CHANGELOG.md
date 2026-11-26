@@ -73,21 +73,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   (`cargo_ripe4rust::render::json::documents`), serialized as declared -- where the nested objects were written
   with their keys sorted. serde_json's `preserve_order` stays off: it would bring a crate under a licence
   `deny.toml` refuses.
-- The seams every adapter reaches the system through, in the cli (`cargo_ripe4rust::traits`): `CommandRunner`, a
+- The seams every adapter reaches the system through, in the cli (`cargo_ripe4rust::system::traits`): `CommandRunner`, a
   program run to its end with what it printed, `FileSystem`, a file's text, a directory's entries and a file written
-  whole, and `Pause`, a wait between requests; their real implementations (`cargo_ripe4rust::system`) run a child
+  whole, and `Pause`, a wait between requests; their real implementations (`cargo_ripe4rust::system::real`) run a child
   process without colour, write a file beside its place and rename it, and sleep the thread. A program not
   installed is `LaunchFailure::Missing`, a file not there `FileFailure::Missing`.
-- `cargo metadata`, read (`cargo_ripe4rust::cargo::cargo_metadata`): the members, each with its crates.io
+- `cargo metadata`, read (`cargo_ripe4rust::adapters::cargo::cargo_metadata`): the members, each with its crates.io
   dependencies and the requirement that asked for each, and the lock's crates.io packages, from
   `cargo metadata --format-version 1 --locked`; the crates a `validate-beyond-gates` target reaches, from the same
   with `--filter-platform`. `--locked` leaves the lock file alone; `--offline` follows an offline plan. A failure is
   `cargo-metadata-failed` with cargo's error on one line, output that does not read `internal`.
-- `cargo update --dry-run`, read strictly (`cargo_ripe4rust::cargo::cargo_update`): a direct dependency's moves
+- `cargo update --dry-run`, read strictly (`cargo_ripe4rust::adapters::cargo::cargo_update`): a direct dependency's moves
   with `--recursive -p <crate>@<version>`, the workspace's without. Every line is a move -- updated, downgraded,
   added, removed, with no note or one of cargo's own -- or a status that moves nothing; any other line is
   `cargo-update-unrecognised`, quoting it, and a failure `cargo-update-failed`. Tested on cargo 1.99.1's own
   output, recorded from scratch workspaces.
+- The advisories, from cargo-deny (`cargo_ripe4rust::adapters::cargo::deny`): those in force from its JSON log,
+  without what `deny.toml` ignores, each with its `patched` and `unaffected` ranges from its audit-compatible
+  report. `cargo-deny-missing` where cargo has no `deny` command, `cargo-deny-failed` with the error of its log on
+  one line where it could not check. The cli's modules regrouped, at most five folders to a directory:
+  `adapters/` for the ports' implementations, `system/` for the seams -- `traits/`, `model/`, `real/`.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

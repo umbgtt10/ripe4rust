@@ -2,6 +2,4 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod disk_file_system_tests;
-pub mod system_command_runner_tests;
-pub mod thread_pause_tests;
+pub mod real;
