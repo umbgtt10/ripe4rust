@@ -461,8 +461,17 @@ the rest              compatible  --        --        ripe             2 moves n
 A breaking unit's `apply` names every manifest line that states the
 dependency's requirement, as `file:line`, the requirement to write there, and
 then the `cargo update -p <crate>` that takes it; its evidence carries the
-footprint's locations, the migration's work list. The toolchain unit's
-`apply` is the channel to write in `rust-toolchain.toml`.
+footprint's locations, the migration's work list. The requirement written is
+the target version itself, `3.0.9`, a caret requirement; a `rust-version` the
+target needs raised is written the same way, at its own line. The toolchain
+unit's `apply` is the channel to write in `rust-toolchain.toml`.
+
+A compatible unit with a move held out of it, and the rest, whose moves are
+taken one at a time so as not to take another unit's, apply one `cargo update
+-p <crate> --precise <version>` per move; a compatible unit splits only where
+it moves two crates or more. A crate the lock holds at several versions is
+named `<crate>@<version>`. `revert` restores `Cargo.lock`, the manifests a
+breaking unit edits too, and only `rust-toolchain.toml` for the toolchain.
 
 The rule that decided and the evidence it read are always included: a caller
 asking a person must be able to show why.
@@ -492,6 +501,19 @@ An urgent unit with no fix offers "replace the crate" and "accept it in
 `deny.toml`"; a pin to revisit offers "unpin" and "keep it, with a new review
 date". Every option's `then` is a step the agent can carry out without asking
 again.
+
+The answers, by the way a unit asks:
+
+| the unit | options | recommended |
+|---|---|---|
+| an advisory row | `replace`, `accept` | `replace` |
+| urgent, with no gates | `declare-gates`, `take-it` (`migrate-now` if breaking), `accept` | `declare-gates` |
+| urgent | `take-it` (`migrate-now` if breaking), `accept` -- an urgent unit is never held | `take-it` |
+| not urgent, with no gates | `declare-gates`, `take-it` (`migrate-now` if breaking), `wait` | `declare-gates` |
+| a pin due (rule 5), or a pinned unit overripe | `unpin`, `keep-pinned` | `unpin` |
+| breaking, overripe | `migrate-now`, `plan-it`, `wait` | `migrate-now` |
+| breaking, otherwise | `migrate-now`, `plan-it`, `wait` | its verdict |
+| anything else | `take-it`, `wait` | `take-it` |
 
 ## Commands
 

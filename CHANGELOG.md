@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- The steps and the questions (`ripe4rust_core::planning::writing`): every unit's `apply`, `check`, `gates`,
+  `revert` and `split` -- one recursive update, or one `--precise` update per move where a move is held out and for
+  the rest; a breaking unit's requirement lines and raised `rust-version`s, then its update; the toolchain's
+  channel; a crate the lock holds twice named at its version --, and the question of every unit that asks, its
+  options by the way it asks, each with what it means and the step that carries it out.
 - The rules (`ripe4rust_core::planning::judging`): all twelve, each a `Rule` (`ripe4rust_core::traits::rule`) of
   its own over a unit's facts, applied in order with the first match deciding; the verdict for a breaking unit that
   asks -- migrate now, plan it, wait --, also carried by rules 7 and 8; against drift, a hold of rule 4 or 9 asked

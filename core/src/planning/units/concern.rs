@@ -21,6 +21,18 @@ pub enum Concern {
 }
 
 impl Concern {
+    pub fn ignore_entry(&self) -> String {
+        match self {
+            Self::Advisory(advisory) => format!(
+                "{{ id = \"{}\", reason = \"<the person's words>\" }}",
+                advisory.id
+            ),
+            Self::Yanked { name, version } => {
+                format!("{{ crate = \"{name}@{version}\", reason = \"<the person's words>\" }}")
+            }
+        }
+    }
+
     pub fn is_cleared_by(&self, lock_move: &LockMove) -> bool {
         let Some(to) = &lock_move.to else {
             return false;
@@ -45,6 +57,13 @@ impl Concern {
         match self {
             Self::Advisory(advisory) => advisory.id.clone(),
             Self::Yanked { name, version } => format!("the yanked {name} {version}"),
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            Self::Advisory(advisory) => &advisory.name,
+            Self::Yanked { name, .. } => name,
         }
     }
 

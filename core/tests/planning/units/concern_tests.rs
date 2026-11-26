@@ -29,6 +29,30 @@ fn yanked() -> Concern {
 }
 
 #[test]
+fn ignore_entry_of_a_yanked_release_names_the_crate_at_its_version() {
+    // Arrange & Act
+    let entry = yanked().ignore_entry();
+
+    // Assert
+    assert_eq!(
+        entry,
+        "{ crate = \"spin@0.10.0\", reason = \"<the person's words>\" }"
+    );
+}
+
+#[test]
+fn ignore_entry_of_an_advisory_names_its_id() {
+    // Arrange & Act
+    let entry = advisory().ignore_entry();
+
+    // Assert
+    assert_eq!(
+        entry,
+        "{ id = \"RUSTSEC-2026-0592\", reason = \"<the person's words>\" }"
+    );
+}
+
+#[test]
 fn is_cleared_by_a_move_of_another_crate_is_false() {
     // Arrange & Act
     let cleared = advisory().is_cleared_by(&moved("idna", "2.5.8", "2.5.9"));
@@ -89,6 +113,15 @@ fn label_of_an_advisory_is_its_id() {
 
     // Assert
     assert_eq!(label, "RUSTSEC-2026-0592");
+}
+
+#[test]
+fn name_of_a_concern_is_its_crate() {
+    // Arrange & Act
+    let names = [advisory().name().to_string(), yanked().name().to_string()];
+
+    // Assert
+    assert_eq!(names, [String::from("url"), String::from("spin")]);
 }
 
 #[test]
