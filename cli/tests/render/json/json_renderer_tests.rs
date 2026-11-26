@@ -69,6 +69,7 @@ fn plan_prints_every_object_s_keys_in_the_design_s_order() {
     // Assert
     for ordered in [
         r#""workspace":{"fingerprint":"9f2c41d0e3b5a7c9","lock":["#,
+        r#""lines":[{"where":"Cargo.toml:22","key":"gadget","value":"0.13"},"#,
         r#"{"severity":"warning","code":"gates-undeclared","where":null,"what":"nogates","do":"declarethem","needs_person":true}"#,
         r#"{"id":"compatible:widget","kind":"compatible","crate":"widget","members":["widget"],"from":"4.6.6","to":"4.6.7","moves":[{"crate":"widget","from":"4.6.6","to":"4.6.7"}"#,
         r#""outcome":"ripe","urgent":false,"rule":10,"suggestion":null,"reasons":["compatible"],"summary":"#,
@@ -126,7 +127,14 @@ fn plan_prints_the_workspace_and_every_unit() {
     assert_eq!(document["registry_read"], json!("2026-10-30"));
     assert_eq!(
         document["workspace"],
-        json!({ "fingerprint": "9f2c41d0e3b5a7c9", "lock": ["gadget 0.13.1", "widget 4.6.6"] })
+        json!({
+            "fingerprint": "9f2c41d0e3b5a7c9",
+            "lock": ["gadget 0.13.1", "widget 4.6.6"],
+            "lines": [
+                { "where": "Cargo.toml:22", "key": "gadget", "value": "0.13" },
+                { "where": "rust-toolchain.toml:2", "key": "channel", "value": "1.99.1" }
+            ]
+        })
     );
     assert_eq!(document["gates"], json!(["just stage1", "just stage2"]));
     assert_eq!(document["diagnostics"], json!([]));

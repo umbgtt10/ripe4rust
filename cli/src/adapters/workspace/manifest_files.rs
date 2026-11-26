@@ -14,11 +14,13 @@ use crate::system::traits::layout_source::LayoutSource;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
+use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::traits::workspace_files::WorkspaceFiles;
 use ripe4rust_core::values::location::Location;
 use std::path::Path;
 use std::path::PathBuf;
 
+const CHANNEL: &str = "channel";
 const LOCK: &str = "Cargo.lock";
 const MANIFEST: &str = "Cargo.toml";
 const TOOLCHAIN: &str = "rust-toolchain.toml";
@@ -117,5 +119,31 @@ impl WorkspaceFiles for ManifestFiles<'_> {
         self.read(&layout, &layout.root.join(TOOLCHAIN))?
             .map(|text| ToolchainReader.file(&text))
             .transpose()
+    }
+
+    fn written(&self) -> Result<Vec<WrittenLine>, PortFailure> {
+        let layout = self.source.layout()?;
+        let root = self.required(&layout, &layout.root.join(MANIFEST))?;
+        let mut lines = Vec::new();
+        for manifest in Self::manifests(&layout) {
+            let text = self.required(&layout, &manifest)?;
+            lines.extend(RequirementFinder.written(&Self::named(&layout, &manifest), &text)?);
+        }
+        for (_, manifest) in &layout.members {
+            let text = self.required(&layout, manifest)?;
+            lines.extend(RustVersionFinder.written(
+                &Self::named(&layout, manifest),
+                &text,
+                &root,
+            )?);
+        }
+        lines.extend(self.toolchain()?.map(|file| WrittenLine {
+            at: file.at,
+            key: String::from(CHANNEL),
+            value: file.channel,
+        }));
+        lines.sort_by(|left, right| left.at.cmp(&right.at));
+        lines.dedup();
+        Ok(lines)
     }
 }

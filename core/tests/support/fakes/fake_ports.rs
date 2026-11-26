@@ -71,6 +71,7 @@ impl FakePorts {
                 }),
                 requirement_lines: surveyed.requirement_lines.clone(),
                 rust_version_lines: surveyed.rust_version_lines.clone(),
+                written: surveyed.written.clone(),
                 failure: None,
             },
             advisories: FakeAdvisories {

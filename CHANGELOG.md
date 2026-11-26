@@ -120,6 +120,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   own tests now run a command line that needs no network.
 - `.gitattributes`: the recorded fixtures kept byte for byte on every system, so a Windows checkout reads what
   Linux recorded.
+- The plan records every line a unit's `apply` can edit, with what it says (`workspace.lines`): each crates.io
+  requirement in every manifest, each member's `rust-version` -- its own or the one it inherits -- and
+  `rust-toolchain.toml`'s `channel`, read by the workspace's files adapter beside the requirement lines it already
+  found. The fingerprint tells `check` that the workspace changed; the lines tell it where, so a requirement edited
+  by hand is not taken for one a unit wrote.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

@@ -23,9 +23,18 @@ struct FailureDocument<'a> {
 }
 
 #[derive(Serialize)]
+struct WrittenLineDocument<'a> {
+    #[serde(rename = "where")]
+    pub at: String,
+    pub key: &'a str,
+    pub value: &'a str,
+}
+
+#[derive(Serialize)]
 struct WorkspaceDocument<'a> {
     pub fingerprint: &'a str,
     pub lock: &'a [String],
+    pub lines: Vec<WrittenLineDocument<'a>>,
 }
 
 #[derive(Serialize)]
@@ -87,6 +96,16 @@ impl PlanRenderer for JsonRenderer {
             workspace: WorkspaceDocument {
                 fingerprint: &plan.workspace.fingerprint,
                 lock: &plan.workspace.lock,
+                lines: plan
+                    .workspace
+                    .lines
+                    .iter()
+                    .map(|line| WrittenLineDocument {
+                        at: line.at.to_string(),
+                        key: &line.key,
+                        value: &line.value,
+                    })
+                    .collect(),
             },
             gates: &plan.gates,
             diagnostics: Self::diagnostics(&plan.diagnostics),

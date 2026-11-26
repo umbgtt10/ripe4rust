@@ -167,6 +167,7 @@ impl<'a> Survey<'a> {
             reached: self.reached(&policy).map_err(stop)?,
             requirement_lines: self.requirement_lines(&direct).map_err(stop)?,
             rust_version_lines: self.rust_version_lines(&workspace).map_err(stop)?,
+            written: self.ports.files.written().map_err(stop)?,
             diagnostics: Vec::new(),
             pinned: toolchain.pinned,
             channel_at: toolchain.channel_at,

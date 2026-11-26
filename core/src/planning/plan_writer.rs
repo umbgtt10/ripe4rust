@@ -96,6 +96,7 @@ impl<'a> PlanWriter<'a> {
             workspace: WorkspaceState {
                 fingerprint: surveyed.fingerprint.clone(),
                 lock,
+                lines: surveyed.written.clone(),
             },
             gates: surveyed.policy.gates.clone(),
             diagnostics: surveyed.diagnostics.clone(),

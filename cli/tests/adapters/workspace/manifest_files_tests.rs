@@ -12,6 +12,7 @@ use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::policy_value::PolicyValue;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
+use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::traits::workspace_files::WorkspaceFiles;
 use ripe4rust_core::values::location::Location;
 use std::path::PathBuf;
@@ -264,5 +265,53 @@ fn toolchain_of_the_recorded_workspace_is_its_channel() {
             channel: String::from("1.99.1"),
             at: at("rust-toolchain.toml", 2),
         }))
+    );
+}
+
+#[test]
+fn written_of_a_workspace_without_a_toolchain_file_names_no_channel() {
+    // Arrange
+    let runner = layout();
+    let files = files();
+    files
+        .files
+        .borrow_mut()
+        .remove("/work/ws/rust-toolchain.toml");
+
+    // Act
+    let lines = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).written();
+
+    // Assert
+    assert_eq!(
+        lines.map(|lines| lines.iter().any(|line| line.key == "channel")),
+        Ok(false)
+    );
+}
+
+#[test]
+fn written_of_the_recorded_workspace_is_every_line_a_unit_can_edit() {
+    // Arrange
+    let (runner, files) = (layout(), files());
+    let written = |file: &str, line: u32, key: &str, value: &str| WrittenLine {
+        at: at(file, line),
+        key: String::from(key),
+        value: String::from(value),
+    };
+
+    // Act
+    let lines = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).written();
+
+    // Assert
+    assert_eq!(
+        lines,
+        Ok(vec![
+            written("Cargo.toml", 8, "rust-version", "1.85"),
+            written("Cargo.toml", 12, "itertools", "0.10"),
+            written("app-core/Cargo.toml", 5, "rust-version", "1.85"),
+            written("app-core/Cargo.toml", 9, "itoa", "0.4"),
+            written("app/Cargo.toml", 12, "smallvec", "1.6.0"),
+            written("app/Cargo.toml", 15, "memchr", "2.5"),
+            written("rust-toolchain.toml", 2, "channel", "1.99.1"),
+        ])
     );
 }

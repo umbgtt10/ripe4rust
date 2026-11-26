@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use ripe4rust_core::inputs::lock_move::LockMove;
+use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::outcome::Outcome;
 use ripe4rust_core::planning::choice::line_stats::LineStats;
 use ripe4rust_core::planning::judging::decision::Decision;
@@ -182,6 +183,10 @@ pub fn plan(units: Vec<PlannedUnit>) -> Plan {
         workspace: WorkspaceState {
             fingerprint: String::from("9f2c41d0e3b5a7c9"),
             lock: vec![String::from("gadget 0.13.1"), String::from("widget 4.6.6")],
+            lines: vec![
+                written(at("Cargo.toml", 22), "gadget", "0.13"),
+                written(at("rust-toolchain.toml", 2), "channel", "1.99.1"),
+            ],
         },
         gates: gates(),
         diagnostics: Vec::new(),
@@ -235,4 +240,12 @@ pub fn toolchain() -> PlannedUnit {
 
 pub fn version(text: &str) -> Version {
     Version::parse(text).expect("a version")
+}
+
+pub fn written(at: Location, key: &str, value: &str) -> WrittenLine {
+    WrittenLine {
+        at,
+        key: String::from(key),
+        value: String::from(value),
+    }
 }

@@ -17,3 +17,4 @@ pub mod scan;
 pub mod toolchain_file;
 pub mod unparsed_file;
 pub mod workspace;
+pub mod written_line;

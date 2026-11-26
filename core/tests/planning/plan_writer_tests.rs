@@ -133,3 +133,15 @@ fn plan_puts_an_advisory_on_the_unit_that_clears_it_and_rows_the_rest() {
         )
     );
 }
+
+#[test]
+fn plan_records_every_line_a_unit_can_edit_as_it_was_written() {
+    // Arrange
+    let surveyed = surveyed();
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    assert_eq!(plan.workspace.lines, surveyed.written);
+}

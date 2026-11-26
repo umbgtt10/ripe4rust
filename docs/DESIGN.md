@@ -198,7 +198,10 @@ Where the sections above are silent, the adapters read the inputs this way:
   every kind of dependency table, every target's, and `[workspace.dependencies]`:
   the line of `crate = "..."` or of a table's `version`, a renamed crate found
   by its `package`; one with no version of its own -- a path, a git source,
-  `workspace = true` -- states none. A member's `rust-version` line is its own,
+  `workspace = true` -- states none. The lines a plan records are these for
+  every crate a manifest names, each with the requirement written there, the
+  members' `rust-version` lines with theirs, and the channel's, in `file:line`
+  order. A member's `rust-version` line is its own,
   or `[workspace.package]`'s where it inherits it. `rust-toolchain.toml` gives
   its channel and that line, an empty channel where it names none.
 - **The fingerprint** is FNV-1a, 64 bits, written by hand rather than taken from
@@ -541,7 +544,11 @@ the rest              compatible  --        --        ripe             2 moves n
   "registry_read": "2026-10-30",
   "workspace": {
     "fingerprint": "9f2c41d0...",
-    "lock": ["anyhow 1.0.102", "clap 4.6.6", "..."]
+    "lock": ["anyhow 1.0.102", "clap 4.6.6", "..."],
+    "lines": [
+      { "where": "Cargo.toml:12", "key": "clap", "value": "4.6" },
+      { "where": "rust-toolchain.toml:2", "key": "channel", "value": "1.99.1" }
+    ]
   },
   "gates": ["just stage1", "just stage2"],
   "diagnostics": [],
@@ -588,8 +595,13 @@ for the toolchain -- and its `reasons`, the table's last column; an `apply`
 step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
-release and the moves a pin holds out of the unit. Every object's keys come
-in the order shown, at every depth: a unit's `members` after `crate` and its
+release and the moves a pin holds out of the unit. The workspace's `lines` are
+every line a unit's `apply` can edit, as the plan found it written: each
+crates.io dependency's requirement in every manifest, `key` the crate; each
+member's `rust-version`, its own or the one it inherits; and
+`rust-toolchain.toml`'s `channel` -- what `check` compares the manifests and
+the toolchain file with. Every object's keys come in the order shown, at
+every depth: a unit's `members` after `crate` and its
 `reasons` after `suggestion`; the evidence's `footprint`, `held_back` and
 `held` after `yanked_in_use`; the line in use as `line`, `first_release`,
 `last_release`, `releases`. A document for a failure carries `schema`,
@@ -681,8 +693,11 @@ the system through.
 
 `check` is what makes a step's result visible to the agent
 (ADR-ACheckAfterEveryUnit). The plan holds the workspace it was made from: a
-fingerprint of `Cargo.lock`, every manifest and `rust-toolchain.toml`, and the
-lock's packages. Against them, `check` sorts every difference in the
+fingerprint of `Cargo.lock`, every manifest and `rust-toolchain.toml`, the
+lock's packages, and every line a unit's `apply` can edit with what it said.
+The fingerprint alone tells that something changed, not what; the lines are
+what lets `check` tell a requirement a unit wrote from one edited by hand.
+Against them, `check` sorts every difference in the
 workspace into the units it belongs to:
 
 - every difference belongs to units of the plan, and the one named shows

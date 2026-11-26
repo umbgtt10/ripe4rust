@@ -11,6 +11,43 @@
       "itoa 0.4.7",
       "memchr 2.5.0",
       "smallvec 1.6.0"
+    ],
+    "lines": [
+      {
+        "where": "Cargo.toml:8",
+        "key": "rust-version",
+        "value": "1.85"
+      },
+      {
+        "where": "Cargo.toml:12",
+        "key": "itertools",
+        "value": "0.10"
+      },
+      {
+        "where": "app-core/Cargo.toml:5",
+        "key": "rust-version",
+        "value": "1.85"
+      },
+      {
+        "where": "app-core/Cargo.toml:9",
+        "key": "itoa",
+        "value": "0.4"
+      },
+      {
+        "where": "app/Cargo.toml:12",
+        "key": "smallvec",
+        "value": "1.6.0"
+      },
+      {
+        "where": "app/Cargo.toml:15",
+        "key": "memchr",
+        "value": "2.5"
+      },
+      {
+        "where": "rust-toolchain.toml:2",
+        "key": "channel",
+        "value": "1.99.1"
+      }
     ]
   },
   "gates": [
