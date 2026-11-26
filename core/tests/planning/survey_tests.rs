@@ -309,6 +309,24 @@ fn toolchain_of_a_channel_pinning_no_release_is_rustc_s_with_a_notice() {
 }
 
 #[test]
+fn toolchain_of_a_channel_pinning_no_release_reads_no_releases() {
+    // Arrange
+    let mut fakes = FakePorts::new();
+    fakes.files.toolchain = None;
+    fakes.toolchain.releases = Err(PortFailure::ToolchainUnreachable {
+        detail: String::from("Could not resolve host: static.rust-lang.org"),
+    });
+
+    // Act
+    let toolchain = Survey::new(fakes.ports())
+        .toolchain(&surveyed().policy)
+        .map(|toolchain| toolchain.value.releases);
+
+    // Assert
+    assert_eq!(toolchain, Ok(Vec::new()));
+}
+
+#[test]
 fn toolchain_of_a_pinned_channel_is_its_release() {
     // Arrange
     let fakes = FakePorts::new();
@@ -326,30 +344,21 @@ fn toolchain_of_a_pinned_channel_is_its_release() {
 }
 
 #[test]
-fn toolchain_of_releases_not_yet_read_is_none_with_a_notice() {
+fn toolchain_of_releases_that_cannot_be_read_is_their_failure() {
     // Arrange
     let mut fakes = FakePorts::new();
-    fakes.toolchain.releases = None;
+    let failure = PortFailure::ToolchainUnreachable {
+        detail: String::from("Could not resolve host: static.rust-lang.org"),
+    };
+    fakes.toolchain.releases = Err(failure.clone());
 
     // Act
     let toolchain = Survey::new(fakes.ports())
         .toolchain(&surveyed().policy)
-        .expect("a toolchain");
+        .map(|toolchain| toolchain.value);
 
     // Assert
-    assert_eq!(toolchain.value.pinned, Some(version("1.99.1")));
-    assert_eq!(toolchain.value.releases, Vec::new());
-    assert_eq!(
-        toolchain
-            .diagnostics
-            .iter()
-            .map(|diagnostic| (diagnostic.code, diagnostic.at.clone()))
-            .collect::<Vec<_>>(),
-        vec![(
-            DiagnosticCode::ToolchainReleasesUnknown,
-            Some(at("rust-toolchain.toml", 9))
-        )]
-    );
+    assert_eq!(toolchain, Err(failure));
 }
 
 #[test]

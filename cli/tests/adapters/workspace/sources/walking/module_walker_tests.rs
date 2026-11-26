@@ -47,6 +47,7 @@ fn children_of_a_file_are_its_modules_where_they_may_be() {
         owns_directory: false,
         public: true,
         declared_at: None,
+        name: Some(String::from("a")),
     };
     let parsed = walker.read(&source).expect("a parsed file");
 
@@ -64,6 +65,7 @@ fn children_of_a_file_are_its_modules_where_they_may_be() {
             owns_directory: false,
             public: true,
             declared_at: Some(at("app/src/a.rs", 1)),
+            name: Some(String::from("b")),
         }]
     );
 }
@@ -80,15 +82,31 @@ fn read_of_a_module_is_the_first_of_its_files_there() {
         owns_directory: false,
         public: false,
         declared_at: Some(at("app/src/lib.rs", 3)),
+        name: Some(String::from("b")),
     };
 
     // Act
     let read = ModuleWalker::new(&files, Path::new("/work/ws"))
         .read(&source)
-        .map(|parsed| (parsed.name, parsed.public, parsed.syntax.items.len()));
+        .map(|parsed| {
+            (
+                parsed.name,
+                parsed.module,
+                parsed.public,
+                parsed.syntax.items.len(),
+            )
+        });
 
     // Assert
-    assert_eq!(read, Ok((String::from("app/src/b/mod.rs"), false, 1)));
+    assert_eq!(
+        read,
+        Ok((
+            String::from("app/src/b/mod.rs"),
+            Some(String::from("b")),
+            false,
+            1
+        ))
+    );
 }
 
 #[test]
@@ -133,6 +151,36 @@ fn walk_of_a_file_that_does_not_parse_is_unparsed_at_the_line_it_stopped_at() {
                 "expected an expression"
             )]
         )
+    );
+}
+
+#[test]
+fn walk_of_a_library_names_each_file_s_module_as_its_mod_item_does() {
+    // Arrange
+    let files = MemoryFiles::new()
+        .with(
+            "/work/ws/app-core/src/lib.rs",
+            "mod a;\nmod b {\n    pub mod c;\n}\n#[path = \"shared.rs\"]\nmod d;\n",
+        )
+        .with("/work/ws/app-core/src/a.rs", "")
+        .with("/work/ws/app-core/src/b/c.rs", "")
+        .with("/work/ws/app-core/src/shared.rs", "");
+
+    // Act
+    let walk = walked(&files, "/work/ws/app-core/src/lib.rs");
+
+    // Assert
+    assert_eq!(
+        walk.parsed
+            .iter()
+            .map(|file| (file.name.as_str(), file.module.as_deref()))
+            .collect::<Vec<_>>(),
+        vec![
+            ("app-core/src/a.rs", Some("a")),
+            ("app-core/src/b/c.rs", Some("c")),
+            ("app-core/src/lib.rs", None),
+            ("app-core/src/shared.rs", Some("d")),
+        ]
     );
 }
 

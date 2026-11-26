@@ -1,9 +1,10 @@
 # ripe4rust -- design
 
-Status: settled 2026-11-26; the agent's contract added the same day. Slices
-0 to 4 of "Delivery" are implemented: the scaffolding, the core with the
+Status: settled 2026-11-26; the agent's contract added the same day. Every
+slice of "Delivery" is implemented: the scaffolding, the core with the
 renderers, the adapters with `plan` end to end, the round's commands, `check`,
-`hold` and `guide`, and the parse of the sources. The decisions that were not
+`hold` and `guide`, the parse of the sources, and the toolchain unit. Next is
+the first dry round across real workspaces. The decisions that were not
 obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
@@ -112,7 +113,7 @@ the workspace's owner has. Everything else it carries out on its own.
 | the dependency graph, which targets reach a crate | `cargo metadata` |
 | advisories against the versions in use | `cargo deny check advisories --format json` |
 | the toolchain in use | `rust-toolchain.toml`'s channel; `rustc --version` where it pins none |
-| the toolchain's releases and their dates | the Rust distribution's stable channel manifests |
+| the toolchain's releases and their dates | the Rust distribution's list of the channel manifests it published, `manifests.txt` |
 | footprint and public exposure | the workspace's sources, parsed with `syn` |
 | pins, policy and the gates | `[workspace.metadata.ripe4rust]` in `Cargo.toml` |
 | today's date | injected, so a plan is reproducible |
@@ -124,7 +125,8 @@ and nothing personal. Every answer is cached for the day it was read, under
 `~/.cache/ripe4rust/<date>/`; a plan names that date, and with the same cache
 and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). The
 requests go through a `curl` process, not an HTTP crate
-(ADR-TheRegistryThroughCurl).
+(ADR-TheRegistryThroughCurl). The toolchain's releases are read the same way,
+one request a day, and kept in the same cache.
 
 cargo-deny is required. Without it, or when it fails, no plan is produced: a
 plan blind to advisories would call ripe what it should call urgent.
@@ -220,8 +222,33 @@ Where the sections above are silent, the adapters read the inputs this way:
   rules, and as the day of the cache read and written.
 - **The toolchain** is `rustc --version` and `rustc --print target-list`, run
   in the workspace's directory so `rust-toolchain.toml` chooses the compiler;
-  a failure is `toolchain-unreachable`. Its releases are slice 5's: until then
-  it answers that it knows none.
+  a failure is `toolchain-unreachable`.
+- **The toolchain's releases** are read only where the channel pins a stable
+  release, from `https://static.rust-lang.org/manifests.txt`, through the same
+  `curl` and day cache as the registry's answers, as
+  `<date>/toolchain/manifests.txt`. The file lists every channel manifest the
+  distribution published, one a line under the day it went out,
+  `static.rust-lang.org/dist/<date>/channel-rust-<name>.toml`: a `<name>` that
+  is a full stable version is a release of that day, and every other line -- a
+  nightly, a beta or another pre-release, a line's alias such as `1.100`,
+  `stable` itself -- is passed over. A release listed on several days is dated
+  by the last: 1.49.0 is listed in October 2020 as well as on its day,
+  2020-12-31, so an earlier listing is a promotion ahead of the release. About
+  330 KB, it is the lightest answer that holds every release with its day: the
+  stable channel's manifest names one release in about 900 KB; a ranged
+  request for its head, which the server honours, gives its date but not the
+  release, deep in the file; and a manifest per release is a request per
+  release, found by trying names. Only a 200 is an answer -- a 404 is no empty
+  one, as it is for the registry -- and the list is kept only once it reads,
+  so a captive portal's page is never cached; one naming no stable release, or
+  a stable line whose day is no date, is `internal`. Any other status, curl
+  failing, or `--offline` with nothing cached, is `toolchain-unreachable`,
+  which stops the plan as `registry-unreachable` does: the table makes it an
+  error, and a plan blind to the toolchain's releases would offer no toolchain
+  unit, and name no version held back for one, without a word. The cache being
+  the registry's, an offline plan reads the list of the day it reads the
+  registry's answers on, a cache that cannot be read or written is
+  `registry-cache-unusable`, and curl not on the PATH `curl-missing`.
 - **The sources** are parsed with `syn` 2 (MIT OR Apache-2.0, with `full` and
   `visit`), `proc-macro2`'s span locations giving every name its line: each
   member's targets as the same `cargo metadata --no-deps` lists them --
@@ -260,11 +287,6 @@ A version within the toolchain but needing more than the workspace's declared
 published crate that is rule 8's question. It raises the `rust-version` of
 every member that uses the crate and declares a lower one; a member that
 declares none promises nothing, and is not raised.
-
-Until the channel manifests are read (slice 5 of "Delivery"), the toolchain
-answers that it knows no releases: no toolchain unit is offered, no version is
-named as held back for it, and the plan carries the notice
-`toolchain-releases-unknown` at the channel's line.
 
 The toolchain's youth is judged by `toolchain-young-days` alone: a minor
 rarely has three releases. Its evidence names, for each direct dependency, the
@@ -386,7 +408,8 @@ One `syn` parse of the workspace's sources answers both
 - **Exposure** -- whether the crate's items reach a published crate's public
   API: public signatures, public fields, `pub use` re-exports, and the crate's
   traits derived or implemented on public types, counted where the item is
-  reachable from the crate's `lib.rs` through `pub mod` declarations.
+  reachable from the crate's `lib.rs` through `pub mod` declarations or `pub
+  use` re-exports.
 
 A parse can be wrong about exposure (a type alias, a macro that expands to a
 public item). The policy can override it, crate by crate: `public` exposes the
@@ -439,9 +462,10 @@ Where the lines above leave it open, the parse reads a file this way:
   by its name alone reads as a variable's, so one a glob alone brings in is not
   seen.
 - **What exposes a crate.** A library's -- a `lib`, `rlib` or `dylib` target's
-  -- `pub` items, `pub(crate)` and narrower aside, in a module reachable from
-  its root through `pub mod` declarations, inline modules included, show their
-  users: a function's signature, a struct's or a union's `pub` fields, every
+  -- `pub` items, `pub(crate)` and narrower aside, reachable from its root --
+  in a module `pub mod` declarations reach, inline modules included, or
+  through `pub use` re-exports, the facade `mod inner; pub use inner::Thing;`
+  -- show their users: a function's signature, a struct's or a union's `pub` fields, every
   variant of an enum, a trait's bounds and its items' signatures, types and
   bounds, a type alias, a constant's or a static's type, their derives, a `pub
   use` and a `pub extern crate`; never a body or a private field. An
@@ -451,11 +475,19 @@ Where the lines above leave it open, the parse reads a file this way:
   type's own `pub` methods and constants. The library's types and traits are
   told by name, public where any definition of that name is. A proc-macro or C
   library exposes nothing.
+- **What a re-export reaches.** A `pub use` reachable from the root reaches
+  what it names wherever the library defines it, told by name as the
+  library's types are: `inner::Thing` and `inner::Thing as Other` every item
+  named `Thing`, and a `use` binding that name, so a re-export re-exported is
+  followed to the item; `inner::*`, or a module a `pub use` names, every item
+  of each module of that name -- a file's module named as its `mod` item names
+  it, `#[path]` or not --, and of the `pub mod`s in it. What is reached is
+  followed in turn, until nothing more is. A `use` short of `pub` re-exports
+  nothing.
 - **What it cannot see.** What a macro expands to -- generated items, a
-  derive's expansion, `include!` --, as the ADR accepts; an item of a private
-  module re-exported by `pub use`, which `pub mod` declarations do not reach;
-  and a dependency whose library is named otherwise than its package, which
-  the manifest does not say. The policy's `exposure` is the remedy for
+  derive's expansion, `include!` --, as the ADR accepts; and a dependency whose
+  library is named otherwise than its package, which the manifest does not
+  say. The policy's `exposure` is the remedy for
   exposure; the footprint is a floor.
 
 ## Groups
@@ -507,6 +539,9 @@ probe-rs = { reason = "the rig's CLI is 0.31; the library moves with it", until 
 tokio = { reason = "the runtime the service ships on; a release is load-tested first", until = "the load test passes on the new release", review = "2027-02-28" }
 memchr = { reason = "2.7.6 broke stage 2: <the gate's failure>", review = "2026-12-10", hold = "all" }
 ```
+
+`published` names the crates others depend on as libraries; a subcommand's
+library, kept for its own tests, is not one.
 
 A pin without a reason, or without a review date or a release condition, is
 an error, reported before any rule runs. A pin is released on its review date
@@ -599,10 +634,9 @@ The problems the design already names, at least:
 | `lock-outdated` | error | `Cargo.lock` is not there, or no longer matches the manifests, and `cargo metadata --locked` will not write it |
 | `workspace-unreadable` | error | a file of the workspace ripe4rust reads could not be read |
 | `toolchain-unreachable` | error | the toolchain's releases, targets or version could not be read, nothing cached for the day |
-| `curl-missing` | error | curl is not on the PATH, and the registry is read through it |
+| `curl-missing` | error | curl is not on the PATH, and the registry and the toolchain's releases are read through it |
 | `registry-cache-unusable` | error | the day cache cannot be read or written, or there is no directory for it |
 | `source-unscanned` | warning | not one source file of the workspace could be parsed, so the scan failed as a whole: no footprint or exposure is known |
-| `toolchain-releases-unknown` | notice | the toolchain's releases are not read yet: no toolchain unit is offered |
 | `usage-invalid` | error | a command or an option ripe4rust does not know, or an option's value of the wrong kind |
 | `plan-unreadable` | error | the plan file `--plan` names is not there, or is no plan `plan` wrote |
 | `plan-schema-unknown` | error | the plan file is of a `schema` this release does not read |
@@ -1027,8 +1061,9 @@ CLI.
   diagnostic is tested against fakes, the date included.
 - **cli** -- the real implementations: the sparse index and the API with their
   day cache, `cargo update --dry-run`, `cargo metadata`, `cargo deny`, the
-  channel manifests, the `syn` parse, the workspace's files and their
-  fingerprint, the system clock, and the table and JSON renderers.
+  distribution's list of channel manifests, the `syn` parse, the workspace's
+  files and their fingerprint, the system clock, and the table and JSON
+  renderers.
 
 ## Delivery
 
@@ -1047,8 +1082,9 @@ In slices, each releasable and each held to the family's stages 1 and 2:
 5. **The toolchain unit.** The channel manifests, `rust-toolchain.toml`, the
    held-back versions as evidence.
 
-Then a first dry round across real workspaces: plans only, nothing applied,
-to tune the thresholds and the grouping before any caller acts on a plan.
+Every slice is in place. Next is a first dry round across real workspaces:
+plans only, nothing applied, to tune the thresholds and the grouping before
+any caller acts on a plan.
 
 ## Open points
 

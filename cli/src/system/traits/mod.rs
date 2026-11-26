@@ -8,3 +8,4 @@ pub mod file_system;
 pub mod http;
 pub mod layout_source;
 pub mod pause;
+pub mod release_source;

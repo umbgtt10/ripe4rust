@@ -53,16 +53,7 @@
   "gates": [
     "cargo test"
   ],
-  "diagnostics": [
-    {
-      "severity": "notice",
-      "code": "toolchain-releases-unknown",
-      "where": "rust-toolchain.toml:2",
-      "what": "the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named",
-      "do": "nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand",
-      "needs_person": false
-    }
-  ],
+  "diagnostics": [],
   "units": [
     {
       "id": "compatible:itertools",
@@ -443,6 +434,76 @@
           "releases": 32
         },
         "rust_version": "1.61",
+        "advisories": [],
+        "yanked_in_use": false,
+        "footprint": [],
+        "held_back": [],
+        "held": []
+      }
+    },
+    {
+      "id": "toolchain:rust",
+      "kind": "toolchain",
+      "crate": "rust",
+      "members": [
+        "rust"
+      ],
+      "from": "1.99.1",
+      "to": "1.100.0",
+      "moves": [],
+      "outcome": "ask",
+      "urgent": false,
+      "rule": 7,
+      "suggestion": "apply-then-validate",
+      "reasons": [
+        "reaches thumbv7em-none-eabihf"
+      ],
+      "summary": "Move the toolchain to 1.100.0",
+      "steps": {
+        "apply": [
+          {
+            "edit": "rust-toolchain.toml:2",
+            "key": "channel",
+            "value": "1.100.0"
+          }
+        ],
+        "check": "cargo ripe4rust check toolchain:rust --plan plan.json",
+        "gates": [
+          "cargo test"
+        ],
+        "revert": {
+          "restore": [
+            "rust-toolchain.toml"
+          ],
+          "run": "git restore -- rust-toolchain.toml"
+        },
+        "split": []
+      },
+      "question": {
+        "title": "Move the toolchain to 1.100.0?",
+        "why": "it reaches thumbv7em-none-eabihf, which the gates cannot validate",
+        "recommendation": "take-it",
+        "options": [
+          {
+            "answer": "take-it",
+            "means": "apply it now and validate on thumbv7em-none-eabihf",
+            "then": "apply it as a ripe unit"
+          },
+          {
+            "answer": "wait",
+            "means": "not now",
+            "then": "cargo ripe4rust hold toolchain:rust --plan plan.json --because \"<the person's words>\""
+          }
+        ]
+      },
+      "evidence": {
+        "line_in_use": {
+          "line": "1.99.x",
+          "first_release": "2026-10-01",
+          "last_release": "2026-10-15",
+          "releases": 2
+        },
+        "rust_version": null,
         "advisories": [],
         "yanked_in_use": false,
         "footprint": [],

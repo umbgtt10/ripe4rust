@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><Key>manifests-gone.txt</Key><RequestId>KV5EST3ZVAQKN6NT</RequestId><HostId>A8FcHKxoZAbKbeSQlXz/ZaekkApzWnYmK1ljZidFds1CKTscC+5tehtie0r5PIr3y17uf0+ab7UbiTLetAO+aS3nJmAAb9Ci</HostId></Error>
+404

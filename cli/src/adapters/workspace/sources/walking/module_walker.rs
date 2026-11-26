@@ -47,6 +47,7 @@ impl<'a> ModuleWalker<'a> {
                     file: parsed.name.clone(),
                     line: declared.line,
                 }),
+                name: Some(declared.name),
             })
             .collect()
     }
@@ -72,6 +73,7 @@ impl<'a> ModuleWalker<'a> {
                         name,
                         syntax,
                         public: source.public,
+                        module: source.name.clone(),
                     });
                 }
                 Err(FileFailure::Failed { detail }) => return Err(unparsed(1, detail)),
@@ -87,6 +89,7 @@ impl<'a> ModuleWalker<'a> {
             owns_directory: true,
             public: true,
             declared_at: None,
+            name: None,
         }];
         let mut walk = Walk {
             parsed: Vec::new(),

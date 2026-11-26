@@ -6,6 +6,7 @@ use crate::support::counting_pause::CountingPause;
 use crate::support::memory_files::MemoryFiles;
 use crate::support::outputs::failed;
 use crate::support::recorded::recorded;
+use crate::support::registry::curl;
 use crate::support::replay_runner::ReplayRunner;
 use crate::support::workspace::files;
 use crate::support::workspace::layout;
@@ -116,7 +117,7 @@ fn run_of_a_library_that_does_not_parse_warns_where_and_asks_its_exposure() {
         .and_then(|units| units.iter().find(|unit| unit["id"] == "breaking:itoa"))
         .expect("the breaking unit");
     assert_eq!(
-        (ran.code, &document["diagnostics"][1]),
+        (ran.code, &document["diagnostics"][0]),
         (
             0,
             &json!({
@@ -159,6 +160,40 @@ fn run_of_a_policy_in_error_reads_nothing_beyond_it() {
     assert_eq!(
         runner.commands(),
         vec![String::from("cargo metadata --format-version 1 --no-deps")]
+    );
+}
+
+#[test]
+fn run_of_a_workspace_on_an_older_toolchain_names_what_the_newest_releases() {
+    // Arrange
+    let runner = recorded(false);
+    let files = files().with(
+        "/work/ws/rust-toolchain.toml",
+        "[toolchain]\nchannel = \"1.62.1\"\n",
+    );
+    let (pause, clock) = (CountingPause::new(), clock());
+
+    // Act
+    let ran =
+        Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&plan_json("2026-11-26", false));
+
+    // Assert
+    let document = parsed(&ran.output);
+    let toolchain = document["units"]
+        .as_array()
+        .and_then(|units| units.iter().find(|unit| unit["id"] == "toolchain:rust"))
+        .expect("the toolchain unit");
+    assert_eq!(
+        (
+            &toolchain["from"],
+            &toolchain["to"],
+            &toolchain["evidence"]["held_back"]
+        ),
+        (
+            &json!("1.62.1"),
+            &json!("1.100.0"),
+            &json!(["itertools 0.15.0", "itoa 1.0.19"])
+        )
     );
 }
 
@@ -209,7 +244,7 @@ fn run_of_check_in_a_table_says_how_the_unit_stands() {
     assert_eq!(ran.code, 0);
     assert_eq!(
         ran.output,
-        "check compatible:itoa: as planned\napplied: compatible:itoa\nto go: compatible:itertools, breaking:itertools, breaking:itoa, compatible:memchr, compatible:smallvec\n"
+        "check compatible:itoa: as planned\napplied: compatible:itoa\nto go: compatible:itertools, breaking:itertools, breaking:itoa, compatible:memchr, toolchain:rust, compatible:smallvec\n"
     );
 }
 
@@ -259,6 +294,7 @@ fn run_of_check_on_a_unit_applied_as_planned_exits_zero_listing_what_is_applied(
             "breaking:itertools",
             "breaking:itoa",
             "compatible:memchr",
+            "toolchain:rust",
             "compatible:smallvec"
         ])
     );
@@ -544,6 +580,34 @@ fn run_offline_on_a_later_day_warns_the_cache_is_old() {
         "{}",
         ran.output
     );
+}
+
+#[test]
+fn run_with_the_rust_distribution_out_of_reach_prints_no_plan_and_exits_two() {
+    // Arrange
+    let runner = recorded(false).reply(
+        &curl("https://static.rust-lang.org/manifests.txt"),
+        failed(
+            6,
+            include_str!("../fixtures/toolchain/manifests-unreachable.txt"),
+        ),
+    );
+    let mut runner = runner;
+    let unreachable = runner.replies.pop().expect("the reply");
+    runner.replies.insert(0, unreachable);
+    let (files, pause, clock) = (files(), CountingPause::new(), clock());
+
+    // Act
+    let ran =
+        Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&plan_json("2026-11-26", false));
+
+    // Assert
+    let document = parsed(&ran.output);
+    assert_eq!(
+        (ran.code, &document["diagnostics"][0]["code"]),
+        (2, &json!("toolchain-unreachable"))
+    );
+    assert!(document.get("units").is_none(), "{}", ran.output);
 }
 
 #[test]

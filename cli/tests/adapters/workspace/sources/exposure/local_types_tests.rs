@@ -15,7 +15,7 @@ const LIBRARY: &str = "pub struct Shown;\nstruct Hidden;\npub enum Kind {}\npub 
 fn answers(run: impl Fn(&LocalTypes) -> Vec<bool>) -> Vec<bool> {
     let file = parsed(LIBRARY);
     scoped("", |scope| {
-        let items = ModuleItems::items(&file.items, true, scope);
+        let items = ModuleItems::items(&file.items, true, None, scope);
         run(&LocalTypes::new(&items))
     })
 }

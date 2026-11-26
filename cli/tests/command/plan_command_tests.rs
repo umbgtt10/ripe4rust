@@ -58,6 +58,38 @@ fn plan_of_the_recorded_workspace_is_dated_the_day_asked() {
 }
 
 #[test]
+fn plan_of_the_recorded_workspace_keeps_the_toolchain_s_releases_for_the_day() {
+    // Arrange
+    let (runner, files, pause) = (recorded(false), files(), CountingPause::new());
+    let clock = FixedClock::new(date("2026-11-26"));
+    let seams = Seams {
+        runner: &runner,
+        files: &files,
+        pause: &pause,
+        clock: &clock,
+        dir: PathBuf::from("/work/ws"),
+        cache: Some(PathBuf::from("/cache")),
+    };
+
+    // Act
+    let plan = PlanCommand::new(seams)
+        .plan(&request(None))
+        .expect("a plan");
+
+    // Assert
+    assert!(
+        plan.units
+            .iter()
+            .any(|planned| planned.unit.id.to_string() == "toolchain:rust")
+    );
+    assert!(
+        files
+            .contents("/cache/2026-11-26/toolchain/manifests.txt")
+            .is_some()
+    );
+}
+
+#[test]
 fn plan_without_a_date_asked_is_dated_today() {
     // Arrange
     let (runner, files, pause) = (recorded(false), files(), CountingPause::new());

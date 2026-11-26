@@ -59,16 +59,29 @@ pub fn dependency(name: &str, rename: Option<&str>) -> DeclaredDependency {
 /// each with whether it is reachable through `pub mod` declarations; the
 /// first is its `lib.rs`.
 pub fn exposed(texts: &[(&str, bool)]) -> Vec<String> {
+    exposed_in(
+        &texts
+            .iter()
+            .map(|(text, public)| (*text, *public, None))
+            .collect::<Vec<_>>(),
+    )
+}
+
+/// The crates in the public API of a library whose files are these texts,
+/// each with whether it is reachable through `pub mod` declarations and the
+/// module it holds; the first is its `lib.rs`.
+pub fn exposed_in(texts: &[(&str, bool, Option<&str>)]) -> Vec<String> {
     let member = app();
     let codes = CodeNames::new(&member);
     let files = texts
         .iter()
         .enumerate()
-        .map(|(at, (text, public))| ParsedFile {
+        .map(|(at, (text, public, module))| ParsedFile {
             path: PathBuf::from(format!("/work/ws/app/src/{at}.rs")),
             name: format!("app/src/{at}.rs"),
             syntax: parsed(text),
             public: *public,
+            module: module.map(String::from),
         })
         .collect::<Vec<ParsedFile>>();
     let declarations = files

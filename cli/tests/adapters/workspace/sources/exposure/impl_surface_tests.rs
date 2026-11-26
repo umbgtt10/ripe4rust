@@ -19,7 +19,7 @@ fn implemented(
 ) -> Vec<Vec<String>> {
     let file = parsed(&format!("{TYPES}{text}"));
     scoped("", |scope| {
-        let items = ModuleItems::items(&file.items, true, scope);
+        let items = ModuleItems::items(&file.items, true, None, scope);
         let types = LocalTypes::new(&items);
         let surface = ImplSurface::new(&types);
         let names = SurfaceNames::new(scope);

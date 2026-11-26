@@ -75,18 +75,6 @@ impl Findings {
         )
     }
 
-    pub fn toolchain_releases_unknown(&self, at: Location) -> Diagnostic {
-        DiagnosticCode::ToolchainReleasesUnknown.diagnose(
-            Some(at),
-            String::from(
-                "the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named",
-            ),
-            String::from(
-                "nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand",
-            ),
-        )
-    }
-
     pub fn toolchain_unpinned(&self, file: Option<&ToolchainFile>, rustc: &Version) -> Diagnostic {
         let what = match file {
             Some(file) => format!(

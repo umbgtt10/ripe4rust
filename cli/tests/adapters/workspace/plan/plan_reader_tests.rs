@@ -144,6 +144,7 @@ fn plan_of_the_recorded_plan_is_its_date_its_workspace_and_its_units() {
             "compatible:itoa",
             "breaking:itoa",
             "compatible:memchr",
+            "toolchain:rust",
             "compatible:smallvec",
         ]
     );

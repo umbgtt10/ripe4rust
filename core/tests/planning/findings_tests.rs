@@ -117,26 +117,28 @@ fn target_unknown_needs_a_person() {
 }
 
 #[test]
-fn toolchain_releases_unknown_is_a_notice_at_the_channel() {
-    // Arrange & Act
-    let diagnostic = Findings.toolchain_releases_unknown(at("rust-toolchain.toml", 9));
+fn toolchain_unpinned_is_a_notice_at_the_channel_saying_how_to_have_it_judged() {
+    // Arrange
+    let file = ToolchainFile {
+        channel: String::from("nightly-2026-11-20"),
+        at: at("rust-toolchain.toml", 9),
+    };
+
+    // Act
+    let diagnostic = Findings.toolchain_unpinned(Some(&file), &version("1.99.1"));
 
     // Assert
     assert_eq!(
         (diagnostic.code, diagnostic.severity, diagnostic.at),
         (
-            DiagnosticCode::ToolchainReleasesUnknown,
+            DiagnosticCode::ToolchainUnpinned,
             Severity::Notice,
             Some(at("rust-toolchain.toml", 9))
         )
     );
     assert_eq!(
-        diagnostic.what,
-        "the toolchain's releases are not read yet: no toolchain unit is offered, and the versions a newer toolchain would release are not named"
-    );
-    assert_eq!(
         diagnostic.action,
-        "nothing is needed; until a release of ripe4rust reads them, compare `rust-toolchain.toml`'s channel with the stable releases by hand"
+        "nothing is needed; to have the toolchain judged as a unit, pin a stable release in `rust-toolchain.toml`'s `channel`"
     );
 }
 
