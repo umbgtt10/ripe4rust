@@ -185,6 +185,27 @@ Where the sections above are silent, the adapters read the inputs this way:
   before the plan's date, and an answer it lacks is `registry-unreachable`. A
   cache that cannot be read or written, or no directory to keep it in, is
   `registry-cache-unusable`.
+- **The workspace's files** are found where `cargo metadata --format-version 1
+  --no-deps` says they are -- the root and every member's manifest --, which
+  resolves nothing, so it needs no network and moves no lock; each is named
+  from the root with `/` on every system. They are parsed with `toml` (MIT OR
+  Apache-2.0, its `parse` feature alone), which keeps every key's span: a
+  policy key's line is the line its key is written on, and the section's own
+  that of its `ripe4rust` key, in a table header or a dotted key alike. A bare
+  date, a float and an integer beyond 64 bits arrive as text, for the policy's
+  readers to refuse where text is not what the key takes; a `ripe4rust` that is
+  no table is `workspace-unreadable`. A crate's requirement lines are found in
+  every kind of dependency table, every target's, and `[workspace.dependencies]`:
+  the line of `crate = "..."` or of a table's `version`, a renamed crate found
+  by its `package`; one with no version of its own -- a path, a git source,
+  `workspace = true` -- states none. A member's `rust-version` line is its own,
+  or `[workspace.package]`'s where it inherits it. `rust-toolchain.toml` gives
+  its channel and that line, an empty channel where it names none.
+- **The fingerprint** is FNV-1a, 64 bits, written by hand rather than taken from
+  a crate: over `Cargo.lock`, every manifest and `rust-toolchain.toml`, each by
+  its name from the root, then its length and bytes, or a mark where it is
+  absent, as sixteen hex digits. It tells `check` that the workspace changed;
+  it seals nothing, so a cryptographic hash would buy no more.
 
 ## Which version a unit moves to
 

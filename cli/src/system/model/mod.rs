@@ -7,3 +7,4 @@ pub mod fetched;
 pub mod file_failure;
 pub mod invocation;
 pub mod launch_failure;
+pub mod layout;

@@ -100,6 +100,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `$XDG_CACHE_HOME`, `~/.cache` or `%LOCALAPPDATA%`; `--offline` reads the latest day on or before the plan's.
   Two codes for what it meets: `curl-missing`, and `registry-cache-unusable` where the cache cannot be read or
   written.
+- The workspace's files (`cargo_ripe4rust::adapters::workspace`), found where `cargo metadata --no-deps` says
+  they are, asked once behind a `LayoutSource` seam: `[workspace.metadata.ripe4rust]` as the raw tree with every key's `file:line`, through `toml`'s
+  span-keeping parser; a crate's requirement lines in every dependency table, every target's and
+  `[workspace.dependencies]`; a member's `rust-version` line, its own or the workspace's it inherits;
+  `rust-toolchain.toml`'s channel; and the fingerprint of the lock, the manifests and the toolchain file, FNV-1a
+  by hand. A file that cannot be read or parsed is `workspace-unreadable`, at the line where it breaks.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from
   its first commit. `just stage1` -- the lock file synced, `cargo fmt`, clippy pedantic with `-D warnings` on every
   target, the tests -- and `just stage2`, run by a third workspace member, `xtask`, with tests of its own: the

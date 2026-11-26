@@ -6,3 +6,4 @@ pub mod cargo;
 pub mod complaint;
 pub mod registry;
 pub mod unreadable;
+pub mod workspace;

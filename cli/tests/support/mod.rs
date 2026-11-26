@@ -10,3 +10,4 @@ pub mod outputs;
 pub mod plans;
 pub mod registry;
 pub mod replay_runner;
+pub mod workspace;

@@ -62,6 +62,19 @@ fn moves_of_a_recorded_workspace_update_are_every_update_in_order() {
 }
 
 #[test]
+fn moves_of_a_recorded_workspace_update_move_both_direct_dependencies() {
+    // Arrange & Act
+    let moves = UpdateReader
+        .moves(include_str!("../../fixtures/cargo-update/moves.txt"))
+        .expect("moves");
+
+    // Assert
+    assert_eq!(moves.len(), 40);
+    assert!(moves.contains(&updated("chrono", "0.4.19", "0.4.45")));
+    assert!(moves.contains(&updated("memchr", "2.7.0", "2.8.3")));
+}
+
+#[test]
 fn moves_of_recorded_additions_and_removals_keep_each() {
     // Arrange & Act
     let moves = UpdateReader
