@@ -240,6 +240,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   the gates and the score hook, the rules every slice keeps, and the owner's strict rules and coding standards.
 - `CODE_OF_CONDUCT.md` and `DONATE.md`, with the two QR images, as the family carries them.
 - This changelog.
+- `.cargo/mutants.toml`, which onboards ripe4rust on sentinel4rust: `ripe4rust-core` is mutated, against its own
+  tests only; the cli and the xtask are not.
 
 ### Changed
 - `source-unscanned` is a warning, and means a scan that failed as a whole -- not one source file could be parsed --,
