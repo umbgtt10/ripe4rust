@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-11-26
+
+The first release that decides: `plan`, `check`, `hold` and `guide`, every slice of `docs/DESIGN.md`'s
+"Delivery" in place.
+
 ### Added
 - `ripe4rust_core::values`, the arithmetic the rules are written in, by hand since the core takes no crate: `Version`
   with semver's order and its line (the major, or the minor for `0.x` and the toolchain); `PartialVersion`, a version

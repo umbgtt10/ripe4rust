@@ -16,9 +16,20 @@ everything the moment it is published is not right either -- ripe4rust makes
 the judgement in between explicit, rule by rule, so it can be automated where
 it is safe and asked where it is not.
 
+## Install
+
+```sh
+cargo install cargo-ripe4rust
+cargo install --locked cargo-deny
+```
+
+It reads the advisories through `cargo deny`, and the crates.io registry and
+the Rust distribution's list of releases through `curl`: both are needed on
+`PATH`. In a workspace, `cargo ripe4rust guide` prints the round.
+
 ## Status
 
-**In development.** `cargo ripe4rust plan [--format table|json] [--date
+**0.1.0, the first release that decides.** `cargo ripe4rust plan [--format table|json] [--date
 YYYY-MM-DD] [--offline]` reads a real workspace -- cargo, cargo-deny, rustc,
 the crates.io registry and the Rust distribution's list of releases, through
 `curl` and cached for the day -- and prints the plan. `cargo ripe4rust check
@@ -34,8 +45,8 @@ work list of its migration -- and whether the crate is in a published member's
 public API are known. A `rust-toolchain.toml` pinning an older stable release
 is judged as a unit of its own, with the dependency versions the newer one
 would release. Every slice of the design is in place; next is a first dry
-round across real workspaces, plans only. Version 0.0.1, on crates.io, holds
-the vocabulary only. The design is in [`docs/DESIGN.md`](docs/DESIGN.md).
+round across real workspaces, plans only, to tune the thresholds and the
+grouping. The design is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License
 
