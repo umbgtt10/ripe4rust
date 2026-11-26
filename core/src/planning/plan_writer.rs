@@ -22,7 +22,6 @@ use crate::planning::writing::step_writer::StepWriter;
 use crate::values::version::Version;
 use alloc::format;
 use alloc::string::String;
-use alloc::vec;
 use alloc::vec::Vec;
 
 /// The plan, made from a survey alone: the units built, grouped and put in
@@ -60,10 +59,7 @@ impl<'a> PlanWriter<'a> {
         let units = PlanOrder.sorted(units);
         let clearing = Clearing::new(concerns);
         let assigned = clearing.assign(&units);
-        let rows = clearing
-            .unclear(&units)
-            .into_iter()
-            .map(|concern| (concern.row(), vec![concern]));
+        let rows = clearing.rows(&units);
         let mut lock = surveyed
             .workspace
             .lock

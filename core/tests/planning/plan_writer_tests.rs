@@ -126,11 +126,7 @@ fn plan_puts_an_advisory_on_the_unit_that_clears_it_and_rows_the_rest() {
     );
     assert_eq!(
         rows[5],
-        (
-            String::from("advisory:RUSTSEC-2026-0002"),
-            Outcome::Ask,
-            None
-        )
+        (String::from("advisory:gadget@0.13.1"), Outcome::Ask, None)
     );
 }
 
@@ -144,4 +140,49 @@ fn plan_records_every_line_a_unit_can_edit_as_it_was_written() {
 
     // Assert
     assert_eq!(plan.workspace.lines, surveyed.written);
+}
+
+#[test]
+fn plan_rows_every_advisory_no_unit_clears_against_one_crate_version_once() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.advisories = ["RUSTSEC-2026-0002", "RUSTSEC-2026-0003"]
+        .map(|id| Advisory {
+            id: String::from(id),
+            name: String::from("gadget"),
+            version: version("0.13.1"),
+            patched: Vec::new(),
+            unaffected: Vec::new(),
+        })
+        .to_vec();
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    let advisory_rows = plan
+        .units
+        .iter()
+        .filter(|planned| planned.unit.id.to_string().starts_with("advisory:"))
+        .map(|planned| {
+            (
+                planned.unit.id.to_string(),
+                planned.evidence.advisories.clone(),
+                planned.decision.reasons.clone(),
+            )
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        advisory_rows,
+        vec![(
+            String::from("advisory:gadget@0.13.1"),
+            vec![
+                String::from("RUSTSEC-2026-0002"),
+                String::from("RUSTSEC-2026-0003")
+            ],
+            vec![String::from(
+                "RUSTSEC-2026-0002, RUSTSEC-2026-0003, which no upgrade clears"
+            )],
+        )]
+    );
 }

@@ -94,7 +94,7 @@ const FIELDS: [(&str, &str, &str); 119] = [
     (
         "plan",
         "units[].id",
-        "`<kind>:<crate>`, `rest`, or `advisory:<id>`; what `check` and `hold` name it by",
+        "`<kind>:<crate>`, `rest`, or `advisory:<crate>@<version>` -- one row for every advisory and yanking against that version no unit clears; what `check` and `hold` name it by",
     ),
     (
         "plan",

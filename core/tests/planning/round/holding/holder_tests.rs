@@ -184,7 +184,7 @@ fn hold_of_an_advisory_row_is_refused_as_an_urgent_ask() {
     let files = base();
 
     // Act
-    let failure = hold(plan(), &files, "advisory:RUSTSEC-2026-0001").expect_err("a refusal");
+    let failure = hold(plan(), &files, "advisory:gizmo@2.7.5").expect_err("a refusal");
 
     // Assert
     assert_eq!(codes(&failure), vec![DiagnosticCode::UnitUrgent]);

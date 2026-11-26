@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   is not yanked makes a unit the rules call ripe ask, rule and urgency kept, with the new suggestion `moves-back`.
   One leaving a yanked release is the cure, named "back from the yanked ...", its outcome unchanged
   (`ADR-AMoveBackIsAsked`).
+- What no unit clears is one advisory row per crate version, `advisory:<crate>@<version>`, listing every advisory
+  against that version and its yanking, as a compatible unit lists all it clears; it was one row per advisory,
+  `advisory:<id>`, so a crate with four advisories took four rows. `check` and `hold` refuse the new ids as they did
+  the old, and `guide` names the form.
 
 ## [0.1.0] — 2026-11-26
 

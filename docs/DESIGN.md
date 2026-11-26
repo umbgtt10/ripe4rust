@@ -75,9 +75,10 @@ the workspace's owner has. Everything else it carries out on its own.
   - the **toolchain** unit: `rust-toolchain.toml`'s channel moved to a newer
     stable release (ADR-TheToolchainIsAUnit).
 - **Unit id** -- `<kind>:<crate>`: `compatible:clap`, `breaking:syn`,
-  `toolchain:rust`; `rest` for the last compatible unit; `advisory:<id>` for
-  an advisory no unit clears, and `advisory:<crate>@<version>` for a yanked
-  release none clears; such a row's kind is `advisory`. A group goes by its
+  `toolchain:rust`; `rest` for the last compatible unit;
+  `advisory:<crate>@<version>` for a crate version with advisories or a
+  yanking no unit clears, every one of them in that one row; such a row's kind
+  is `advisory`. A group goes by its
   first member's name. A compatible unit's single moves, for bisecting it, are
   `<unit>/<crate>`.
 - **Line** -- every release of one major (`2.x`), or one minor for `0.x`
@@ -330,9 +331,11 @@ clear it, it lands on the first in plan order: units by crate name, a crate's
 compatible unit before its breaking one, the toolchain as `rust`, then the
 rest, then the advisory rows. A move clears an advisory when it takes the
 crate off the affected version to one the advisory names patched or
-unaffected; it clears a yanked release when it takes the crate off it. One
-that no unit clears gets a row of its own: **ask**, urgent, "replace the
-crate, or accept it in `deny.toml`'s `[advisories] ignore` with its reason".
+unaffected; it clears a yanked release when it takes the crate off it. What
+no unit clears gets a row of its own, one per crate version, which lists
+every advisory against that version and its yanking, as a compatible unit
+lists all it clears: **ask**, urgent, "replace the crate, or accept it in
+`deny.toml`'s `[advisories] ignore` with its reason".
 
 ## The rules
 

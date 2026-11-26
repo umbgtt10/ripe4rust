@@ -151,7 +151,7 @@ pub fn plan() -> RecordedPlan {
                 )
             },
             RecordedUnit {
-                id: String::from("advisory:RUSTSEC-2026-0001"),
+                id: String::from("advisory:gizmo@2.7.5"),
                 urgent: true,
                 revert: None,
                 ..unit(UnitKind::Advisory, "gizmo", Vec::new(), Vec::new())

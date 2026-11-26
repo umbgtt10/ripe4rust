@@ -221,13 +221,13 @@ fn check_of_an_advisory_row_is_refused_as_nothing_to_check() {
     let files = base();
 
     // Act
-    let failure = check(&files, "advisory:RUSTSEC-2026-0001").expect_err("a refusal");
+    let failure = check(&files, "advisory:gizmo@2.7.5").expect_err("a refusal");
 
     // Assert
     assert_eq!(codes(&failure), vec![DiagnosticCode::UnitUnknown]);
     assert_eq!(
         failure.diagnostics[0].what,
-        "`advisory:RUSTSEC-2026-0001` is an advisory row: it applies nothing, so there is nothing to check"
+        "`advisory:gizmo@2.7.5` is an advisory row: it applies nothing, so there is nothing to check"
     );
 }
 
