@@ -2,7 +2,8 @@
 
 Status: settled 2026-11-26; the agent's contract added the same day. Slices
 0, 1 and 2 of "Delivery" are implemented: the scaffolding, the core with the
-renderers, and the adapters with `plan` end to end; of slice 3, `check`. The decisions that were not
+renderers, and the adapters with `plan` end to end; of slice 3, `check` and
+`hold`. The decisions that were not
 obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
@@ -523,9 +524,11 @@ The problems the design already names, at least:
 | `plan-unreadable` | error | the plan file `--plan` names is not there, or is no plan `plan` wrote |
 | `plan-schema-unknown` | error | the plan file is of a `schema` this release does not read |
 | `unit-unknown` | error | `check` or `hold` names an id that is no unit of the plan nor a move of a unit's split, or an advisory row, which applies nothing |
+| `unit-urgent` | error | `hold` names an urgent unit, which is never held: it becomes an urgent ask |
 
-Of these, the policy's own codes, `target-unknown` and `gates-undeclared` need
-a person: each asks for a fact or a decision only the owner has.
+Of these, the policy's own codes, `target-unknown`, `gates-undeclared` and
+`unit-urgent` need a person: each asks for a fact or a decision only the owner
+has.
 
 ### The plan
 
@@ -717,7 +720,7 @@ plan reaches none. With no command, the command is `plan`; the name cargo
 passes a subcommand first is skipped, so `cargo ripe4rust` and
 `cargo-ripe4rust` read alike. An option takes its value after it or after `=`.
 A command or an option ripe4rust does not know is `usage-invalid`, and, until
-the rest of slice 3 builds them, `hold` and `guide` are `command-unavailable`:
+the rest of slice 3 builds it, `guide` is `command-unavailable`:
 both errors, exit 2, the document in the format the line asked for. `--plan`
 names the plan file from the directory the command runs in, or by an absolute
 path; `check` and `hold` take one unit, its id or a split id. `main` is
@@ -794,6 +797,55 @@ and the next round finds it there. ripe4rust prints the pin -- the reason
 given, a review date `hold-days` ahead unless one is given, `hold = "all"` for
 a compatible move -- and the section and line it belongs at; the agent adds it
 and commits it. ripe4rust still edits no manifest.
+
+Where the lines above leave it open, `hold` works this way:
+
+- **What is read, in order.** The plan and the unit, as `check` reads them; an
+  urgent unit -- an advisory row is one -- is refused at once, `unit-urgent`, a
+  decision for the person: it becomes an urgent ask. Then the policy as it
+  stands and the workspace, sorted as `check` sorts it. No step is being
+  checked, so a lock move no unit makes is a change outside the plan too,
+  unless it is the tail of a breaking unit applied: any change no unit explains
+  is `plan-stale`, **3**.
+- **What the pins hold**, so the next plan holds the unit: a compatible unit's
+  every crate it moves, with `hold = "all"` -- a pin on its crate alone would
+  leave the rest of its moves to be judged again --, and a split move's crate
+  the same; a breaking unit's crate on its line, the default, which holds a
+  group by its first member; the toolchain as `rust`, on its line for a new
+  minor and with `hold = "all"` for a patch release.
+- **The pin** is one line of the pins table, `<crate> = { reason = "...",
+  review = "YYYY-MM-DD" }`, `hold = "all"` added where it holds every move:
+  the reason in a TOML basic string, quotes, backslashes and control characters
+  escaped; the review the one `--review` gives, or `hold-days` after the plan's
+  date, by the policy as it stands. A crate pinned already gets a line in place
+  of its pin that keeps what that pin said: its reason first, then the new one,
+  its `until`, the sooner review, and `hold = "all"` where either held every
+  move.
+- **Where it goes**: under `[workspace.metadata.ripe4rust.pins]`, at the line
+  of that table's header or `pins` key; where the manifest has none, in that
+  table added at the end of the workspace's `Cargo.toml`.
+
+```json
+{
+  "schema": 1,
+  "command": "hold",
+  "unit": "compatible:memchr",
+  "section": "[workspace.metadata.ripe4rust.pins]",
+  "where": "Cargo.toml:41",
+  "pins": [
+    { "crate": "memchr",
+      "line": "memchr = { reason = \"2.7.6 broke stage 2: ...\", review = \"2026-12-10\", hold = \"all\" }",
+      "replaces": null }
+  ],
+  "do": "put the pin under `[workspace.metadata.ripe4rust.pins]` at Cargo.toml:41, and commit it",
+  "diagnostics": []
+}
+```
+
+`where` is `null` where the table is to be added, and `replaces` names the pin
+a line takes the place of. In text: `hold <unit>: under <section> at
+<file:line>`, or `in a new <section> at the end of Cargo.toml` followed by the
+section's header, then each pin's line and `Do: ...`.
 
 ## The round
 

@@ -36,6 +36,11 @@ impl<'a> RoundReader<'a> {
             .map_err(|failure| Stopping.with(&policy.diagnostics, &failure))?;
         Ok(RoundInputs {
             policy: policy.value,
+            pins_at: tree
+                .entries
+                .iter()
+                .find(|entry| entry.key == "pins")
+                .map(|entry| entry.at.clone()),
             current,
             diagnostics: policy.diagnostics,
         })

@@ -5,6 +5,7 @@
 use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use crate::support::reports::as_planned;
+use crate::support::reports::held;
 use cargo_ripe4rust::command::document::Document;
 use cargo_ripe4rust::command::format::Format;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
@@ -66,6 +67,32 @@ fn failure_in_json_is_the_failure_document() {
     // Assert
     assert!(
         text.starts_with("{\n  \"schema\": 1,\n  \"command\": \"check\",\n  \"diagnostics\": ["),
+        "{text}"
+    );
+}
+
+#[test]
+fn hold_in_a_table_opens_with_the_unit_and_where_its_pins_go() {
+    // Arrange & Act
+    let text = Document::new(Format::Table, "hold").hold(&held(false));
+
+    // Assert
+    assert!(
+        text.starts_with("hold compatible:widget: in a new [workspace.metadata.ripe4rust.pins] at the end of Cargo.toml\n"),
+        "{text}"
+    );
+}
+
+#[test]
+fn hold_in_json_is_the_hold_document() {
+    // Arrange & Act
+    let text = Document::new(Format::Json, "hold").hold(&held(false));
+
+    // Assert
+    assert!(
+        text.starts_with(
+            "{\n  \"schema\": 1,\n  \"command\": \"hold\",\n  \"unit\": \"compatible:widget\""
+        ),
         "{text}"
     );
 }

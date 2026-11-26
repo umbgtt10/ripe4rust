@@ -5,6 +5,7 @@
 pub mod check_json_tests;
 pub mod diagnostic_json_tests;
 pub mod evidence_json_tests;
+pub mod hold_json_tests;
 pub mod json_renderer_tests;
 pub mod move_json_tests;
 pub mod question_json_tests;

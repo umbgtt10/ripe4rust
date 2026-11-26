@@ -2,18 +2,15 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::adapters::workspace::cargo_layout::CargoLayout;
-use crate::adapters::workspace::manifest_files::ManifestFiles;
-use crate::adapters::workspace::plan::plan_file::PlanFile;
 use crate::command::request::Request;
+use crate::command::round_adapters::RoundAdapters;
 use crate::command::seams::Seams;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use ripe4rust_core::planning::round::checking::check_report::CheckReport;
 use ripe4rust_core::planning::round::checking::checker::Checker;
 
-/// `check`: the plan file read from where `--plan` names it, from the
-/// directory the command runs in, the workspace's files over the run's
-/// seams, and the core's checker run over them.
+/// `check`: the core's checker run over the round's adapters, for the unit
+/// the line named.
 pub struct CheckCommand<'a> {
     seams: Seams<'a>,
 }
@@ -24,11 +21,10 @@ impl<'a> CheckCommand<'a> {
     }
 
     pub fn check(&self, request: &Request) -> Result<CheckReport, PlanFailure> {
-        let seams = &self.seams;
-        let plan = request.plan.as_deref().unwrap_or_default();
-        let layout = CargoLayout::new(seams.runner, seams.dir.clone());
-        let files = ManifestFiles::new(&layout, seams.files);
-        let source = PlanFile::new(seams.files, seams.dir.join(plan), plan);
-        Checker::new(&source, &files).check(request.unit.as_deref().unwrap_or_default())
+        let unit = request.unit.as_deref().unwrap_or_default();
+        RoundAdapters::new(self.seams.clone()).with(
+            request.plan.as_deref().unwrap_or_default(),
+            |source, files| Checker::new(source, files).check(unit),
+        )
     }
 }

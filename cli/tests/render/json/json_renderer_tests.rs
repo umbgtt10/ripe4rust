@@ -6,6 +6,7 @@ use crate::support::plans::breaking;
 use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use crate::support::reports::as_planned;
+use crate::support::reports::held;
 use cargo_ripe4rust::render::document_renderer::DocumentRenderer;
 use cargo_ripe4rust::render::json::json_renderer::JsonRenderer;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
@@ -66,6 +67,20 @@ fn failure_prints_schema_command_and_diagnostics() {
                 "needs_person": false,
             }],
         })
+    );
+}
+
+#[test]
+fn hold_prints_schema_and_command_before_the_pins() {
+    // Arrange & Act
+    let text = JsonRenderer::new("hold").hold(&held(true));
+
+    // Assert
+    assert!(
+        compact(&text).starts_with(
+            r#"{"schema":1,"command":"hold","unit":"compatible:widget","section":"[workspace.metadata.ripe4rust.pins]","where":"Cargo.toml:40","pins":[{"crate":"widget","line":"#
+        ),
+        "{text}"
     );
 }
 

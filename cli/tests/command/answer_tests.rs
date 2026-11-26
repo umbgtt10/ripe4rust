@@ -5,6 +5,7 @@
 use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use crate::support::reports::as_planned;
+use crate::support::reports::held;
 use crate::support::reports::not_as_planned;
 use cargo_ripe4rust::command::answer::Answer;
 use cargo_ripe4rust::command::format::Format;
@@ -51,6 +52,21 @@ fn failed_prints_the_failure_and_exits_by_its_diagnostics() {
             code: 3,
         }
     );
+}
+
+#[test]
+fn held_of_pins_printed_exits_zero_and_of_a_stale_plan_three() {
+    // Arrange
+    let answer = Answer::new(Format::Table, "hold");
+
+    // Act
+    let codes = [
+        answer.held(Ok(held(true))).code,
+        answer.held(Err(stale())).code,
+    ];
+
+    // Assert
+    assert_eq!(codes, [0, 3]);
 }
 
 #[test]

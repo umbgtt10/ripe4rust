@@ -7,6 +7,7 @@ use crate::support::plans::compatible;
 use crate::support::plans::plan;
 use crate::support::plans::rest;
 use crate::support::plans::toolchain;
+use crate::support::reports::held;
 use crate::support::reports::not_as_planned;
 use cargo_ripe4rust::render::document_renderer::DocumentRenderer;
 use cargo_ripe4rust::render::table::table_renderer::TableRenderer;
@@ -43,6 +44,20 @@ fn failure_prints_each_diagnostic_on_a_line() {
     assert_eq!(
         text,
         "error[cargo-deny-missing] cargo-deny is not installed. Do: install it\n"
+    );
+}
+
+#[test]
+fn hold_prints_the_pins() {
+    // Arrange & Act
+    let text = TableRenderer.hold(&held(true));
+
+    // Assert
+    assert!(
+        text.starts_with(
+            "hold compatible:widget: under [workspace.metadata.ripe4rust.pins] at Cargo.toml:40\n"
+        ),
+        "{text}"
     );
 }
 

@@ -23,9 +23,12 @@ YYYY-MM-DD] [--offline]` reads a real workspace -- cargo, cargo-deny, rustc,
 and the crates.io registry through `curl`, cached for the day -- and prints the
 plan. `cargo ripe4rust check <unit> --plan <file>` reads the plan back and the
 workspace again, and says whether the unit applied is as planned -- exit 0, or
-1 with every difference and what to do -- or the plan is stale, 3. The parse of
-the sources and the toolchain's releases are still to come: until then the plan
-reads them conservatively and says so; `hold` and `guide` come after. Version 0.0.1, on crates.io, holds the vocabulary only. The
+1 with every difference and what to do -- or the plan is stale, 3. `cargo
+ripe4rust hold <unit> --plan <file> --because <text>` prints the pin that holds
+a unit whose gates went red, or that a person said to wait on, and where it
+goes; ripe4rust still writes no file. The parse of the sources and the
+toolchain's releases are still to come: until then the plan reads them
+conservatively and says so; `guide` comes after. Version 0.0.1, on crates.io, holds the vocabulary only. The
 design is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License

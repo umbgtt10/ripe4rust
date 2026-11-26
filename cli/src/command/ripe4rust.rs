@@ -5,12 +5,14 @@
 use crate::command::answer::Answer;
 use crate::command::check_command::CheckCommand;
 use crate::command::command_line::CommandLine;
+use crate::command::hold_command::HoldCommand;
 use crate::command::plan_command::PlanCommand;
 use crate::command::ran::Ran;
 use crate::command::seams::Seams;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 
 const CHECK: &str = "check";
+const HOLD: &str = "hold";
 
 /// The library's entry point, which `main` is a thin shim over: the
 /// command line read, the command it names run over the seams it was given,
@@ -38,6 +40,7 @@ impl<'a> Ripe4rust<'a> {
         let seams = self.seams.clone();
         match request.command.as_str() {
             CHECK => answer.checked(CheckCommand::new(seams).check(&request)),
+            HOLD => answer.held(HoldCommand::new(seams).hold(&request)),
             _ => answer.planned(PlanCommand::new(seams).plan(&request)),
         }
     }

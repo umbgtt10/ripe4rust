@@ -125,17 +125,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `rust-toolchain.toml`'s `channel`, read by the workspace's files adapter beside the requirement lines it already
   found. The fingerprint tells `check` that the workspace changed; the lines tell it where, so a requirement edited
   by hand is not taken for one a unit wrote.
-- `check`, slice 3's first command: `cargo ripe4rust check <unit> --plan <file> [--format table|json]`, a unit's
-  id or one move of its split, `<unit>/<crate>`. The core (`ripe4rust_core::planning::round`) reads the plan back
+- `check`, slice 3's first command: `cargo ripe4rust check <unit> --plan <file> [--format table|json]`, a unit's id
+  or one move of its split, `<unit>/<crate>`. The core (`ripe4rust_core::planning::round`) reads the plan back
   through a new port, `PlanSource`, the policy again, and the workspace through `WorkspaceFiles`, now also answering
   `Cargo.lock`'s crates.io packages; then sorts every difference into the units that explain it. A lock move no unit
   makes is the unit's -- not as planned, exit 1, every difference with its `do` --; a requirement, `rust-version` or
   channel no unit's edit explains is the plan stale, exit 3, `plan-stale` where it is; as planned is 0, with the
   units applied and those still to go; a breaking unit applied reports its tail as `transitive`, and a tail move
   past a pin is a difference. The cli reads the plan document back -- schema 1, `plan`'s, holding units -- and
-  `Cargo.lock` itself rather than through cargo, so a lock a hand-edited manifest no longer matches still reads. Three
-  codes: `plan-unreadable`, `plan-schema-unknown`, `unit-unknown`. The command line reads each command's own
+  `Cargo.lock` itself rather than through cargo, so a lock a hand-edited manifest no longer matches still reads.
+  Three codes: `plan-unreadable`, `plan-schema-unknown`, `unit-unknown`. The command line reads each command's own
   options, and the renderers print `check`'s document in JSON and text.
+- `hold`: `cargo ripe4rust hold <unit> --plan <file> --because <text> [--review YYYY-MM-DD] [--format table|json]`
+  prints the pin that holds a unit and where it goes; the agent adds it. The core
+  (`ripe4rust_core::planning::round::holding`) reads the plan, refuses an urgent unit as `unit-urgent` -- a new
+  code, for the person: it becomes an urgent ask --, sorts the workspace as `check` does, any change no unit
+  explains being the plan stale (3), and writes a line of `[workspace.metadata.ripe4rust.pins]` for every crate the
+  unit's pins hold: a compatible unit's or a split move's whole, `hold = "all"`; a breaking unit's on its line; the
+  toolchain's as `rust`. The reason is a TOML basic string, escaped; the review is `--review` or `hold-days` after
+  the plan's date; a crate pinned already keeps its reason, its condition and the sooner review. The line goes under
+  the pins table's line, or in that table added at the end of `Cargo.toml`. A test reads a printed pin back through
+  the policy's own reader.
 - The version choice moved to `ripe4rust_core::planning::units::choice`, so `planning/` keeps five folders with
   `round/` beside them.
 - The scaffolding, slice 0 of `docs/DESIGN.md`'s "Delivery": every later slice is held to the family's gates from

@@ -5,5 +5,6 @@
 pub mod check_table_tests;
 pub mod columns_tests;
 pub mod diagnostic_line_tests;
+pub mod hold_table_tests;
 pub mod row_label_tests;
 pub mod table_renderer_tests;

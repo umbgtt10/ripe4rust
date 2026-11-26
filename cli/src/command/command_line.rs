@@ -12,8 +12,8 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 
 const SUBCOMMAND: &str = "ripe4rust";
 const PLAN: &str = "plan";
-const LATER: [&str; 2] = ["hold", "guide"];
-const COMMANDS: [CommandSpec; 2] = [
+const LATER: [&str; 1] = ["guide"];
+const COMMANDS: [CommandSpec; 3] = [
     CommandSpec {
         name: PLAN,
         usage: "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]`",
@@ -28,12 +28,20 @@ const COMMANDS: [CommandSpec; 2] = [
         unit: true,
         required: &["--plan"],
     },
+    CommandSpec {
+        name: "hold",
+        usage: "run `cargo ripe4rust hold <unit> --plan <file> --because <text> [--review YYYY-MM-DD] [--format table|json]`",
+        options: &["--format", "--plan", "--because", "--review"],
+        unit: true,
+        required: &["--plan", "--because"],
+    },
 ];
 
 /// The command line: `cargo ripe4rust [plan] [--format table|json] [--date
-/// YYYY-MM-DD] [--offline]` or `cargo ripe4rust check <unit> --plan <file>
-/// [--format table|json]`, the subcommand's own name cargo passes first
-/// skipped. A command this release does not run yet, or anything it does
+/// YYYY-MM-DD] [--offline]`, `cargo ripe4rust check <unit> --plan <file>
+/// [--format table|json]` or `cargo ripe4rust hold <unit> --plan <file>
+/// --because <text> [--review YYYY-MM-DD] [--format table|json]`, the
+/// subcommand's own name cargo passes first skipped. A command this release does not run yet, or anything it does
 /// not know, is refused with a diagnostic, in the format the line asked for.
 pub struct CommandLine;
 
@@ -56,7 +64,7 @@ impl CommandLine {
                 None,
                 format!("`{command}` is not in this release of ripe4rust yet"),
                 String::from(
-                    "use `cargo ripe4rust plan` or `cargo ripe4rust check`, the commands this release runs; `hold` and `guide` come with a later release",
+                    "use `cargo ripe4rust plan`, `check` or `hold`, the commands this release runs; `guide` comes with a later release",
                 ),
             )));
         }

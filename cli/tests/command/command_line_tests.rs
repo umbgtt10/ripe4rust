@@ -9,6 +9,7 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::values::date::Date;
 
 const CHECK_USAGE: &str = "run `cargo ripe4rust check <unit> --plan <file> [--format table|json]`";
+const HOLD_USAGE: &str = "run `cargo ripe4rust hold <unit> --plan <file> --because <text> [--review YYYY-MM-DD] [--format table|json]`";
 const USAGE: &str =
     "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]`";
 
@@ -41,7 +42,7 @@ fn refused(words: &[&str]) -> (DiagnosticCode, String, String) {
 #[test]
 fn read_of_a_command_not_built_yet_is_unavailable() {
     // Arrange & Act
-    let refusals = ["hold", "guide"].map(|command| {
+    let refusals = ["guide"].map(|command| {
         CommandLine.read(&args(&[
             "ripe4rust",
             command,
@@ -52,7 +53,7 @@ fn read_of_a_command_not_built_yet_is_unavailable() {
     });
 
     // Assert
-    for (refusal, command) in refusals.iter().zip(["hold", "guide"]) {
+    for (refusal, command) in refusals.iter().zip(["guide"]) {
         let refusal = refusal.as_ref().expect_err("a refusal");
         assert_eq!(refusal.command, command);
         assert_eq!(refusal.diagnostic.code, DiagnosticCode::CommandUnavailable);
@@ -62,7 +63,7 @@ fn read_of_a_command_not_built_yet_is_unavailable() {
         );
         assert_eq!(
             refusal.diagnostic.action,
-            "use `cargo ripe4rust plan` or `cargo ripe4rust check`, the commands this release runs; `hold` and `guide` come with a later release"
+            "use `cargo ripe4rust plan`, `check` or `hold`, the commands this release runs; `guide` comes with a later release"
         );
     }
 }
@@ -270,6 +271,72 @@ fn read_of_every_option_takes_each() {
 
     // Assert
     assert_eq!(request, Ok(plan(Format::Json, Some("2026-10-30"), true)));
+}
+
+#[test]
+fn read_of_hold_given_a_review_that_is_no_date_is_usage_invalid() {
+    // Arrange & Act
+    let refusal = refused(&[
+        "hold",
+        "compatible:itoa",
+        "--plan",
+        "plan.json",
+        "--because",
+        "red",
+        "--review",
+        "soon",
+    ]);
+
+    // Assert
+    assert_eq!(
+        refusal,
+        (
+            DiagnosticCode::UsageInvalid,
+            String::from("`--review` takes a date, YYYY-MM-DD, not `soon`"),
+            String::from(HOLD_USAGE)
+        )
+    );
+}
+
+#[test]
+fn read_of_hold_takes_its_unit_plan_reason_and_review() {
+    // Arrange & Act
+    let request = CommandLine.read(&args(&[
+        "hold",
+        "compatible:itoa",
+        "--plan",
+        "plan.json",
+        "--because",
+        "--format=json failed: \"stage 2\"",
+        "--review=2027-01-31",
+    ]));
+
+    // Assert
+    assert_eq!(
+        request,
+        Ok(Request {
+            command: String::from("hold"),
+            format: Format::Table,
+            date: None,
+            offline: false,
+            unit: Some(String::from("compatible:itoa")),
+            plan: Some(String::from("plan.json")),
+            because: Some(String::from("--format=json failed: \"stage 2\"")),
+            review: Some(Date::parse("2027-01-31").expect("a date")),
+        })
+    );
+}
+
+#[test]
+fn read_of_hold_without_a_reason_is_usage_invalid() {
+    // Arrange & Act
+    let refusal = refused(&["hold", "compatible:itoa", "--plan", "plan.json"]);
+
+    // Assert
+    assert_eq!(
+        refusal.1,
+        "`hold` takes `--because <text>`, and was given none"
+    );
 }
 
 #[test]

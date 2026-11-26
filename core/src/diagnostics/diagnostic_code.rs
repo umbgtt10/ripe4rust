@@ -37,6 +37,7 @@ pub enum DiagnosticCode {
     ToolchainUnpinned,
     ToolchainUnreachable,
     UnitUnknown,
+    UnitUrgent,
     UsageInvalid,
     WorkspaceUnreadable,
 }
@@ -82,6 +83,7 @@ impl DiagnosticCode {
             Self::ToolchainUnpinned => "toolchain-unpinned",
             Self::ToolchainUnreachable => "toolchain-unreachable",
             Self::UnitUnknown => "unit-unknown",
+            Self::UnitUrgent => "unit-urgent",
             Self::UsageInvalid => "usage-invalid",
             Self::WorkspaceUnreadable => "workspace-unreadable",
         }
@@ -96,6 +98,7 @@ impl DiagnosticCode {
                 | Self::PolicyInvalidValue
                 | Self::PolicyUnknownKey
                 | Self::TargetUnknown
+                | Self::UnitUrgent
         )
     }
 

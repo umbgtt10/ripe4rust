@@ -7,7 +7,7 @@ use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::diagnostics::severity::Severity;
 use ripe4rust_core::values::location::Location;
 
-const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 29] = [
+const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 30] = [
     (
         DiagnosticCode::CargoDenyFailed,
         "cargo-deny-failed",
@@ -176,6 +176,12 @@ const EVERY_CODE: [(DiagnosticCode, &str, Severity, bool); 29] = [
         "unit-unknown",
         Severity::Error,
         false,
+    ),
+    (
+        DiagnosticCode::UnitUrgent,
+        "unit-urgent",
+        Severity::Error,
+        true,
     ),
 ];
 

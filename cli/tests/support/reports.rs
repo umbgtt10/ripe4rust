@@ -5,6 +5,9 @@
 use crate::support::plans::moved;
 use ripe4rust_core::planning::round::checking::check_report::CheckReport;
 use ripe4rust_core::planning::round::checking::difference::Difference;
+use ripe4rust_core::planning::round::holding::hold_report::HoldReport;
+use ripe4rust_core::planning::round::holding::pin_line::PinLine;
+use ripe4rust_core::values::location::Location;
 
 pub fn as_planned() -> CheckReport {
     CheckReport {
@@ -21,6 +24,36 @@ pub fn as_planned() -> CheckReport {
             String::from("breaking:gadget"),
         ],
         to_go: vec![String::from("rest")],
+        diagnostics: Vec::new(),
+    }
+}
+
+pub fn held(table: bool) -> HoldReport {
+    let at = |line: u32| Location {
+        file: String::from("Cargo.toml"),
+        line,
+    };
+    HoldReport {
+        unit: String::from("compatible:widget"),
+        section: String::from("[workspace.metadata.ripe4rust.pins]"),
+        at: table.then(|| at(40)),
+        pins: vec![
+            PinLine {
+                name: String::from("widget"),
+                line: String::from(
+                    r#"widget = { reason = "red", review = "2026-12-10", hold = "all" }"#,
+                ),
+                replaces: table.then(|| at(41)),
+            },
+            PinLine {
+                name: String::from("gizmo"),
+                line: String::from(
+                    r#"gizmo = { reason = "red", review = "2026-12-10", hold = "all" }"#,
+                ),
+                replaces: None,
+            },
+        ],
+        action: String::from("put the pins there, and commit it"),
         diagnostics: Vec::new(),
     }
 }

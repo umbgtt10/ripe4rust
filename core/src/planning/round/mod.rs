@@ -4,6 +4,7 @@
 
 pub mod checking;
 pub mod current_state;
+pub mod holding;
 pub mod line_change;
 pub mod line_changes;
 pub mod lock_changes;

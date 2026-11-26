@@ -6,11 +6,13 @@ use crate::render::document_renderer::DocumentRenderer;
 use crate::render::table::check_table::CheckTable;
 use crate::render::table::columns::Columns;
 use crate::render::table::diagnostic_line::DiagnosticLine;
+use crate::render::table::hold_table::HoldTable;
 use crate::render::table::row_label::RowLabel;
 use ripe4rust_core::diagnostics::diagnostic::Diagnostic;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use ripe4rust_core::planning::round::checking::check_report::CheckReport;
+use ripe4rust_core::planning::round::holding::hold_report::HoldReport;
 use ripe4rust_core::values::version::Version;
 
 const FINGERPRINT_SHOWN: usize = 8;
@@ -36,6 +38,10 @@ impl DocumentRenderer for TableRenderer {
 
     fn failure(&self, failure: &PlanFailure) -> String {
         Self::diagnostics(&failure.diagnostics)
+    }
+
+    fn hold(&self, report: &HoldReport) -> String {
+        HoldTable.text(report)
     }
 
     fn plan(&self, plan: &Plan) -> String {
