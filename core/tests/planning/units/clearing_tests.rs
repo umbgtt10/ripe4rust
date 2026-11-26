@@ -60,20 +60,15 @@ fn assign_gives_a_concern_to_the_first_unit_that_clears_it() {
 }
 
 #[test]
-fn rows_are_the_concerns_no_unit_clears() {
+fn unclear_are_the_concerns_no_unit_clears() {
     // Arrange
     let cleared = advisory("RUSTSEC-2026-0592", "url", "2.5.8", ">=2.5.9");
     let uncleared = advisory("RUSTSEC-2026-0002", "atty", "0.2.14", ">=9");
     let units = vec![compatible("url", vec![moved("url", "2.5.8", "2.5.9")])];
 
     // Act
-    let rows = Clearing::new(vec![cleared, uncleared]).rows(&units);
+    let unclear = Clearing::new(vec![cleared, uncleared.clone()]).unclear(&units);
 
     // Assert
-    assert_eq!(
-        rows.iter()
-            .map(|row| row.id.to_string())
-            .collect::<Vec<_>>(),
-        vec![String::from("advisory:RUSTSEC-2026-0002")]
-    );
+    assert_eq!(unclear, vec![uncleared]);
 }

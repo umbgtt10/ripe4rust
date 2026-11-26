@@ -5,5 +5,7 @@
 pub mod choice;
 pub mod judging;
 pub mod pins_and_policy;
+pub mod plan_writer_tests;
+pub mod unit_writer_tests;
 pub mod units;
 pub mod writing;

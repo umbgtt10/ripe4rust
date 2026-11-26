@@ -146,7 +146,13 @@ version is not offered yet, recorded as evidence on the toolchain unit
 
 A version within the toolchain but needing more than the workspace's declared
 `rust-version` is a candidate. Its unit raises `rust-version` too, and for a
-published crate that is rule 8's question.
+published crate that is rule 8's question. It raises the `rust-version` of
+every member that uses the crate and declares a lower one; a member that
+declares none promises nothing, and is not raised.
+
+The toolchain's youth is judged by `toolchain-young-days` alone: a minor
+rarely has three releases. Its evidence names, for each direct dependency, the
+newest release the toolchain in use cannot build and the new one can.
 
 A line is **young** while either holds: its first release is under
 `young-days` old, or it has fewer than `young-releases` releases. It has
@@ -227,7 +233,9 @@ null.
 ### The verdict for a breaking unit that needs asking
 
 - **Migrate now**: the line in use is stale while the new one is active, or
-  migrating removes a second copy of the crate from the tree.
+  migrating removes a second copy of the crate from the tree -- the lock
+  already holds it on the new line, and nothing outside the workspace's
+  members depends on the copy in use.
 - **Plan it**: the new line has settled and the footprint is under
   `moderate-footprint`.
 - **Wait**: anything else, with the reason.
@@ -265,8 +273,9 @@ One `syn` parse of the workspace's sources answers both
   reachable from the crate's `lib.rs` through `pub mod` declarations.
 
 A parse can be wrong about exposure (a type alias, a macro that expands to a
-public item). The policy can override it, crate by crate. A source file the
-parse cannot read is a warning: the footprint may be low.
+public item). The policy can override it, crate by crate: `public` exposes the
+crate in every published member that uses it, `private` in none. A source file
+the parse cannot read is a warning: the footprint may be low.
 
 ## Groups
 
@@ -319,7 +328,11 @@ memchr = { reason = "2.7.6 broke stage 2: <the gate's failure>", review = "2026-
 ```
 
 A pin without a reason, or without a review date or a release condition, is
-an error, reported before any rule runs. A release condition is either
+an error, reported before any rule runs. A pin is released on its review date
+or after it, or once the index holds a release, not yanked, that meets its
+condition. A pin named `rust` on its line lets a patch release of the
+toolchain through and holds a new minor. A freeze is open while the plan's
+date is before `freeze-until`. A release condition is either
 checkable -- a crate reaching a version, read from the index -- or in words.
 One in words is honest but cannot be checked, so it must come with a review
 date; a pin with neither is refused (ADR-APinConditionCanBeChecked). A pin

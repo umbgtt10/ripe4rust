@@ -5,4 +5,5 @@
 pub mod facts;
 pub mod policy_trees;
 pub mod releases;
+pub mod surveyed;
 pub mod units;

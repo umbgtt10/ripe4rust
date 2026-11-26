@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- The plan made from a survey of the workspace (`ripe4rust_core::planning`): `Surveyed`, everything the ports will
+  answer, read once; `PlanWriter`, which builds, groups and orders the units, lands every advisory and yanked
+  release, and writes every row; the facts each unit is judged on (`planning::judging::facts`) -- its lines, its
+  pins and whether they are released, the targets it reaches, its exposure and the `rust-version`s it raises, its
+  footprint, a second copy migrating removes, what the toolchain would release --; each row's evidence, summary and
+  edits; and `Plan`, `PlannedUnit` and `PlanFailure`, the model the renderers print.
 - The steps and the questions (`ripe4rust_core::planning::writing`): every unit's `apply`, `check`, `gates`,
   `revert` and `split` -- one recursive update, or one `--precise` update per move where a move is held out and for
   the rest; a breaking unit's requirement lines and raised `rust-version`s, then its update; the toolchain's

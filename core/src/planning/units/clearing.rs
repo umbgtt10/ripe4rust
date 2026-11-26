@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 
 /// Every advisory and yanked release lands on the first unit, in plan
 /// order, whose moves clear it, wherever it sits in the tree; one no unit
-/// clears gets a row of its own.
+/// clears is unclear, and gets a row of its own.
 pub struct Clearing {
     concerns: Vec<Concern>,
 }
@@ -29,11 +29,11 @@ impl Clearing {
         assigned
     }
 
-    pub fn rows(&self, units: &[Unit]) -> Vec<Unit> {
+    pub fn unclear(&self, units: &[Unit]) -> Vec<Concern> {
         self.concerns
             .iter()
             .filter(|concern| !units.iter().any(|unit| Self::clears(unit, concern)))
-            .map(Concern::row)
+            .cloned()
             .collect()
     }
 
