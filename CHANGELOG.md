@@ -42,6 +42,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   ask, and one already ripening what holds it; `guide` names the new fields, and says the rules are 1 to 13
   (`ADR-ARequirementHoldsACrateBack`,
   `ripe4rust_core::planning::judging::held_by_dependents::HeldByDependents`).
+- Such a held-back move was credited with the advisories against the version it leaves, which stays in the lock for
+  the dependent: the breaking unit read urgent, and no row said the advisory would remain. A move a dependent holds
+  back now clears nothing. The advisory keeps its row, urgent, "replace or accept", which holds the move that would
+  clear it in its evidence's `held`, names the dependents among its reasons and in `held_by`, and says in its
+  question that the upgrade that would clear it ripens until its dependents move; the breaking unit, urgent no more,
+  ripens with the rest (`ripe4rust_core::planning::units::clearing::Clearing` takes the dependents).
 
 ## [0.1.1] — 2026-11-26
 

@@ -39,11 +39,41 @@ version in use with a requirement the unit's target does not meet.
   it is for a person to decide while the move cannot land, and the
   dependent's upgrade, a unit of its own, is what releases it. The next plan
   reads the lock that upgrade leaves.
-- An urgent unit keeps its ask, the dependents named: an urgent unit is never
-  held. One already ripening -- a pin, a freeze, a young line -- keeps what
-  holds it, and gains the reason.
+- A held move clears no advisory and no yanked release (below), so the unit
+  is urgent only for what another of its moves clears; such a unit keeps its
+  ask, the dependents named: an urgent unit is never held. One already
+  ripening -- a pin, a freeze, a young line -- keeps what holds it, and gains
+  the reason.
 - It is applied after drift, so an overripe unit its dependents hold ripens
   too, and before the no-gates downgrade, which reads only what is ripe.
+
+### An advisory the held move would clear
+
+A held-back move clears nothing: the version it leaves stays for the
+dependent, and with it every advisory against that version. So no advisory
+and no yanked release is credited to it. Where no other unit clears the
+advisory, its row stays, urgent, "replace or accept"; it holds the move
+that would clear it in its evidence's `held`, names the dependents among its
+reasons and in `held_by`, and its question says why: the upgrade that would
+clear it ripens until its dependents move.
+
+The unit itself is then not urgent, and ripens with the rest. Keeping it an
+urgent ask, its question saying the move alone will not clear the advisory,
+was weighed and refused:
+
+- an urgent unit is never held, so its answers are to take it or to accept
+  the advisory. Taken, the edit adds the target beside the version in use,
+  `check` finds that version still in the lock, the unit is reverted and
+  asked again -- a loop no answer ends but the dependent's own upgrade;
+- accepting is what the row already offers, so the person would be asked
+  twice, urgently, about one advisory, by two rows that each say the other
+  is the way out;
+- urgent means a unit clears an advisory or a yanked release; this one does
+  not, and saying it is urgent would put it ahead of the units that do.
+
+The way out is the dependent's upgrade, which has a unit of its own. Once it
+lands, the next plan finds the crate unheld, credits the breaking unit with
+the advisory, and asks it urgently.
 
 ## Rejected alternatives
 

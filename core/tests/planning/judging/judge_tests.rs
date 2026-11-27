@@ -241,6 +241,47 @@ fn judge_of_a_young_breaking_line_far_behind_asks_it_overripe() {
 }
 
 #[test]
+fn judge_of_an_advisory_row_a_dependent_holds_names_it_and_the_upgrade_ripening() {
+    // Arrange
+    let row = UnitFacts {
+        name: String::from("prost 0.13.5"),
+        concerns: vec![String::from("RUSTSEC-2026-0007")],
+        held_by: vec![Dependent {
+            name: String::from("tonic"),
+            version: version("0.12.3"),
+            requires: String::from("prost"),
+            requirement: Requirement::parse("^0.13").expect("a requirement"),
+            in_use: version("0.13.5"),
+            target: version("0.14.6"),
+        }],
+        ..facts(UnitKind::Advisory)
+    };
+
+    // Act
+    let decision = Judge.judge(&row);
+
+    // Assert
+    assert_eq!(
+        decision,
+        Decision {
+            outcome: Outcome::Ask,
+            urgent: true,
+            rule: None,
+            suggestion: Some(Suggestion::ReplaceOrAccept),
+            reasons: vec![
+                String::from("RUSTSEC-2026-0007, which no upgrade clears"),
+                String::from(
+                    "tonic 0.12.3 requires prost ^0.13: moving it adds 0.14.6 beside 0.13.5"
+                ),
+            ],
+            why: Some(String::from(
+                "RUSTSEC-2026-0007 affects prost 0.13.5, and no upgrade in this plan clears it: the upgrade that would ripens until its dependents move"
+            )),
+        }
+    );
+}
+
+#[test]
 fn judge_of_an_advisory_row_asks_it_urgently_by_no_rule() {
     // Arrange
     let row = UnitFacts {

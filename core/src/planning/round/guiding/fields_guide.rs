@@ -323,7 +323,7 @@ const FIELDS: [(&str, &str, &str); 129] = [
     (
         "plan",
         "units[].evidence.held",
-        "the moves a pin holds out of the unit",
+        "the moves a pin holds out of the unit; for an advisory row, the moves that would clear it a dependent holds back",
     ),
     ("plan", "units[].evidence.held[].crate", "the crate held"),
     (

@@ -12,6 +12,7 @@ use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
 use ripe4rust_core::inputs::workspace::Workspace;
 use ripe4rust_core::planning::judging::dependent::Dependent;
 use ripe4rust_core::planning::judging::facts::dependents::Dependents;
+use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::values::requirement::Requirement;
 
 fn dependent(name: &str, at: &str, requires: (&str, &str, &str)) -> Dependent {
@@ -158,4 +159,29 @@ fn holding_of_a_compatible_unit_is_none() {
 
     // Assert
     assert_eq!(holding, Vec::new());
+}
+
+#[test]
+fn holding_of_an_advisory_row_names_the_dependents_of_the_move_held_out_of_it() {
+    // Arrange
+    let workspace = workspace(vec![requiring(
+        "tonic",
+        "0.12.3",
+        ("prost", "^0.13", "0.13.5"),
+    )]);
+    let mut row = Concern::Yanked {
+        name: String::from("prost"),
+        version: version("0.13.5"),
+    }
+    .row();
+    row.held = vec![moved("prost", "0.13.5", "0.14.6")];
+
+    // Act
+    let holding = Dependents::new(&workspace).holding(&row);
+
+    // Assert
+    assert_eq!(
+        holding,
+        vec![dependent("tonic", "0.12.3", ("prost", "^0.13", "0.13.5"))]
+    );
 }

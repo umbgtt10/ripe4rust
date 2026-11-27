@@ -379,11 +379,17 @@ clear it, it lands on the first in plan order: units by crate name, a crate's
 compatible unit before its breaking one, the toolchain as `rust`, then the
 rest, then the advisory rows. A move clears an advisory when it takes the
 crate off the affected version to one the advisory names patched or
-unaffected; it clears a yanked release when it takes the crate off it. What
+unaffected; it clears a yanked release when it takes the crate off it. A move
+a dependent's requirement holds back -- a breaking unit's crate its
+dependents keep on the version in use, "A crate its dependents hold back"
+below -- clears nothing: the version it leaves stays in the lock. What
 no unit clears gets a row of its own, one per crate version, which lists
 every advisory against that version and its yanking, as a compatible unit
 lists all it clears: **ask**, urgent, "replace the crate, or accept it in
-`deny.toml`'s `[advisories] ignore` with its reason".
+`deny.toml`'s `[advisories] ignore` with its reason". A row whose advisory a
+held-back move would clear holds that move in its evidence's `held`, names
+the dependents among its reasons and in `held_by`, and its question says why:
+the upgrade that would clear it ripens until its dependents move.
 
 ## The rules
 
@@ -499,8 +505,11 @@ meet. Each is named among the unit's reasons, "tonic 0.12.3 requires prost
 **ripens** instead, its rule kept, with the suggestion
 `until-its-dependents-move`: the dependent's own upgrade releases it -- here
 `tonic`'s, to a line that requires the new `prost` or none --, and the next
-plan reads the lock it leaves. An urgent unit keeps its ask, as an urgent unit
-is never held, and one already ripening keeps what holds it; it is applied
+plan reads the lock it leaves. Such a move clears no advisory and no yanked
+release, so a unit is never urgent for what only its held move would clear:
+the advisory keeps its row, which says so, and the unit ripens. A unit urgent
+for what another of its moves clears keeps its ask, as an urgent unit is
+never held, and one already ripening keeps what holds it; it is applied
 after drift and before the no-gates downgrade, so an overripe unit its
 dependents hold ripens too.
 

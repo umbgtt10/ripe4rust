@@ -14,6 +14,7 @@ use alloc::vec::Vec;
 /// lock, the unit's own members aside, that depends on the version in use
 /// with a requirement the unit's target does not meet. Moving the crate
 /// then adds the target beside the version in use, which stays for them.
+/// An advisory row's are those holding back the moves that would clear it.
 pub struct Dependents<'a> {
     workspace: &'a Workspace,
 }
@@ -24,11 +25,12 @@ impl<'a> Dependents<'a> {
     }
 
     pub fn holding(&self, unit: &Unit) -> Vec<Dependent> {
-        if unit.kind != UnitKind::Breaking {
-            return Vec::new();
-        }
-        let mut holding = unit
-            .moves
+        let moves = match unit.kind {
+            UnitKind::Breaking => &unit.moves,
+            UnitKind::Advisory => &unit.held,
+            _ => return Vec::new(),
+        };
+        let mut holding = moves
             .iter()
             .flat_map(|lock_move| self.of(lock_move, &unit.members))
             .collect::<Vec<Dependent>>();

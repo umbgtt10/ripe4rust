@@ -3,10 +3,15 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::releases::version;
+use crate::support::surveyed::surveyed;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
 use crate::support::units::moved;
 use ripe4rust_core::inputs::advisory::Advisory;
+use ripe4rust_core::inputs::locked_package::LockedPackage;
+use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
+use ripe4rust_core::inputs::workspace::Workspace;
+use ripe4rust_core::planning::judging::facts::dependents::Dependents;
 use ripe4rust_core::planning::units::clearing::Clearing;
 use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::values::requirement::Requirement;
@@ -21,9 +26,24 @@ fn advisory(id: &str, name: &str, at: &str, patched: &str) -> Concern {
     })
 }
 
+fn held_by_tonic() -> Workspace {
+    let mut workspace = surveyed().workspace;
+    workspace.lock.push(LockedPackage {
+        name: String::from("tonic"),
+        version: version("0.12.3"),
+        dependencies: vec![ResolvedDependency {
+            name: String::from("prost"),
+            version: version("0.13.5"),
+            requirement: Requirement::parse("^0.13").expect("a requirement"),
+        }],
+    });
+    workspace
+}
+
 #[test]
 fn assign_gives_a_breaking_unit_the_concern_its_target_clears() {
     // Arrange
+    let workspace = surveyed().workspace;
     let concern = advisory("RUSTSEC-2026-0001", "url", "2.5.8", ">=3");
     let units = vec![
         compatible("url", vec![moved("url", "2.5.8", "2.5.9")]),
@@ -31,7 +51,7 @@ fn assign_gives_a_breaking_unit_the_concern_its_target_clears() {
     ];
 
     // Act
-    let assigned = Clearing::new(vec![concern.clone()]).assign(&units);
+    let assigned = Clearing::new(vec![concern.clone()], Dependents::new(&workspace)).assign(&units);
 
     // Assert
     assert_eq!(assigned, vec![Vec::new(), vec![concern]]);
@@ -40,6 +60,7 @@ fn assign_gives_a_breaking_unit_the_concern_its_target_clears() {
 #[test]
 fn assign_gives_a_concern_to_the_first_unit_that_clears_it() {
     // Arrange
+    let workspace = surveyed().workspace;
     let concern = advisory("RUSTSEC-2026-0592", "url", "2.5.8", ">=2.5.9");
     let units = vec![
         compatible(
@@ -53,15 +74,53 @@ fn assign_gives_a_concern_to_the_first_unit_that_clears_it() {
     ];
 
     // Act
-    let assigned = Clearing::new(vec![concern.clone()]).assign(&units);
+    let assigned = Clearing::new(vec![concern.clone()], Dependents::new(&workspace)).assign(&units);
 
     // Assert
     assert_eq!(assigned, vec![vec![concern], Vec::new()]);
 }
 
 #[test]
+fn assign_gives_no_concern_to_a_move_a_dependent_holds_back() {
+    // Arrange
+    let workspace = held_by_tonic();
+    let concern = advisory("RUSTSEC-2026-0007", "prost", "0.13.5", ">=0.14");
+    let units = vec![breaking("prost", "0.13.5", "0.14.6")];
+
+    // Act
+    let assigned = Clearing::new(vec![concern], Dependents::new(&workspace)).assign(&units);
+
+    // Assert
+    assert_eq!(assigned, vec![Vec::new()]);
+}
+
+#[test]
+fn rows_of_a_concern_only_a_held_move_clears_hold_that_move_out_of_the_row() {
+    // Arrange
+    let workspace = held_by_tonic();
+    let concern = advisory("RUSTSEC-2026-0007", "prost", "0.13.5", ">=0.14");
+    let units = vec![breaking("prost", "0.13.5", "0.14.6")];
+
+    // Act
+    let rows = Clearing::new(vec![concern.clone()], Dependents::new(&workspace)).rows(&units);
+
+    // Assert
+    assert_eq!(
+        rows.iter()
+            .map(|(row, concerns)| (row.id.to_string(), row.held.clone(), concerns.clone()))
+            .collect::<Vec<_>>(),
+        vec![(
+            String::from("advisory:prost@0.13.5"),
+            vec![moved("prost", "0.13.5", "0.14.6")],
+            vec![concern]
+        )]
+    );
+}
+
+#[test]
 fn rows_of_the_concerns_no_unit_clears_are_one_per_crate_version() {
     // Arrange
+    let workspace = surveyed().workspace;
     let first = advisory("RUSTSEC-2026-0003", "ring", "0.16.20", ">=9");
     let other = advisory("RUSTSEC-2026-0002", "atty", "0.2.14", ">=9");
     let second = advisory("RUSTSEC-2026-0004", "ring", "0.16.20", ">=9");
@@ -79,7 +138,7 @@ fn rows_of_the_concerns_no_unit_clears_are_one_per_crate_version() {
     ];
 
     // Act
-    let rows = Clearing::new(concerns).rows(&[]);
+    let rows = Clearing::new(concerns, Dependents::new(&workspace)).rows(&[]);
 
     // Assert
     assert_eq!(
@@ -100,12 +159,17 @@ fn rows_of_the_concerns_no_unit_clears_are_one_per_crate_version() {
 #[test]
 fn unclear_are_the_concerns_no_unit_clears() {
     // Arrange
+    let workspace = surveyed().workspace;
     let cleared = advisory("RUSTSEC-2026-0592", "url", "2.5.8", ">=2.5.9");
     let uncleared = advisory("RUSTSEC-2026-0002", "atty", "0.2.14", ">=9");
     let units = vec![compatible("url", vec![moved("url", "2.5.8", "2.5.9")])];
 
     // Act
-    let unclear = Clearing::new(vec![cleared, uncleared.clone()]).unclear(&units);
+    let unclear = Clearing::new(
+        vec![cleared, uncleared.clone()],
+        Dependents::new(&workspace),
+    )
+    .unclear(&units);
 
     // Assert
     assert_eq!(unclear, vec![uncleared]);

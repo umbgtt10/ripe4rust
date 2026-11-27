@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::lock_move::LockMove;
+use crate::planning::judging::facts::dependents::Dependents;
 use crate::planning::judging::facts::plan_context::PlanContext;
 use crate::planning::pins_and_policy::hold::Hold;
 use crate::planning::plan::Plan;
@@ -60,7 +61,7 @@ impl<'a> PlanWriter<'a> {
         let mut units = self.units(&context, &concerns);
         units.extend(ToolchainUnit::new(&toolchain).build(surveyed.pinned.as_ref()));
         let units = PlanOrder.sorted(units);
-        let clearing = Clearing::new(concerns);
+        let clearing = Clearing::new(concerns, Dependents::new(&surveyed.workspace));
         let assigned = clearing.assign(&units);
         let rows = clearing.rows(&units);
         let mut lock = surveyed

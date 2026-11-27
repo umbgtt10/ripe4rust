@@ -34,24 +34,31 @@ use alloc::vec;
 /// git unit the others leave, and rule 12 every breaking unit. Then against
 /// drift, then a crate its dependents hold back, then the no-gates
 /// downgrade, then the moves back to a lower version, then a crate named
-/// nowhere. An advisory row is asked, urgent, by no rule.
+/// nowhere. An advisory row is asked, urgent, by no rule, naming the
+/// dependents that hold back the upgrade that would clear it.
 pub struct Judge;
 
 impl Judge {
     pub fn judge(&self, facts: &UnitFacts) -> Decision {
         if facts.kind == UnitKind::Advisory {
             let concerns = Wording.list(&facts.concerns);
-            return Decision {
+            let held = if facts.held_by.is_empty() {
+                ""
+            } else {
+                ": the upgrade that would ripens until its dependents move"
+            };
+            let row = Decision {
                 outcome: Outcome::Ask,
                 urgent: true,
                 rule: None,
                 suggestion: Some(Suggestion::ReplaceOrAccept),
                 reasons: vec![format!("{concerns}, which no upgrade clears")],
                 why: Some(format!(
-                    "{concerns} affects {}, and no upgrade in this plan clears it",
+                    "{concerns} affects {}, and no upgrade in this plan clears it{held}",
                     facts.name
                 )),
             };
+            return HeldByDependents.applied(row, facts);
         }
         let rules: [&dyn Rule; 12] = [
             &UrgentBeyondGates,

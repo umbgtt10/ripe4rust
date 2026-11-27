@@ -203,6 +203,59 @@ fn plan_of_a_git_source_moving_asks_it_as_a_unit_of_its_own() {
 }
 
 #[test]
+fn plan_of_an_advisory_only_a_held_back_unit_would_clear_rows_it_and_ripens_the_unit() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.workspace.lock.push(LockedPackage {
+        name: String::from("frame"),
+        version: version("0.4.0"),
+        dependencies: vec![ResolvedDependency {
+            name: String::from("widget"),
+            version: version("1.4.0"),
+            requirement: Requirement::parse("^1.4").expect("a requirement"),
+        }],
+    });
+    surveyed.advisories = vec![Advisory {
+        id: String::from("RUSTSEC-2026-0007"),
+        name: String::from("widget"),
+        version: version("1.4.0"),
+        patched: vec![Requirement::parse(">=2").expect("a requirement")],
+        unaffected: Vec::new(),
+    }];
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    let row = |id: &str| {
+        plan.units
+            .iter()
+            .find(|planned| planned.unit.id.to_string() == id)
+            .expect("the row")
+    };
+    let (widget, advisory) = (row("breaking:widget"), row("advisory:widget@1.4.0"));
+    assert_eq!(
+        (widget.decision.outcome, widget.decision.urgent),
+        (Outcome::Ripening, false)
+    );
+    assert_eq!(
+        (
+            advisory.decision.urgent,
+            advisory.decision.reasons.clone(),
+            advisory.evidence.held.clone()
+        ),
+        (
+            true,
+            vec![
+                String::from("RUSTSEC-2026-0007, which no upgrade clears"),
+                String::from("frame 0.4.0 requires widget ^1.4: moving it adds 2.1.0 beside 1.4.0"),
+            ],
+            vec![moved("widget", "1.4.0", "2.1.0")]
+        )
+    );
+}
+
+#[test]
 fn plan_puts_an_advisory_on_the_unit_that_clears_it_and_rows_the_rest() {
     // Arrange
     let mut surveyed = surveyed();
