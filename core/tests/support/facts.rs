@@ -38,6 +38,7 @@ pub fn facts(kind: UnitKind) -> UnitFacts {
             complete: true,
         }),
         removes_copy: false,
+        held_by: Vec::new(),
         held_back: 0,
         gates: 2,
         small_footprint: 10,

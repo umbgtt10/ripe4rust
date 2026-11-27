@@ -7,6 +7,7 @@ use crate::inputs::lock_move::LockMove;
 use crate::inputs::written_line::WrittenLine;
 use crate::planning::pins_and_policy::hold::Hold;
 use crate::planning::pins_and_policy::pin::Pin;
+use crate::planning::round::checking::accountable::Accountable;
 use crate::planning::round::checking::difference::Difference;
 use crate::planning::round::move_wording::MoveWording;
 use crate::planning::round::sorted::Sorted;
@@ -26,29 +27,39 @@ const LOCK: &str = "Cargo.lock";
 /// not at the rev it takes, a git source moved where no unit takes it. The lock's changes no
 /// move accounts for are a breaking unit's tail where one is applied -- the
 /// unit checked's, reported as its `transitive` moves, or an earlier one's --
-/// and the unit checked's extra moves where none is.
+/// and the unit checked's extra moves where none is. Of a crate the units
+/// share, whose moves depend on the order they are applied in, a move it does
+/// not own and a change no move explains are never a difference -- unless the
+/// crate is its own, or its split's --, and are reported as `shared` where
+/// the unit moves the crate: another unit's shared crates are not its to say.
 pub struct DifferenceFinder<'a> {
     target: &'a Target,
     sorting: &'a Sorting<'a>,
     pins: &'a [Pin],
+    accountable: &'a Accountable<'a>,
 }
 
 impl<'a> DifferenceFinder<'a> {
-    pub fn new(target: &'a Target, sorting: &'a Sorting<'a>, pins: &'a [Pin]) -> Self {
+    pub fn new(
+        target: &'a Target,
+        sorting: &'a Sorting<'a>,
+        pins: &'a [Pin],
+        accountable: &'a Accountable<'a>,
+    ) -> Self {
         Self {
             target,
             sorting,
             pins,
+            accountable,
         }
     }
 
     pub fn differences(&self, sorted: &Sorted) -> Vec<Difference> {
-        let lock = self.sorting.lock();
         let mut found = self
-            .target
-            .moves
-            .iter()
-            .filter(|lock_move| !lock.applied(lock_move))
+            .accountable
+            .unmade()
+            .into_iter()
+            .filter(|lock_move| self.accountable.owns(lock_move))
             .map(|lock_move| self.difference(String::from(LOCK), self.missed(lock_move, sorted)))
             .collect::<Vec<Difference>>();
         found.extend(
@@ -64,9 +75,14 @@ impl<'a> DifferenceFinder<'a> {
                 .filter_map(|lock_move| self.pinned(lock_move))
                 .map(|what| self.difference(String::from(LOCK), what)),
         );
-        found.extend(self.extra(sorted).iter().map(|lock_move| {
-            self.difference(String::from(LOCK), MoveWording.unexplained(lock_move))
-        }));
+        found.extend(
+            self.extra(sorted)
+                .iter()
+                .filter(|lock_move| self.accountable.answers_for(&lock_move.name))
+                .map(|lock_move| {
+                    self.difference(String::from(LOCK), MoveWording.unexplained(lock_move))
+                }),
+        );
         found.extend(
             self.target
                 .unit
@@ -89,6 +105,24 @@ impl<'a> DifferenceFinder<'a> {
                 .map(|moved| self.difference(String::from(LOCK), MoveWording.git(moved))),
         );
         found
+    }
+
+    pub fn shared(&self, sorted: &Sorted) -> Vec<String> {
+        let missed = self
+            .accountable
+            .unmade()
+            .into_iter()
+            .filter(|lock_move| !self.accountable.owns(lock_move))
+            .map(|lock_move| MoveWording.why_shared(&self.missed(lock_move, sorted)));
+        let changed = self
+            .extra(sorted)
+            .into_iter()
+            .filter(|lock_move| {
+                !self.accountable.answers_for(&lock_move.name)
+                    && self.accountable.moves(&lock_move.name)
+            })
+            .map(|lock_move| MoveWording.shared(&lock_move));
+        missed.chain(changed).collect()
     }
 
     pub fn transitive(&self, sorted: &Sorted) -> Vec<LockMove> {
@@ -117,17 +151,11 @@ impl<'a> DifferenceFinder<'a> {
         if !sorted.breaking.is_empty() {
             return Vec::new();
         }
-        let lock = self.sorting.lock();
+        let unmade = self.accountable.unmade();
         sorted
             .unexplained
             .iter()
-            .filter(|lock_move| {
-                !self
-                    .target
-                    .moves
-                    .iter()
-                    .any(|planned| planned.name == lock_move.name && !lock.applied(planned))
-            })
+            .filter(|lock_move| !unmade.iter().any(|planned| planned.name == lock_move.name))
             .cloned()
             .collect()
     }

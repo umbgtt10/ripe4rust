@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::render::json::documents::dependent_document::DependentDocument;
 use crate::render::json::documents::line_document::LineDocument;
 use crate::render::json::documents::move_document::MoveDocument;
 use serde::Serialize;
@@ -18,4 +19,5 @@ pub struct EvidenceDocument<'a> {
     pub held: Vec<MoveDocument<'a>>,
     pub downgrades: Vec<MoveDocument<'a>>,
     pub unfollowed_includes: Vec<String>,
+    pub held_by: Vec<DependentDocument<'a>>,
 }

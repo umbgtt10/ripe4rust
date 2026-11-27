@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod check_document;
+pub mod dependent_document;
 pub mod diagnostic_document;
 pub mod difference_document;
 pub mod evidence_document;

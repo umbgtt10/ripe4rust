@@ -48,7 +48,7 @@ const COMMANDS: [Entry; 5] = [
         exits: &[
             (
                 0,
-                "as planned: the units applied and those still to go are listed",
+                "as planned: the units applied and those still to go are listed, and a move of a crate the units share, of those the unit moves, that came out otherwise is reported, no difference",
             ),
             (
                 1,

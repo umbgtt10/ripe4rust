@@ -5,8 +5,10 @@ slice of "Delivery" is implemented: the scaffolding, the core with the
 renderers, the adapters with `plan` end to end, the round's commands, `check`,
 `hold` and `guide`, the parse of the sources, and the toolchain unit, released
 as 0.1.0. The first dry round across real workspaces ran with it, and 0.1.1
-fixes what it found. The decisions that were not
-obvious each have an ADR under `docs/ADRs/`.
+fixes what it found; the first round that applied a plan found two flaws,
+units sharing a crate and a crate its dependents hold back, which 0.1.2
+fixes. The decisions that were not obvious each have an ADR under
+`docs/ADRs/`.
 
 ## The question
 
@@ -333,13 +335,20 @@ line young and no line active.
 - **Compatible:** what `cargo update --dry-run --recursive -p <crate>`
   reports (ADR-CargoComputesTheLockMoves). Units are taken in plan order, by
   crate name. A transitive move several units share belongs to the first,
-  because applying it moves it for the rest. The moves `cargo update
-  --dry-run` makes for the whole workspace and no unit reaches form one last
-  unit, **the rest**. A move of a crate pinned with `hold = "all"` is left
-  out of every unit, which then applies its other moves one by one -- unless
-  it clears an advisory or a yanked release, which no pin holds. A unit whose
-  moves all belong to earlier units is no unit. A crate the members use at
-  several versions is judged from the oldest.
+  because applying it moves it for the rest: a later unit's move is left out
+  where the moves taken before it leave the version it leaves and reach the
+  one it reaches, version by version, so a crate the lock holds in two
+  versions is told apart however cargo prints it -- one line moving a
+  version, or a removal and an addition. The moves `cargo update --dry-run`
+  makes for the whole workspace and no unit reaches form one last unit,
+  **the rest**, where one of them takes a crate from a version to another: a
+  rest of crates only added or removed is no unit, since no step takes them
+  alone -- cargo adds or removes a crate as another's move needs it -- and
+  they come with the units. A move of a crate pinned with `hold = "all"` is
+  left out of every unit, which then applies its other moves one by one --
+  unless it clears an advisory or a yanked release, which no pin holds. A
+  unit whose moves all belong to earlier units is no unit. A crate the
+  members use at several versions is judged from the oldest.
 - **Breaking:** the direct crate and its target version. What the lock moves
   with it is known only once the manifest is edited, which ripe4rust never
   does; `check` reports it after the agent has applied it.
@@ -353,6 +362,18 @@ line young and no line active.
   promises none. A git source moving is never left to the rest.
 - **Group:** the members' moves together.
 
+Each unit's moves are computed alone, on the lock the plan found; applied one
+after another, they move the lock under the units after them. A crate is
+**shared** where its moves, each unit's computed alone, do not add up to the
+whole workspace's: a unit leaves a version the whole workspace keeps or
+reaches one it does not, two units leaving one version take it to different
+places, or the whole workspace moves a version no unit does -- the rest's,
+or one only added or removed. Its moves depend on the order the units are
+applied in, and on which of them are applied at all, so the plan names it in
+`shared`, and `check` holds no unit to a move of it the unit does not own
+(ADR-AUnitIsCheckedOnWhatItOwns). A crate pinned with `hold = "all"` is never
+shared.
+
 An advisory or a yanked release in use is attached to the unit whose moves
 clear it, wherever it sits in the tree -- an advisory on a transitive crate
 lands on the unit of the direct dependency that pulls it. Where several units
@@ -360,11 +381,17 @@ clear it, it lands on the first in plan order: units by crate name, a crate's
 compatible unit before its breaking one, the toolchain as `rust`, then the
 rest, then the advisory rows. A move clears an advisory when it takes the
 crate off the affected version to one the advisory names patched or
-unaffected; it clears a yanked release when it takes the crate off it. What
+unaffected; it clears a yanked release when it takes the crate off it. A move
+a dependent's requirement holds back -- a breaking unit's crate its
+dependents keep on the version in use, "A crate its dependents hold back"
+below -- clears nothing: the version it leaves stays in the lock. What
 no unit clears gets a row of its own, one per crate version, which lists
 every advisory against that version and its yanking, as a compatible unit
 lists all it clears: **ask**, urgent, "replace the crate, or accept it in
-`deny.toml`'s `[advisories] ignore` with its reason".
+`deny.toml`'s `[advisories] ignore` with its reason". A row whose advisory a
+held-back move would clear holds that move in its evidence's `held`, names
+the dependents among its reasons and in `held_by`, and its question says why:
+the upgrade that would clear it ripens until its dependents move.
 
 ## The rules
 
@@ -464,6 +491,29 @@ possibly an unused dependency", whatever rule decided it. Its question
 offers `remove` beside its other answers: a person decides, as a crate can be
 needed for its features or side effects, and the gates say whether the build
 still holds without it. Its outcome is what the rules make it.
+
+### A crate its dependents hold back
+
+A breaking unit moves its crate to a version a package of the lock may not
+accept: a dependent whose requirement the target does not meet -- `tonic`
+0.12.3 requiring `prost` `^0.13` -- keeps the version in use, and moving the
+crate only adds the target beside it, a second copy, not a migration
+(ADR-ARequirementHoldsACrateBack). The dependents are read from `cargo
+metadata`'s resolve: every package of the lock, the unit's own members aside,
+that depends on the version in use with a requirement the target does not
+meet. Each is named among the unit's reasons, "tonic 0.12.3 requires prost
+^0.13: moving it adds 0.14.6 beside 0.13.5", and in its evidence as
+`held_by`, whatever rule decided it. A unit the rules would take or ask
+**ripens** instead, its rule kept, with the suggestion
+`until-its-dependents-move`: the dependent's own upgrade releases it -- here
+`tonic`'s, to a line that requires the new `prost` or none --, and the next
+plan reads the lock it leaves. Such a move clears no advisory and no yanked
+release, so a unit is never urgent for what only its held move would clear:
+the advisory keeps its row, which says so, and the unit ripens. A unit urgent
+for what another of its moves clears keeps its ask, as an urgent unit is
+never held, and one already ripening keeps what holds it; it is applied
+after drift and before the no-gates downgrade, so an overripe unit its
+dependents hold ripens too.
 
 ## Footprint and exposure
 
@@ -753,6 +803,7 @@ the rest                      compatible  --       --       ripe          2 move
     ]
   },
   "gates": ["just stage1", "just stage2"],
+  "shared": [],
   "diagnostics": [],
   "units": [
     {
@@ -798,20 +849,23 @@ step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
 release, the moves a pin holds out of the unit, the moves to a lower
-version it makes, and the includes a breaking unit's footprint could not
-follow. The workspace's `lines` are
+version it makes, the includes a breaking unit's footprint could not
+follow, and the dependents holding its crate back, each `{ "crate", "version",
+"requires", "requirement" }`. The workspace's `lines` are
 every line a unit's `apply` can edit, as the plan found it written: each
 crates.io dependency's requirement in every manifest, `key` the crate; each
 member's `rust-version`, its own or the one it inherits; and
 `rust-toolchain.toml`'s `channel` -- what `check` compares the manifests and
 the toolchain file with; its `git`, after `lock`, every crate of a git source
 the lock holds, `<crate> <source>#<rev>`, the rev short, which `check` sorts a
-git unit by. A git unit's `from` and `to` are the short revs its source
+git unit by. The plan's `shared`, after `gates`, names the crates the units
+share, in order, which `check` holds no unit to a move of it does not own;
+a plan written before it reads as sharing none. A git unit's `from` and `to` are the short revs its source
 leaves and takes, its `source` the URL and spec cargo writes, null for every
 other kind; its `moves` the registry's it pulls in. Every object's keys come
 in the order shown, at every depth: a unit's `members` after `crate`, its
 `source` after `to` and its `reasons` after `suggestion`; the evidence's
-`footprint`, `held_back`, `held`, `downgrades` and `unfollowed_includes` after
+`footprint`, `held_back`, `held`, `downgrades`, `unfollowed_includes` and `held_by` after
 `yanked_in_use`; the line in use as `line`, `first_release`, `last_release`,
 `releases`. A document for a failure carries `schema`,
 `command` and `diagnostics` alone.
@@ -819,7 +873,10 @@ in the order shown, at every depth: a unit's `members` after `crate`, its
 In the table, one parenthesis after the crate counts a group's other members
 as `+N released with it` and the crates a compatible unit pulls in as `+N
 transitive`, `tonic (+1 released with it, +16 transitive)`; the workspace is named by its fingerprint's
-first eight characters, and the diagnostics follow the table, one a line.
+first eight characters; the crates the units share follow the table on one
+line, `shared by the units: getrandom, wasip2 -- their moves depend on the
+order the units are applied in`, where there are any; and the diagnostics
+follow, one a line.
 
 A compatible unit whose own move a pin holds -- its crate pinned with `hold =
 "all"` -- takes that crate to no version: its `to` is null, the table writes
@@ -909,6 +966,9 @@ whichever row they come from.
       "what": "`memchr` moved 2.5.0 -> 2.6.0, a move no unit of the plan makes",
       "do": "carry out the unit's `revert`, `git restore -- Cargo.lock`: compatible:itoa becomes ask, with these differences attached" }
   ],
+  "shared": [
+    "`wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in"
+  ],
   "applied": ["compatible:itoa"],
   "to_go": ["compatible:memchr"],
   "diagnostics": []
@@ -917,12 +977,19 @@ whichever row they come from.
 
 `transitive` is a breaking unit's tail, the moves its edit made beyond its
 own, each as `moves` writes it; `where` is `Cargo.lock` for a move and a
-manifest's `file:line` for an edit. A check that could not be made, or that
+manifest's `file:line` for an edit. `shared` is every move of a crate the
+units share, of the crates the unit checked moves, that came out otherwise
+than the plan computed it, a unit alone: a move of the unit's own it does
+not own, not in the lock, and a change of such a crate no move explains --
+each said, and no difference. A shared crate the unit does not move is
+another unit's to say, and goes unsaid. A
+check that could not be made, or that
 found the plan stale, prints the failure document -- `schema`, `command` and
 `diagnostics` --, a stale plan's each a `plan-stale` at its `file:line`. In
 text: `check <unit>: as planned` or `not as planned`, the tail as
-`transitive: ...`, each difference as `<where>: <what>. Do: <do>`, the units
-`applied:` and `to go:`, then the diagnostics.
+`transitive: ...`, each difference as `<where>: <what>. Do: <do>`, each
+shared move as `shared: <what>.`, the units `applied:` and `to go:`, then the
+diagnostics.
 
 ## Commands
 
@@ -962,8 +1029,11 @@ Against them, `check` sorts every difference in the
 workspace into the units it belongs to:
 
 - every difference belongs to units of the plan, and the one named shows
-  exactly its expected moves: **0**, with the units already applied and those
-  still to go, so an interrupted round resumes where it stopped;
+  exactly its expected moves -- those it owns, where the units share a crate
+  --: **0**, with the units already applied and those still to go, so an
+  interrupted round resumes where it stopped, and every move of a crate the
+  units share, of those the unit moves, that came out otherwise, reported
+  and no difference;
 - the unit named shows nothing, or something else -- a move missing, another
   version, an extra move, a crate pinned on its line taken to a new one by a
   breaking unit: **1**, each difference listed, with what to do: revert, and
@@ -1008,15 +1078,28 @@ Where the lines above leave it open, the differences are sorted this way:
   edit explains -- rewritten, new or gone -- is a change outside the plan,
   **3**, one `plan-stale` for each. A change outside those lines -- the pin a
   `hold` printed, a comment -- is no difference.
+- **A crate the units share is the units' together**
+  (ADR-AUnitIsCheckedOnWhatItOwns). A unit owns every move of a crate the
+  plan's `shared` does not name, and of one it names, the move of its own
+  crate, the move of a split, and the rest's moves its `--precise` steps take;
+  it is held to those alone. A move it does not own that the lock does not
+  show, and a change of a shared crate no move of the plan explains -- left,
+  joined, or at a version no unit takes it to -- are never a difference,
+  unless the crate is the unit's own or its split's, and are reported in
+  `shared` where the unit moves the crate: a shared crate only another unit
+  moves is that unit's to say, so a later check does not repeat it; for
+  `hold` such a change is no change outside the plan. Where a breaking unit
+  is applied, they are its tail, as the next bullet says.
 - **A breaking unit's tail.** Where a breaking unit is applied, the lock moves
   no move of the plan accounts for are its tail: the unit named's `transitive`
   moves when it is that unit, and otherwise an earlier one's, so a compatible
   unit checked after a migration is not blamed for it. A tail move of a crate a
   pin holds -- off its line, or at all with `hold = "all"` -- is a difference.
 - **Applied and still to go**, in plan order, advisory rows left out: a unit
-  every move and edit of which shows is applied; one none of which shows is
-  still to go; one partly applied is listed by the ids of its split where it
-  has one, and as still to go where it has none.
+  every move it owns and every edit of which shows is applied -- one that owns
+  none of its moves, by them all; one none of which shows is still to go; one
+  partly applied is listed by the ids of its split where it has one, and as
+  still to go where it has none.
 
 ### hold
 
@@ -1034,8 +1117,8 @@ Where the lines above leave it open, `hold` works this way:
   decision for the person: it becomes an urgent ask. Then the policy as it
   stands and the workspace, sorted as `check` sorts it. No step is being
   checked, so a lock move no unit makes is a change outside the plan too,
-  unless it is the tail of a breaking unit applied: any change no unit explains
-  is `plan-stale`, **3**.
+  unless it is the tail of a breaking unit applied, or a change of a crate the
+  units share: any change no unit explains is `plan-stale`, **3**.
 - **What the pins hold**, so the next plan holds the unit: a compatible unit's
   every crate it moves, with `hold = "all"` -- a pin on its crate alone would
   leave the rest of its moves to be judged again --, and a split move's crate
@@ -1099,7 +1182,7 @@ document's keys and holds each to a field of the guide.
 {
   "schema": 1,
   "command": "guide",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "round": ["1. Run `cargo ripe4rust plan --format json > plan.json`.", "..."],
   "commands": [
     { "usage": "cargo ripe4rust check <unit> --plan <file> [--format table|json]",

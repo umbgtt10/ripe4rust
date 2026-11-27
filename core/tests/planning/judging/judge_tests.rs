@@ -9,15 +9,63 @@ use crate::support::releases::date;
 use crate::support::releases::version;
 use ripe4rust_core::outcome::Outcome;
 use ripe4rust_core::planning::judging::decision::Decision;
+use ripe4rust_core::planning::judging::dependent::Dependent;
 use ripe4rust_core::planning::judging::downgrade::Downgrade;
 use ripe4rust_core::planning::judging::footprint::Footprint;
 use ripe4rust_core::planning::judging::judge::Judge;
 use ripe4rust_core::planning::judging::suggestion::Suggestion;
 use ripe4rust_core::planning::judging::unit_facts::UnitFacts;
 use ripe4rust_core::unit_kind::UnitKind;
+use ripe4rust_core::values::requirement::Requirement;
 
 fn rule_of(facts: &UnitFacts) -> Option<u8> {
     Judge.judge(facts).rule
+}
+
+#[test]
+fn judge_of_a_breaking_unit_a_dependent_holds_back_ripens_it_whatever_the_rules_called_it() {
+    // Arrange
+    let small = UnitFacts {
+        name: String::from("prost"),
+        footprint: Some(Footprint {
+            lines: 3,
+            files: 1,
+            complete: true,
+        }),
+        held_by: vec![Dependent {
+            name: String::from("tonic"),
+            version: version("0.12.3"),
+            requires: String::from("prost"),
+            requirement: Requirement::parse("^0.13").expect("a requirement"),
+            in_use: version("0.13.5"),
+            target: version("0.14.6"),
+        }],
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = Judge.judge(&small);
+
+    // Assert
+    assert_eq!(
+        (
+            decision.outcome,
+            decision.rule,
+            decision.suggestion,
+            decision.reasons
+        ),
+        (
+            Outcome::Ripening,
+            Some(11),
+            Some(Suggestion::UntilItsDependentsMove),
+            vec![
+                String::from("footprint 3 lines in 1 file"),
+                String::from(
+                    "tonic 0.12.3 requires prost ^0.13: moving it adds 0.14.6 beside 0.13.5"
+                )
+            ]
+        )
+    );
 }
 
 #[test]
@@ -190,6 +238,47 @@ fn judge_of_a_young_breaking_line_far_behind_asks_it_overripe() {
     assert_eq!(decision.outcome, Outcome::Ask);
     assert_eq!(decision.rule, Some(9));
     assert_eq!(decision.suggestion, Some(Suggestion::Overripe));
+}
+
+#[test]
+fn judge_of_an_advisory_row_a_dependent_holds_names_it_and_the_upgrade_ripening() {
+    // Arrange
+    let row = UnitFacts {
+        name: String::from("prost 0.13.5"),
+        concerns: vec![String::from("RUSTSEC-2026-0007")],
+        held_by: vec![Dependent {
+            name: String::from("tonic"),
+            version: version("0.12.3"),
+            requires: String::from("prost"),
+            requirement: Requirement::parse("^0.13").expect("a requirement"),
+            in_use: version("0.13.5"),
+            target: version("0.14.6"),
+        }],
+        ..facts(UnitKind::Advisory)
+    };
+
+    // Act
+    let decision = Judge.judge(&row);
+
+    // Assert
+    assert_eq!(
+        decision,
+        Decision {
+            outcome: Outcome::Ask,
+            urgent: true,
+            rule: None,
+            suggestion: Some(Suggestion::ReplaceOrAccept),
+            reasons: vec![
+                String::from("RUSTSEC-2026-0007, which no upgrade clears"),
+                String::from(
+                    "tonic 0.12.3 requires prost ^0.13: moving it adds 0.14.6 beside 0.13.5"
+                ),
+            ],
+            why: Some(String::from(
+                "RUSTSEC-2026-0007 affects prost 0.13.5, and no upgrade in this plan clears it: the upgrade that would ripens until its dependents move"
+            )),
+        }
+    );
 }
 
 #[test]

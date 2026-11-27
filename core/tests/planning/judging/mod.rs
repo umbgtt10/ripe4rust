@@ -4,6 +4,7 @@
 
 pub mod drift_tests;
 pub mod facts;
+pub mod held_by_dependents_tests;
 pub mod judge_tests;
 pub mod moved_back_tests;
 pub mod named_nowhere_tests;

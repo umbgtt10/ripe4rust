@@ -14,6 +14,7 @@ use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::planning::pins_and_policy::hold::Hold;
 use ripe4rust_core::planning::pins_and_policy::pin::Pin;
+use ripe4rust_core::planning::round::checking::accountable::Accountable;
 use ripe4rust_core::planning::round::checking::difference_finder::DifferenceFinder;
 use ripe4rust_core::planning::round::current_state::CurrentState;
 use ripe4rust_core::planning::round::sorting::Sorting;
@@ -30,7 +31,8 @@ fn found(unit: &str, lock: Vec<LockEntry>, lines: Vec<WrittenLine>, pins: &[Pin]
     };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan).find(unit).expect("a unit");
-    DifferenceFinder::new(&target, &sorting, pins)
+    let accountable = Accountable::new(&target, sorting.ownership(), sorting.lock());
+    DifferenceFinder::new(&target, &sorting, pins, &accountable)
         .differences(&sorting.sort())
         .into_iter()
         .map(|difference| format!("{}: {}", difference.at, difference.what))
@@ -210,9 +212,11 @@ fn differences_say_each_time_what_to_do() {
     let target = TargetFinder::new(&plan)
         .find("breaking:gadget")
         .expect("a unit");
+    let accountable = Accountable::new(&target, sorting.ownership(), sorting.lock());
 
     // Act
-    let differences = DifferenceFinder::new(&target, &sorting, &[]).differences(&sorting.sort());
+    let differences =
+        DifferenceFinder::new(&target, &sorting, &[], &accountable).differences(&sorting.sort());
 
     // Assert
     assert_eq!(
@@ -237,9 +241,11 @@ fn transitive_of_a_breaking_unit_applied_is_every_move_no_unit_explains() {
     let target = TargetFinder::new(&plan)
         .find("breaking:gadget")
         .expect("a unit");
+    let accountable = Accountable::new(&target, sorting.ownership(), sorting.lock());
 
     // Act
-    let tail = DifferenceFinder::new(&target, &sorting, &[]).transitive(&sorting.sort());
+    let tail =
+        DifferenceFinder::new(&target, &sorting, &[], &accountable).transitive(&sorting.sort());
 
     // Assert
     assert_eq!(tail, vec![transitive("tiny", "1.0.0")]);
@@ -263,9 +269,11 @@ fn transitive_of_a_compatible_unit_is_none() {
     let target = TargetFinder::new(&plan)
         .find("compatible:widget")
         .expect("a unit");
+    let accountable = Accountable::new(&target, sorting.ownership(), sorting.lock());
 
     // Act
-    let tail = DifferenceFinder::new(&target, &sorting, &[]).transitive(&sorting.sort());
+    let tail =
+        DifferenceFinder::new(&target, &sorting, &[], &accountable).transitive(&sorting.sort());
 
     // Assert
     assert_eq!(tail, Vec::new());

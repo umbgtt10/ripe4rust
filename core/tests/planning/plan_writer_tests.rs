@@ -4,10 +4,13 @@
 
 use crate::support::releases::version;
 use crate::support::surveyed::surveyed;
+use crate::support::units::moved;
+use crate::support::units::removed;
 use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::git::git_source::GitSource;
 use ripe4rust_core::inputs::locked_package::LockedPackage;
+use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
 use ripe4rust_core::outcome::Outcome;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_writer::PlanWriter;
@@ -98,6 +101,62 @@ fn plan_names_a_crate_the_lock_holds_twice_at_its_version() {
 }
 
 #[test]
+fn plan_names_the_crates_the_units_share() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.dependency_moves[1]
+        .moves
+        .push(moved("wasip2", "1.0.3", "1.0.4"));
+    surveyed.workspace_moves.push(removed("wasip2", "1.0.3"));
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    assert_eq!(
+        plan.shared,
+        vec![String::from("libc"), String::from("wasip2")]
+    );
+}
+
+#[test]
+fn plan_of_a_breaking_unit_a_dependent_holds_back_ripens_it_released_by_the_dependent() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.workspace.lock.push(LockedPackage {
+        name: String::from("frame"),
+        version: version("0.4.0"),
+        dependencies: vec![ResolvedDependency {
+            name: String::from("widget"),
+            version: version("1.4.0"),
+            requirement: Requirement::parse("^1.4").expect("a requirement"),
+        }],
+    });
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    let widget = plan
+        .units
+        .iter()
+        .find(|planned| planned.unit.id.to_string() == "breaking:widget")
+        .expect("the breaking unit");
+    assert_eq!(
+        (
+            widget.decision.outcome,
+            widget.decision.reasons.last().map(String::as_str),
+            widget.question.is_none()
+        ),
+        (
+            Outcome::Ripening,
+            Some("frame 0.4.0 requires widget ^1.4: moving it adds 2.1.0 beside 1.4.0"),
+            true
+        )
+    );
+}
+
+#[test]
 fn plan_of_a_git_source_moving_asks_it_as_a_unit_of_its_own() {
     // Arrange
     let mut surveyed = surveyed();
@@ -140,6 +199,59 @@ fn plan_of_a_git_source_moving_asks_it_as_a_unit_of_its_own() {
         vec![String::from(
             "gitcore https://github.com/example/upstream?branch=main#9625c3d2"
         )]
+    );
+}
+
+#[test]
+fn plan_of_an_advisory_only_a_held_back_unit_would_clear_rows_it_and_ripens_the_unit() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.workspace.lock.push(LockedPackage {
+        name: String::from("frame"),
+        version: version("0.4.0"),
+        dependencies: vec![ResolvedDependency {
+            name: String::from("widget"),
+            version: version("1.4.0"),
+            requirement: Requirement::parse("^1.4").expect("a requirement"),
+        }],
+    });
+    surveyed.advisories = vec![Advisory {
+        id: String::from("RUSTSEC-2026-0007"),
+        name: String::from("widget"),
+        version: version("1.4.0"),
+        patched: vec![Requirement::parse(">=2").expect("a requirement")],
+        unaffected: Vec::new(),
+    }];
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    let row = |id: &str| {
+        plan.units
+            .iter()
+            .find(|planned| planned.unit.id.to_string() == id)
+            .expect("the row")
+    };
+    let (widget, advisory) = (row("breaking:widget"), row("advisory:widget@1.4.0"));
+    assert_eq!(
+        (widget.decision.outcome, widget.decision.urgent),
+        (Outcome::Ripening, false)
+    );
+    assert_eq!(
+        (
+            advisory.decision.urgent,
+            advisory.decision.reasons.clone(),
+            advisory.evidence.held.clone()
+        ),
+        (
+            true,
+            vec![
+                String::from("RUSTSEC-2026-0007, which no upgrade clears"),
+                String::from("frame 0.4.0 requires widget ^1.4: moving it adds 2.1.0 beside 1.4.0"),
+            ],
+            vec![moved("widget", "1.4.0", "2.1.0")]
+        )
     );
 }
 

@@ -12,6 +12,8 @@ use crate::support::recorded::lines_with;
 use crate::support::recorded::lock;
 use crate::support::recorded::plan;
 use crate::support::recorded::plan_with_git;
+use crate::support::recorded::plan_with_shared;
+use crate::support::recorded::shared_changed;
 use crate::support::recorded::transitive;
 use crate::support::recorded::with_git;
 use crate::support::surveyed::at;
@@ -23,11 +25,31 @@ use ripe4rust_core::planning::round::checking::check_report::CheckReport;
 use ripe4rust_core::planning::round::checking::checker::Checker;
 use ripe4rust_core::planning::round::checking::difference::Difference;
 
+const BOON_THEN_PROPTEST: [(&str, &str); 7] = [
+    ("ahash", "0.8.14"),
+    ("h2", "0.4.20"),
+    ("libc", "0.2.177"),
+    ("proptest", "1.12.0"),
+    ("r-efi", "5.3.0"),
+    ("r-efi", "6.0.0"),
+    ("rand", "0.10.4"),
+];
+const SHARED: &str =
+    "the units share the crate, and its moves depend on the order they are applied in";
 const UNIT_ONLY: &str = "carry out the unit's `revert`, `git restore -- Cargo.lock`: compatible:widget becomes ask, with these differences attached";
 
 fn check(files: &FakeFiles, unit: &str) -> Result<CheckReport, PlanFailure> {
     let source = FakePlan { plan: Ok(plan()) };
     Checker::new(&source, files).check(unit)
+}
+
+fn check_shared(entries: &[(&str, &str)], unit: &str) -> CheckReport {
+    let source = FakePlan {
+        plan: Ok(plan_with_shared()),
+    };
+    Checker::new(&source, &shared_changed(entries))
+        .check(unit)
+        .expect("a check")
 }
 
 fn codes(failure: &PlanFailure) -> Vec<DiagnosticCode> {
@@ -219,6 +241,41 @@ fn check_of_a_split_move_applied_is_as_planned_and_lists_its_other_move_to_go() 
 }
 
 #[test]
+fn check_of_a_split_move_of_a_shared_crate_not_made_is_not_as_planned() {
+    // Arrange
+    let entries = [
+        ("ahash", "0.8.14"),
+        ("getrandom", "0.3.4"),
+        ("h2", "0.4.20"),
+        ("libc", "0.2.177"),
+        ("proptest", "1.11.0"),
+        ("r-efi", "5.3.0"),
+        ("r-efi", "6.0.0"),
+        ("rand", "0.9.4"),
+        ("wasip2", "1.0.3"),
+    ];
+
+    // Act
+    let report = check_shared(&entries, "compatible:boon/wasip2");
+
+    // Assert
+    assert_eq!(
+        (
+            report.as_planned,
+            report
+                .differences
+                .iter()
+                .map(|difference| difference.what.as_str())
+                .collect::<Vec<&str>>()
+        ),
+        (
+            false,
+            vec!["`wasip2` is still 1.0.3, where the unit moves it to 1.0.4"]
+        )
+    );
+}
+
+#[test]
 fn check_of_a_unit_after_a_git_source_moved_where_no_unit_takes_it_names_the_move() {
     // Arrange
     let source = FakePlan {
@@ -248,6 +305,31 @@ fn check_of_a_unit_after_a_git_source_moved_where_no_unit_takes_it_names_the_mov
 }
 
 #[test]
+fn check_of_a_unit_after_another_that_moved_a_crate_they_share_is_as_planned_saying_nothing_of_it()
+{
+    // Arrange
+    let entries = BOON_THEN_PROPTEST;
+
+    // Act
+    let report = check_shared(&entries, "compatible:proptest");
+
+    // Assert
+    assert_eq!(
+        report,
+        CheckReport {
+            unit: String::from("compatible:proptest"),
+            as_planned: true,
+            transitive: Vec::new(),
+            differences: Vec::new(),
+            shared: Vec::new(),
+            applied: ids(&["compatible:boon", "compatible:proptest"]),
+            to_go: ids(&["compatible:tonic", "rest"]),
+            diagnostics: Vec::new(),
+        }
+    );
+}
+
+#[test]
 fn check_of_a_unit_applied_is_as_planned_listing_what_is_applied_and_what_is_to_go() {
     // Arrange
     let files = changed(widget_applied(), lines());
@@ -263,6 +345,7 @@ fn check_of_a_unit_applied_is_as_planned_listing_what_is_applied_and_what_is_to_
             as_planned: true,
             transitive: Vec::new(),
             differences: Vec::new(),
+            shared: Vec::new(),
             applied: ids(&["compatible:widget"]),
             to_go: ids(&[
                 "breaking:gadget",
@@ -272,6 +355,27 @@ fn check_of_a_unit_applied_is_as_planned_listing_what_is_applied_and_what_is_to_
             ]),
             diagnostics: Vec::new(),
         })
+    );
+}
+
+#[test]
+fn check_of_a_unit_beside_shared_crates_that_moves_a_crate_no_unit_shares_is_not_as_planned() {
+    // Arrange
+    let mut entries = BOON_THEN_PROPTEST.to_vec();
+    entries[1] = ("h2", "0.4.22");
+
+    // Act
+    let report = check_shared(&entries, "compatible:proptest");
+
+    // Assert
+    assert!(!report.as_planned);
+    assert_eq!(
+        report
+            .differences
+            .iter()
+            .map(|difference| difference.what.as_str())
+            .collect::<Vec<&str>>(),
+        vec!["`h2` moved 0.4.20 -> 0.4.22, a move no unit of the plan makes"]
     );
 }
 
@@ -295,6 +399,77 @@ fn check_of_a_unit_not_applied_is_not_as_planned_naming_each_move() {
             "`widget` is still 1.4.0, where the unit moves it to 1.4.1",
             "`gizmo` is still 2.7.5, where the unit moves it to 2.7.6",
         ]
+    );
+}
+
+#[test]
+fn check_of_a_unit_still_reports_a_change_no_move_explains_of_a_shared_crate_it_moves() {
+    // Arrange
+    let mut entries = BOON_THEN_PROPTEST.to_vec();
+    entries[1] = ("h2", "0.4.21");
+    entries[5] = ("r-efi", "6.0.1");
+
+    // Act
+    let report = check_shared(&entries, "compatible:tonic");
+
+    // Assert
+    assert_eq!(
+        (report.as_planned, report.shared),
+        (
+            true,
+            vec![format!("`r-efi` 6.0.1 joined the lock: {SHARED}")]
+        )
+    );
+}
+
+#[test]
+fn check_of_a_unit_whose_move_of_a_shared_crate_came_out_otherwise_is_as_planned_reporting_it() {
+    // Arrange
+    let mut entries = BOON_THEN_PROPTEST.to_vec();
+    entries[1] = ("h2", "0.4.21");
+
+    // Act
+    let report = check_shared(&entries, "compatible:tonic");
+
+    // Assert
+    assert!(report.as_planned, "{report:?}");
+    assert_eq!(
+        report.shared,
+        vec![format!(
+            "`r-efi` 6.0.0 is still in the lock, where the unit removes it: {SHARED}"
+        )]
+    );
+}
+
+#[test]
+fn check_of_a_unit_whose_own_crate_the_units_share_holds_it_to_its_move() {
+    // Arrange
+    let mut recorded = plan_with_shared();
+    recorded.shared.push(String::from("proptest"));
+    recorded.shared.sort();
+    let source = FakePlan { plan: Ok(recorded) };
+    let mut entries = BOON_THEN_PROPTEST.to_vec();
+    entries[3] = ("proptest", "1.11.0");
+
+    // Act
+    let report = Checker::new(&source, &shared_changed(&entries))
+        .check("compatible:proptest")
+        .expect("a check");
+
+    // Assert
+    assert_eq!(
+        (
+            report.as_planned,
+            report
+                .differences
+                .iter()
+                .map(|difference| difference.what.as_str())
+                .collect::<Vec<&str>>()
+        ),
+        (
+            false,
+            vec!["`proptest` is still 1.11.0, where the unit moves it to 1.12.0"]
+        )
     );
 }
 
@@ -348,6 +523,66 @@ fn check_of_an_unreadable_plan_reads_no_workspace() {
 
     // Assert
     assert_eq!(codes(&failure), vec![DiagnosticCode::PlanUnreadable]);
+}
+
+#[test]
+fn check_of_the_rest_not_applied_is_not_as_planned_naming_the_move_its_step_takes() {
+    // Arrange
+    let entries = [
+        ("ahash", "0.8.14"),
+        ("getrandom", "0.3.4"),
+        ("h2", "0.4.20"),
+        ("libc", "0.2.177"),
+        ("proptest", "1.11.0"),
+        ("r-efi", "5.3.0"),
+        ("r-efi", "6.0.0"),
+        ("rand", "0.9.4"),
+        ("wasip2", "1.0.4"),
+    ];
+
+    // Act
+    let report = check_shared(&entries, "rest");
+
+    // Assert
+    assert_eq!((report.as_planned, report.differences.len()), (false, 1));
+    assert_eq!(
+        report.differences[0].what,
+        "`libc` is still 0.2.177, where the unit moves it to 0.2.178"
+    );
+}
+
+#[test]
+fn check_of_the_rest_whose_shared_moves_wait_on_units_not_applied_is_as_planned_reporting_them() {
+    // Arrange
+    let entries = [
+        ("ahash", "0.8.14"),
+        ("getrandom", "0.3.4"),
+        ("h2", "0.4.20"),
+        ("libc", "0.2.178"),
+        ("proptest", "1.11.0"),
+        ("r-efi", "5.3.0"),
+        ("r-efi", "6.0.0"),
+        ("rand", "0.9.4"),
+        ("wasip2", "1.0.4"),
+    ];
+
+    // Act
+    let report = check_shared(&entries, "rest");
+
+    // Assert
+    assert_eq!(
+        (report.as_planned, report.differences, report.shared),
+        (
+            true,
+            Vec::new(),
+            vec![
+                format!(
+                    "`getrandom` 0.3.4 is still in the lock, where the unit removes it: {SHARED}"
+                ),
+                format!("`r-efi` 5.3.0 is still in the lock, where the unit removes it: {SHARED}"),
+            ]
+        )
+    );
 }
 
 #[test]

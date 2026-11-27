@@ -9,6 +9,7 @@ pub mod holding;
 pub mod line_changes_tests;
 pub mod lock_changes_tests;
 pub mod move_wording_tests;
+pub mod ownership_tests;
 pub mod progress_tests;
 pub mod round_reader_tests;
 pub mod sorting_tests;

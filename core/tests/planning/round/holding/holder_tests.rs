@@ -15,6 +15,8 @@ use crate::support::recorded::lines_with;
 use crate::support::recorded::lock;
 use crate::support::recorded::plan;
 use crate::support::recorded::plan_with_git;
+use crate::support::recorded::plan_with_shared;
+use crate::support::recorded::shared_changed;
 use crate::support::recorded::with_git;
 use crate::support::releases::date;
 use crate::support::surveyed::at;
@@ -104,6 +106,33 @@ fn hold_after_a_move_no_unit_makes_is_the_plan_stale() {
     assert_eq!(
         failure.diagnostics[0].what,
         "in `Cargo.lock`, `libc` moved 0.2.177 -> 0.2.180, a move no unit of the plan makes"
+    );
+}
+
+#[test]
+fn hold_after_units_moved_a_crate_they_share_otherwise_than_each_alone_is_not_stale() {
+    // Arrange
+    let files = shared_changed(&[
+        ("ahash", "0.8.14"),
+        ("h2", "0.4.20"),
+        ("libc", "0.2.177"),
+        ("proptest", "1.12.0"),
+        ("r-efi", "5.3.0"),
+        ("r-efi", "6.0.0"),
+        ("rand", "0.10.4"),
+    ]);
+
+    // Act
+    let report = hold(plan_with_shared(), &files, "compatible:tonic");
+
+    // Assert
+    assert_eq!(
+        report.map(|report| report
+            .pins
+            .iter()
+            .map(|pin| pin.name.clone())
+            .collect::<Vec<String>>()),
+        Ok(vec![String::from("h2"), String::from("r-efi")])
     );
 }
 

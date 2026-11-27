@@ -22,6 +22,40 @@ fn git_of_a_source_moved_says_from_which_rev_to_which_no_unit_moves_it() {
 }
 
 #[test]
+fn shared_of_each_kind_of_move_says_the_units_share_the_crate() {
+    // Arrange
+    let removed = LockMove {
+        name: String::from("wasip2"),
+        from: Some(version("1.0.3")),
+        to: None,
+    };
+
+    // Act
+    let said = [
+        moved("memchr", "2.7.5", "2.7.7"),
+        added("getrandom", "0.4.3"),
+        removed,
+    ]
+    .map(|lock_move| MoveWording.shared(&lock_move));
+
+    // Assert
+    assert_eq!(
+        said,
+        [
+            String::from(
+                "`memchr` moved 2.7.5 -> 2.7.7: the units share the crate, and its moves depend on the order they are applied in"
+            ),
+            String::from(
+                "`getrandom` 0.4.3 joined the lock: the units share the crate, and its moves depend on the order they are applied in"
+            ),
+            String::from(
+                "`wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in"
+            ),
+        ]
+    );
+}
+
+#[test]
 fn unexplained_of_each_kind_of_move_says_no_unit_makes_it() {
     // Arrange
     let removed = LockMove {
@@ -46,5 +80,18 @@ fn unexplained_of_each_kind_of_move_says_no_unit_makes_it() {
             String::from("`tiny` 1.0.0 joined the lock, which no unit of the plan adds"),
             String::from("`old` 1.0.0 left the lock, which no unit of the plan removes"),
         ]
+    );
+}
+
+#[test]
+fn why_shared_of_a_sentence_adds_why_it_is_no_difference() {
+    // Arrange & Act
+    let said =
+        MoveWording.why_shared("`r-efi` 6.0.0 is still in the lock, where the unit removes it");
+
+    // Assert
+    assert_eq!(
+        said,
+        "`r-efi` 6.0.0 is still in the lock, where the unit removes it: the units share the crate, and its moves depend on the order they are applied in"
     );
 }

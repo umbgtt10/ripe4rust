@@ -17,6 +17,7 @@ pub enum Suggestion {
     ReplaceOrAccept,
     RevisitThePin,
     UntilItSettles,
+    UntilItsDependentsMove,
     UntilTheWindowCloses,
     Wait,
 }
@@ -34,6 +35,7 @@ impl Suggestion {
             Self::ReplaceOrAccept => "replace-or-accept",
             Self::RevisitThePin => "revisit-the-pin",
             Self::UntilItSettles => "until-it-settles",
+            Self::UntilItsDependentsMove => "until-its-dependents-move",
             Self::UntilTheWindowCloses => "until-the-window-closes",
             Self::Wait => "wait",
         }

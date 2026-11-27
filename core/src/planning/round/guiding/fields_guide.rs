@@ -6,7 +6,7 @@ use crate::planning::round::guiding::field_guide::FieldGuide;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-const FIELDS: [(&str, &str, &str); 122] = [
+const FIELDS: [(&str, &str, &str); 129] = [
     (
         "every",
         "schema",
@@ -93,6 +93,11 @@ const FIELDS: [(&str, &str, &str); 122] = [
     ),
     (
         "plan",
+        "shared",
+        "the crates the units share: their moves, each unit's computed alone, do not add up to the whole workspace's, so they depend on the order the units are applied in; `check` reports such a move a unit does not own, never as a difference",
+    ),
+    (
+        "plan",
         "units",
         "one row per unit, in plan order: by crate, a crate's compatible unit before its breaking one, the toolchain as `rust`, then the rest, then the advisory rows",
     ),
@@ -156,7 +161,7 @@ const FIELDS: [(&str, &str, &str); 122] = [
     (
         "plan",
         "units[].rule",
-        "the rule that decided it, 1 to 12; null for an advisory row",
+        "the rule that decided it, 1 to 13, kept where no gates, a move back or a dependent holding its crate back changes its outcome; null for an advisory row",
     ),
     (
         "plan",
@@ -318,7 +323,7 @@ const FIELDS: [(&str, &str, &str); 122] = [
     (
         "plan",
         "units[].evidence.held",
-        "the moves a pin holds out of the unit",
+        "the moves a pin holds out of the unit; for an advisory row, the moves that would clear it a dependent holds back",
     ),
     ("plan", "units[].evidence.held[].crate", "the crate held"),
     (
@@ -356,6 +361,27 @@ const FIELDS: [(&str, &str, &str); 122] = [
         "units[].evidence.unfollowed_includes",
         "a breaking unit's: every `include!` the parse could not follow -- its path no literal, or generated code as `include_proto!` writes it -- in the members using the crate, as `file:line`; where there is one, the footprint is a floor, never small",
     ),
+    (
+        "plan",
+        "units[].evidence.held_by",
+        "a breaking unit's: every package of the lock whose requirement keeps its crate on the version in use, so moving it adds the target beside that version; where there is one, the unit ripens until its dependents move",
+    ),
+    ("plan", "units[].evidence.held_by[].crate", "the dependent"),
+    (
+        "plan",
+        "units[].evidence.held_by[].version",
+        "its version in the lock",
+    ),
+    (
+        "plan",
+        "units[].evidence.held_by[].requires",
+        "the crate of the unit it requires",
+    ),
+    (
+        "plan",
+        "units[].evidence.held_by[].requirement",
+        "the requirement, which the unit's target does not meet",
+    ),
     ("check", "unit", "the unit, or the move of a split, checked"),
     (
         "check",
@@ -390,6 +416,11 @@ const FIELDS: [(&str, &str, &str); 122] = [
     ),
     ("check", "differences[].what", "what differs"),
     ("check", "differences[].do", "what to do about it"),
+    (
+        "check",
+        "shared",
+        "the moves of crates the units share, of those the unit checked moves, that came out otherwise than the plan computed them, each unit alone: no difference, nothing to do",
+    ),
     (
         "check",
         "applied",

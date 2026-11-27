@@ -5,6 +5,7 @@
 use crate::outcome::Outcome;
 use crate::planning::judging::decision::Decision;
 use crate::planning::judging::drift::Drift;
+use crate::planning::judging::held_by_dependents::HeldByDependents;
 use crate::planning::judging::moved_back::MovedBack;
 use crate::planning::judging::named_nowhere::NamedNowhere;
 use crate::planning::judging::no_gates::NoGates;
@@ -30,26 +31,34 @@ use alloc::format;
 use alloc::vec;
 
 /// The rules, in order, the first that matches deciding; rule 13 takes a
-/// git unit the others leave, and rule 12 every breaking unit. Then against drift, then the
-/// no-gates downgrade, then the moves back to a lower version, then a crate
-/// named nowhere. An advisory row is asked, urgent, by no rule.
+/// git unit the others leave, and rule 12 every breaking unit. Then against
+/// drift, then a crate its dependents hold back, then the no-gates
+/// downgrade, then the moves back to a lower version, then a crate named
+/// nowhere. An advisory row is asked, urgent, by no rule, naming the
+/// dependents that hold back the upgrade that would clear it.
 pub struct Judge;
 
 impl Judge {
     pub fn judge(&self, facts: &UnitFacts) -> Decision {
         if facts.kind == UnitKind::Advisory {
             let concerns = Wording.list(&facts.concerns);
-            return Decision {
+            let held = if facts.held_by.is_empty() {
+                ""
+            } else {
+                ": the upgrade that would ripens until its dependents move"
+            };
+            let row = Decision {
                 outcome: Outcome::Ask,
                 urgent: true,
                 rule: None,
                 suggestion: Some(Suggestion::ReplaceOrAccept),
                 reasons: vec![format!("{concerns}, which no upgrade clears")],
                 why: Some(format!(
-                    "{concerns} affects {}, and no upgrade in this plan clears it",
+                    "{concerns} affects {}, and no upgrade in this plan clears it{held}",
                     facts.name
                 )),
             };
+            return HeldByDependents.applied(row, facts);
         }
         let rules: [&dyn Rule; 12] = [
             &UrgentBeyondGates,
@@ -69,7 +78,8 @@ impl Judge {
             .iter()
             .find_map(|rule| rule.decide(facts))
             .unwrap_or_else(|| VerdictRule.decision(facts));
-        let decided = NoGates.applied(Drift.applied(decided, facts), facts);
+        let decided = HeldByDependents.applied(Drift.applied(decided, facts), facts);
+        let decided = NoGates.applied(decided, facts);
         NamedNowhere.applied(MovedBack.applied(decided, facts), facts)
     }
 }

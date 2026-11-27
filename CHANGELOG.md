@@ -6,6 +6,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-11-27
+
+What the first round that applied a plan found, in one real workspace: units sharing a crate made `check` say "not
+as planned" with nothing wrong, and said so again at every later check, and a breaking unit a dependent's requirement
+held back read ripe -- or urgent, credited with an advisory its move could not clear.
+
+### Fixed
+- Units sharing a crate made `check` say "not as planned" with nothing wrong. Each unit's moves are computed alone,
+  on the lock the plan found, and applied one after another they move the lock under the units after them: a crate
+  one unit took to a version the whole workspace removes was removed by the next, a crate a unit removed alone was
+  kept, and the rest's crates only added or removed came only with units a round had reverted -- each a ripe unit
+  turned into an ask. The plan now names the crates the units share, in the new `shared` after `gates`: those whose
+  moves, each unit's computed alone, do not add up to the whole workspace's -- a unit leaving a version the whole
+  workspace keeps or reaching one it does not, two units taking one version to different places, or the whole
+  workspace moving a version no unit does --, a crate pinned with `hold = "all"` never one of them. `check` holds a
+  unit to the moves it owns -- every move of a crate the units do not share, and of a shared one its own crate's,
+  its split's and the rest's `--precise` steps --, and reports a shared crate's move it does not own, or a change of
+  one no move explains, in the check document's new `shared`, never as a difference -- of the crates the unit moves
+  alone, so a later check does not repeat an earlier unit's shared crates; its exit codes are unchanged,
+  and it still fails a move of a crate no unit shares, its own crate not moved, a split or the rest's step not
+  taken. `hold` counts such a change as no change outside the plan, and a unit is listed applied by the moves it
+  owns. The table writes the shared crates on a line after it, and `guide` names both fields. A plan written before
+  reads as sharing none (`ADR-AUnitIsCheckedOnWhatItOwns`,
+  `ripe4rust_core::planning::units::shared_crates::SharedCrates`,
+  `ripe4rust_core::planning::round::ownership::Ownership`).
+- A later unit's move, and the whole workspace's, was left out of it where an earlier unit's move left the same
+  version, wherever each took it: the whole workspace's removal of a crate a unit had moved went unnamed, and a later
+  unit taking a version further lost its move. A move is now left out where the moves taken before it leave the
+  version it leaves and reach the one it reaches, so a crate the lock holds in two versions is told apart however
+  cargo prints it -- the rest no longer reads two of `rand`'s versions moving as two crates added.
+- A rest of crates only added or removed applied nothing -- no `--precise` step takes them -- and its check could
+  only fail. It is no unit now: those crates come with the units that need them, and are shared.
+- A breaking unit whose crate another package of the tree requires on the line in use was judged as if it could
+  land alone: `breaking:prost`, 0.13.5 to 0.14.6, read ripe by its footprint while `tonic` 0.12.3 requires `prost`
+  `^0.13`, so the edit only added 0.14.6 beside 0.13.5. Every package of the lock -- the unit's own members aside --
+  that depends on the version in use with a requirement the target does not meet now holds the crate back: it is
+  named among the unit's reasons, "tonic 0.12.3 requires prost ^0.13: moving it adds 0.14.6 beside 0.13.5", and in
+  its evidence as the new `held_by`, and a unit the rules would take or ask ripens instead, its rule kept, with the
+  new suggestion `until-its-dependents-move` -- the dependent's own upgrade releases it. An urgent unit keeps its
+  ask, and one already ripening what holds it; `guide` names the new fields, and says the rules are 1 to 13
+  (`ADR-ARequirementHoldsACrateBack`,
+  `ripe4rust_core::planning::judging::held_by_dependents::HeldByDependents`).
+- Such a held-back move was credited with the advisories against the version it leaves, which stays in the lock for
+  the dependent: the breaking unit read urgent, and no row said the advisory would remain. A move a dependent holds
+  back now clears nothing. The advisory keeps its row, urgent, "replace or accept", which holds the move that would
+  clear it in its evidence's `held`, names the dependents among its reasons and in `held_by`, and says in its
+  question that the upgrade that would clear it ripens until its dependents move; the breaking unit, urgent no more,
+  ripens with the rest (`ripe4rust_core::planning::units::clearing::Clearing` takes the dependents).
+
 ## [0.1.1] — 2026-11-26
 
 What the first dry round found, with 0.1.0 across 32 workspaces: a git source moving stopped the plan, a

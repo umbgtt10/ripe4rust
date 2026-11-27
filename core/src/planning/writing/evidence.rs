@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::lock_move::LockMove;
+use crate::planning::judging::dependent::Dependent;
 use crate::planning::units::choice::line_stats::LineStats;
 use crate::values::location::Location;
 use crate::values::partial_version::PartialVersion;
@@ -13,8 +14,8 @@ use alloc::vec::Vec;
 /// the line in use, the `rust-version` the target needs, what it clears, a
 /// breaking unit's footprint -- the migration's work list --, the versions
 /// the toolchain unit would release, the moves a pin holds out, the moves to
-/// a lower version it makes, and the includes a breaking unit's footprint
-/// could not follow.
+/// a lower version it makes, the includes a breaking unit's footprint could
+/// not follow, and the dependents whose requirement holds its crate back.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Evidence {
     pub line_in_use: Option<LineStats>,
@@ -26,4 +27,5 @@ pub struct Evidence {
     pub held: Vec<LockMove>,
     pub downgrades: Vec<LockMove>,
     pub unfollowed_includes: Vec<Location>,
+    pub held_by: Vec<Dependent>,
 }

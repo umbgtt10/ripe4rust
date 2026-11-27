@@ -30,6 +30,7 @@ impl CheckJson {
                     action: &difference.action,
                 })
                 .collect(),
+            shared: &report.shared,
             applied: &report.applied,
             to_go: &report.to_go,
             diagnostics: report

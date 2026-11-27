@@ -7,7 +7,10 @@ use crate::support::plans::breaking;
 use crate::support::plans::compatible;
 use crate::support::plans::moved;
 use cargo_ripe4rust::render::json::evidence_json::EvidenceJson;
+use ripe4rust_core::planning::judging::dependent::Dependent;
 use ripe4rust_core::values::location::Location;
+use ripe4rust_core::values::requirement::Requirement;
+use ripe4rust_core::values::version::Version;
 use serde_json::json;
 
 #[test]
@@ -19,6 +22,14 @@ fn document_of_a_breaking_unit_s_evidence_carries_its_work_list() {
     evidence.unfollowed_includes = vec![Location {
         file: String::from("app/src/wire.rs"),
         line: 2,
+    }];
+    evidence.held_by = vec![Dependent {
+        name: String::from("frame"),
+        version: Version::parse("0.4.0").expect("a version"),
+        requires: String::from("gadget"),
+        requirement: Requirement::parse("^0.13").expect("a requirement"),
+        in_use: Version::parse("0.13.1").expect("a version"),
+        target: Version::parse("0.14.0").expect("a version"),
     }];
 
     // Act
@@ -37,6 +48,9 @@ fn document_of_a_breaking_unit_s_evidence_carries_its_work_list() {
             "held": [{ "crate": "gizmo", "from": "2.7.5", "to": "2.7.6" }],
             "downgrades": [{ "crate": "memchr", "from": "2.7.0", "to": "2.5.0" }],
             "unfollowed_includes": ["app/src/wire.rs:2"],
+            "held_by": [
+                { "crate": "frame", "version": "0.4.0", "requires": "gadget", "requirement": "^0.13" }
+            ],
         })
     );
 }

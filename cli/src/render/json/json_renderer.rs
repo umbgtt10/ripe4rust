@@ -60,6 +60,7 @@ struct PlanDocument<'a> {
     pub registry_read: String,
     pub workspace: WorkspaceDocument<'a>,
     pub gates: &'a [String],
+    pub shared: &'a [String],
     pub diagnostics: Vec<DiagnosticDocument<'a>>,
     pub units: Vec<UnitDocument<'a>>,
 }
@@ -145,6 +146,7 @@ impl DocumentRenderer for JsonRenderer {
                     .collect(),
             },
             gates: &plan.gates,
+            shared: &plan.shared,
             diagnostics: Self::diagnostics(&plan.diagnostics),
             units: plan
                 .units

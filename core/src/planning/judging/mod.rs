@@ -3,10 +3,12 @@
 // SPDX-License-Identifier: MIT
 
 pub mod decision;
+pub mod dependent;
 pub mod downgrade;
 pub mod drift;
 pub mod facts;
 pub mod footprint;
+pub mod held_by_dependents;
 pub mod judge;
 pub mod line_standing;
 pub mod moved_back;
