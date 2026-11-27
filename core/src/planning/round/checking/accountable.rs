@@ -8,10 +8,11 @@ use crate::planning::round::ownership::Ownership;
 use crate::planning::round::target::Target;
 use alloc::vec::Vec;
 
-/// What the unit checked answers for: the moves it owns -- a split's move
-/// always, as its step takes it alone --, those of them the lock does not
-/// show, and the crates whose changes are its to explain: every crate the
-/// units do not share, and its own crate or its split's though they do.
+/// What the unit checked answers for: the crates it moves, the moves it
+/// owns -- a split's move always, as its step takes it alone --, those of
+/// them the lock does not show, and the crates whose changes are its to
+/// explain: every crate the units do not share, and its own crate or its
+/// split's though they do.
 pub struct Accountable<'a> {
     target: &'a Target,
     ownership: Ownership<'a>,
@@ -31,6 +32,10 @@ impl<'a> Accountable<'a> {
         let own = self.target.unit.members.iter().any(|member| member == name)
             || (self.split() && self.target.moves.iter().any(|planned| planned.name == name));
         own || !self.ownership.is_shared(name)
+    }
+
+    pub fn moves(&self, name: &str) -> bool {
+        self.target.moves.iter().any(|planned| planned.name == name)
     }
 
     pub fn owns(&self, lock_move: &LockMove) -> bool {

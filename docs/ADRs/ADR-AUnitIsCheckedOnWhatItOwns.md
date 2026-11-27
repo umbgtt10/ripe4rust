@@ -66,7 +66,10 @@ owns alone.
   not made, a change no move explains of a crate the units do not share, or of
   its own crate, is a difference, **1**, as before. A move it does not own
   that the lock does not show, and a change of a shared crate no move
-  explains, are reported in the check's `shared`, and are no difference.
+  explains, are no difference; they are reported in the check's `shared`
+  where the unit moves the crate. A shared crate only other units move is
+  theirs to say: reported at every later check, it would only repeat what
+  an earlier one said.
   `hold` counts such a change as no change outside the plan. The exit codes
   are unchanged: **0** as planned, **1** not as planned, **2** an error to act
   on, **3** stale.

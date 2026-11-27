@@ -305,7 +305,8 @@ fn check_of_a_unit_after_a_git_source_moved_where_no_unit_takes_it_names_the_mov
 }
 
 #[test]
-fn check_of_a_unit_after_another_that_moved_a_crate_they_share_is_as_planned_reporting_it() {
+fn check_of_a_unit_after_another_that_moved_a_crate_they_share_is_as_planned_saying_nothing_of_it()
+{
     // Arrange
     let entries = BOON_THEN_PROPTEST;
 
@@ -320,7 +321,7 @@ fn check_of_a_unit_after_another_that_moved_a_crate_they_share_is_as_planned_rep
             as_planned: true,
             transitive: Vec::new(),
             differences: Vec::new(),
-            shared: vec![format!("`wasip2` 1.0.3 left the lock: {SHARED}")],
+            shared: Vec::new(),
             applied: ids(&["compatible:boon", "compatible:proptest"]),
             to_go: ids(&["compatible:tonic", "rest"]),
             diagnostics: Vec::new(),
@@ -402,6 +403,26 @@ fn check_of_a_unit_not_applied_is_not_as_planned_naming_each_move() {
 }
 
 #[test]
+fn check_of_a_unit_still_reports_a_change_no_move_explains_of_a_shared_crate_it_moves() {
+    // Arrange
+    let mut entries = BOON_THEN_PROPTEST.to_vec();
+    entries[1] = ("h2", "0.4.21");
+    entries[5] = ("r-efi", "6.0.1");
+
+    // Act
+    let report = check_shared(&entries, "compatible:tonic");
+
+    // Assert
+    assert_eq!(
+        (report.as_planned, report.shared),
+        (
+            true,
+            vec![format!("`r-efi` 6.0.1 joined the lock: {SHARED}")]
+        )
+    );
+}
+
+#[test]
 fn check_of_a_unit_whose_move_of_a_shared_crate_came_out_otherwise_is_as_planned_reporting_it() {
     // Arrange
     let mut entries = BOON_THEN_PROPTEST.to_vec();
@@ -414,10 +435,9 @@ fn check_of_a_unit_whose_move_of_a_shared_crate_came_out_otherwise_is_as_planned
     assert!(report.as_planned, "{report:?}");
     assert_eq!(
         report.shared,
-        vec![
-            format!("`r-efi` 6.0.0 is still in the lock, where the unit removes it: {SHARED}"),
-            format!("`wasip2` 1.0.3 left the lock: {SHARED}"),
-        ]
+        vec![format!(
+            "`r-efi` 6.0.0 is still in the lock, where the unit removes it: {SHARED}"
+        )]
     );
 }
 

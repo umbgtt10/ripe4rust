@@ -967,9 +967,11 @@ whichever row they come from.
 `transitive` is a breaking unit's tail, the moves its edit made beyond its
 own, each as `moves` writes it; `where` is `Cargo.lock` for a move and a
 manifest's `file:line` for an edit. `shared` is every move of a crate the
-units share that came out otherwise than the plan computed it, a unit
-alone: a move of the unit's own it does not own, not in the lock, and a
-change of such a crate no move explains -- each said, and no difference. A
+units share, of the crates the unit checked moves, that came out otherwise
+than the plan computed it, a unit alone: a move of the unit's own it does
+not own, not in the lock, and a change of such a crate no move explains --
+each said, and no difference. A shared crate the unit does not move is
+another unit's to say, and goes unsaid. A
 check that could not be made, or that
 found the plan stale, prints the failure document -- `schema`, `command` and
 `diagnostics` --, a stale plan's each a `plan-stale` at its `file:line`. In
@@ -1019,7 +1021,8 @@ workspace into the units it belongs to:
   exactly its expected moves -- those it owns, where the units share a crate
   --: **0**, with the units already applied and those still to go, so an
   interrupted round resumes where it stopped, and every move of a crate the
-  units share that came out otherwise, reported and no difference;
+  units share, of those the unit moves, that came out otherwise, reported
+  and no difference;
 - the unit named shows nothing, or something else -- a move missing, another
   version, an extra move, a crate pinned on its line taken to a new one by a
   breaking unit: **1**, each difference listed, with what to do: revert, and
@@ -1070,8 +1073,10 @@ Where the lines above leave it open, the differences are sorted this way:
   crate, the move of a split, and the rest's moves its `--precise` steps take;
   it is held to those alone. A move it does not own that the lock does not
   show, and a change of a shared crate no move of the plan explains -- left,
-  joined, or at a version no unit takes it to -- are reported in `shared`,
-  never a difference, unless the crate is the unit's own or its split's; for
+  joined, or at a version no unit takes it to -- are never a difference,
+  unless the crate is the unit's own or its split's, and are reported in
+  `shared` where the unit moves the crate: a shared crate only another unit
+  moves is that unit's to say, so a later check does not repeat it; for
   `hold` such a change is no change outside the plan. Where a breaking unit
   is applied, they are its tail, as the next bullet says.
 - **A breaking unit's tail.** Where a breaking unit is applied, the lock moves

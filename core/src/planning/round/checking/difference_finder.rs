@@ -29,8 +29,9 @@ const LOCK: &str = "Cargo.lock";
 /// unit checked's, reported as its `transitive` moves, or an earlier one's --
 /// and the unit checked's extra moves where none is. Of a crate the units
 /// share, whose moves depend on the order they are applied in, a move it does
-/// not own and a change no move explains are reported as `shared`, never a
-/// difference -- unless the crate is its own, or its split's.
+/// not own and a change no move explains are never a difference -- unless the
+/// crate is its own, or its split's --, and are reported as `shared` where
+/// the unit moves the crate: another unit's shared crates are not its to say.
 pub struct DifferenceFinder<'a> {
     target: &'a Target,
     sorting: &'a Sorting<'a>,
@@ -116,7 +117,10 @@ impl<'a> DifferenceFinder<'a> {
         let changed = self
             .extra(sorted)
             .into_iter()
-            .filter(|lock_move| !self.accountable.answers_for(&lock_move.name))
+            .filter(|lock_move| {
+                !self.accountable.answers_for(&lock_move.name)
+                    && self.accountable.moves(&lock_move.name)
+            })
             .map(|lock_move| MoveWording.shared(&lock_move));
         missed.chain(changed).collect()
     }

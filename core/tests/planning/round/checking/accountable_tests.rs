@@ -50,6 +50,21 @@ fn answers_for_its_split_s_crate_though_the_units_share_it() {
 }
 
 #[test]
+fn moves_a_crate_its_moves_name_and_no_other() {
+    // Arrange
+    let plan = plan_with_shared();
+    let target = target("compatible:tonic");
+    let lock = LockChanges::new(&plan.lock, &plan.lock);
+    let accountable = Accountable::new(&target, Ownership::new(&plan.shared), &lock);
+
+    // Act
+    let moved = ["r-efi", "wasip2"].map(|name| accountable.moves(name));
+
+    // Assert
+    assert_eq!(moved, [true, false]);
+}
+
+#[test]
 fn owns_a_split_s_move_of_a_shared_crate_and_not_the_unit_s() {
     // Arrange
     let plan = plan_with_shared();

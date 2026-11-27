@@ -419,7 +419,7 @@ const FIELDS: [(&str, &str, &str); 129] = [
     (
         "check",
         "shared",
-        "the moves of crates the units share that came out otherwise than the plan computed them, each unit alone: no difference, nothing to do",
+        "the moves of crates the units share, of those the unit checked moves, that came out otherwise than the plan computed them, each unit alone: no difference, nothing to do",
     ),
     (
         "check",

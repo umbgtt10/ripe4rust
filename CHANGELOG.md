@@ -17,7 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   workspace moving a version no unit does --, a crate pinned with `hold = "all"` never one of them. `check` holds a
   unit to the moves it owns -- every move of a crate the units do not share, and of a shared one its own crate's,
   its split's and the rest's `--precise` steps --, and reports a shared crate's move it does not own, or a change of
-  one no move explains, in the check document's new `shared`, never as a difference; its exit codes are unchanged,
+  one no move explains, in the check document's new `shared`, never as a difference -- of the crates the unit moves
+  alone, so a later check does not repeat an earlier unit's shared crates; its exit codes are unchanged,
   and it still fails a move of a crate no unit shares, its own crate not moved, a split or the rest's step not
   taken. `hold` counts such a change as no change outside the plan, and a unit is listed applied by the moves it
   owns. The table writes the shared crates on a line after it, and `guide` names both fields. A plan written before
