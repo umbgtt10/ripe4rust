@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-11-27
+
+What the first round that applied a plan found, in one real workspace: units sharing a crate made `check` say "not
+as planned" with nothing wrong, and said so again at every later check, and a breaking unit a dependent's requirement
+held back read ripe -- or urgent, credited with an advisory its move could not clear.
+
 ### Fixed
 - Units sharing a crate made `check` say "not as planned" with nothing wrong. Each unit's moves are computed alone,
   on the lock the plan found, and applied one after another they move the lock under the units after them: a crate

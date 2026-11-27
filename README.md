@@ -29,7 +29,7 @@ the Rust distribution's list of releases through `curl`: both are needed on
 
 ## Status
 
-**0.1.1, the first dry round's fixes.** `cargo ripe4rust plan [--format table|json] [--date
+**0.1.2, the first applied round's fixes.** `cargo ripe4rust plan [--format table|json] [--date
 YYYY-MM-DD] [--offline]` reads a real workspace -- cargo, cargo-deny, rustc,
 the crates.io registry and the Rust distribution's list of releases, through
 `curl` and cached for the day -- and prints the plan. `cargo ripe4rust check
@@ -46,7 +46,11 @@ public API are known. A `rust-toolchain.toml` pinning an older stable release
 is judged as a unit of its own, with the dependency versions the newer one
 would release, and a git dependency's source moving is a unit of its own,
 always asked. A first dry round across real workspaces, plans only, found
-what 0.1.1 fixes; tuning the thresholds and the grouping is next. The
+what 0.1.1 fixes, and the first round that applied a plan what 0.1.2 does:
+`check` holds a unit to the moves it owns where the units share a crate, and
+a breaking unit whose crate a dependent's requirement holds back ripens until
+the dependent moves, clearing no advisory meanwhile. Tuning the thresholds and
+the grouping is next. The
 design is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License

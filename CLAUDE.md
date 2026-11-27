@@ -24,8 +24,9 @@ fields; the sources are parsed with `syn`, every member's targets and the module
 unit's footprint -- every `file:line` naming its crate, a migration's work list -- and its exposure in a published
 member's public API, `pub use` re-exports followed; and a channel pinning an older stable release is a toolchain
 unit, its evidence the versions the newer one would release. The first dry round across real workspaces, plans
-only, ran with 0.1.0 over 32 of them, and 0.1.1 fixes what it found; tuning the thresholds and the grouping is
-next. Version 0.1.1, on crates.io, is all of it.
+only, ran with 0.1.0 over 32 of them, and 0.1.1 fixes what it found; the first round that applied a plan found
+units sharing a crate and a crate its dependents hold back, which 0.1.2 fixes. Tuning the thresholds and the
+grouping is next. Version 0.1.2, on crates.io, is all of it.
 
 It is self-contained.
 
