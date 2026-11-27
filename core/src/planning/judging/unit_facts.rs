@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::planning::judging::dependent::Dependent;
 use crate::planning::judging::downgrade::Downgrade;
 use crate::planning::judging::footprint::Footprint;
 use crate::planning::judging::line_standing::LineStanding;
@@ -19,7 +20,8 @@ use alloc::vec::Vec;
 /// `fully_held` whether they hold all of it; `freeze` the end of an open
 /// freeze; `exposure_unknown_in` the published members using it whose public
 /// API is not known; `footprint` `None` where the scan failed as a whole;
-/// `gates` how many are declared.
+/// `held_by` the dependents whose requirement keeps a breaking unit's crate
+/// on the version in use; `gates` how many are declared.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UnitFacts {
     pub kind: UnitKind,
@@ -40,6 +42,7 @@ pub struct UnitFacts {
     pub lines_behind: u32,
     pub footprint: Option<Footprint>,
     pub removes_copy: bool,
+    pub held_by: Vec<Dependent>,
     pub held_back: u32,
     pub gates: u32,
     pub small_footprint: u32,

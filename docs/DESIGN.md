@@ -484,6 +484,26 @@ offers `remove` beside its other answers: a person decides, as a crate can be
 needed for its features or side effects, and the gates say whether the build
 still holds without it. Its outcome is what the rules make it.
 
+### A crate its dependents hold back
+
+A breaking unit moves its crate to a version a package of the lock may not
+accept: a dependent whose requirement the target does not meet -- `tonic`
+0.12.3 requiring `prost` `^0.13` -- keeps the version in use, and moving the
+crate only adds the target beside it, a second copy, not a migration
+(ADR-ARequirementHoldsACrateBack). The dependents are read from `cargo
+metadata`'s resolve: every package of the lock, the unit's own members aside,
+that depends on the version in use with a requirement the target does not
+meet. Each is named among the unit's reasons, "tonic 0.12.3 requires prost
+^0.13: moving it adds 0.14.6 beside 0.13.5", and in its evidence as
+`held_by`, whatever rule decided it. A unit the rules would take or ask
+**ripens** instead, its rule kept, with the suggestion
+`until-its-dependents-move`: the dependent's own upgrade releases it -- here
+`tonic`'s, to a line that requires the new `prost` or none --, and the next
+plan reads the lock it leaves. An urgent unit keeps its ask, as an urgent unit
+is never held, and one already ripening keeps what holds it; it is applied
+after drift and before the no-gates downgrade, so an overripe unit its
+dependents hold ripens too.
+
 ## Footprint and exposure
 
 One `syn` parse of the workspace's sources answers both
@@ -818,8 +838,9 @@ step is `{ "run": "..." }` or `{ "edit": "<file:line>", "key": "...",
 "value": "..." }`; `evidence` also names the line in use with its first
 release, the footprint's locations, the versions the toolchain unit would
 release, the moves a pin holds out of the unit, the moves to a lower
-version it makes, and the includes a breaking unit's footprint could not
-follow. The workspace's `lines` are
+version it makes, the includes a breaking unit's footprint could not
+follow, and the dependents holding its crate back, each `{ "crate", "version",
+"requires", "requirement" }`. The workspace's `lines` are
 every line a unit's `apply` can edit, as the plan found it written: each
 crates.io dependency's requirement in every manifest, `key` the crate; each
 member's `rust-version`, its own or the one it inherits; and
@@ -833,7 +854,7 @@ leaves and takes, its `source` the URL and spec cargo writes, null for every
 other kind; its `moves` the registry's it pulls in. Every object's keys come
 in the order shown, at every depth: a unit's `members` after `crate`, its
 `source` after `to` and its `reasons` after `suggestion`; the evidence's
-`footprint`, `held_back`, `held`, `downgrades` and `unfollowed_includes` after
+`footprint`, `held_back`, `held`, `downgrades`, `unfollowed_includes` and `held_by` after
 `yanked_in_use`; the line in use as `line`, `first_release`, `last_release`,
 `releases`. A document for a failure carries `schema`,
 `command` and `diagnostics` alone.

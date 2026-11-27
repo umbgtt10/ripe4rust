@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::lock_move::LockMove;
+use crate::planning::judging::facts::dependents::Dependents;
 use crate::planning::judging::facts::downgrade_finder::DowngradeFinder;
 use crate::planning::judging::facts::footprints::Footprints;
 use crate::planning::judging::facts::held_back::HeldBack;
@@ -70,6 +71,7 @@ impl<'a> EvidenceWriter<'a> {
                 })
                 .collect(),
             unfollowed_includes,
+            held_by: Dependents::new(&self.context.surveyed().workspace).holding(unit),
         }
     }
 }

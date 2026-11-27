@@ -102,6 +102,7 @@ pub fn breaking() -> PlannedUnit {
             held: Vec::new(),
             downgrades: Vec::new(),
             unfollowed_includes: Vec::new(),
+            held_by: Vec::new(),
         },
     }
 }
@@ -163,6 +164,7 @@ pub fn compatible() -> PlannedUnit {
             held: Vec::new(),
             downgrades: Vec::new(),
             unfollowed_includes: Vec::new(),
+            held_by: Vec::new(),
         },
     }
 }

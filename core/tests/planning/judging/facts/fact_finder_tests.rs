@@ -10,6 +10,9 @@ use crate::support::surveyed::toolchain;
 use crate::support::units::breaking;
 use crate::support::units::compatible;
 use crate::support::units::moved;
+use ripe4rust_core::inputs::locked_package::LockedPackage;
+use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
+use ripe4rust_core::planning::judging::dependent::Dependent;
 use ripe4rust_core::planning::judging::downgrade::Downgrade;
 use ripe4rust_core::planning::judging::facts::fact_finder::FactFinder;
 use ripe4rust_core::planning::judging::facts::plan_context::PlanContext;
@@ -18,6 +21,40 @@ use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::planning::units::unit::Unit;
 use ripe4rust_core::planning::units::unit_id::UnitId;
 use ripe4rust_core::unit_kind::UnitKind;
+use ripe4rust_core::values::requirement::Requirement;
+
+#[test]
+fn facts_of_a_breaking_unit_a_dependent_holds_back_name_the_dependent() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.workspace.lock.push(LockedPackage {
+        name: String::from("frame"),
+        version: version("0.4.0"),
+        dependencies: vec![ResolvedDependency {
+            name: String::from("widget"),
+            version: version("1.4.0"),
+            requirement: Requirement::parse("^1.4").expect("a requirement"),
+        }],
+    });
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let facts = FactFinder::new(&context).facts(&breaking("widget", "1.4.0", "2.1.0"), &[]);
+
+    // Assert
+    assert_eq!(
+        facts.held_by,
+        vec![Dependent {
+            name: String::from("frame"),
+            version: version("0.4.0"),
+            requires: String::from("widget"),
+            requirement: Requirement::parse("^1.4").expect("a requirement"),
+            in_use: version("1.4.0"),
+            target: version("2.1.0"),
+        }]
+    );
+}
 
 #[test]
 fn facts_of_a_breaking_unit_gather_what_the_rules_read() {

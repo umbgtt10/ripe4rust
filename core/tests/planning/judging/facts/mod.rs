@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod copies_tests;
+pub mod dependents_tests;
 pub mod downgrade_finder_tests;
 pub mod exposure_tests;
 pub mod fact_finder_tests;

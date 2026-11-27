@@ -18,6 +18,7 @@ fn label_of_every_suggestion_is_its_kebab_name() {
         Suggestion::ReplaceOrAccept,
         Suggestion::RevisitThePin,
         Suggestion::UntilItSettles,
+        Suggestion::UntilItsDependentsMove,
         Suggestion::UntilTheWindowCloses,
         Suggestion::Wait,
     ]
@@ -37,6 +38,7 @@ fn label_of_every_suggestion_is_its_kebab_name() {
             "replace-or-accept",
             "revisit-the-pin",
             "until-it-settles",
+            "until-its-dependents-move",
             "until-the-window-closes",
             "wait",
         ]

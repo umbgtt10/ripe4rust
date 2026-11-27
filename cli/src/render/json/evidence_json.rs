@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::render::json::documents::dependent_document::DependentDocument;
 use crate::render::json::documents::evidence_document::EvidenceDocument;
 use crate::render::json::documents::line_document::LineDocument;
 use crate::render::json::move_json::MoveJson;
@@ -38,6 +39,16 @@ impl EvidenceJson {
                 .unfollowed_includes
                 .iter()
                 .map(ToString::to_string)
+                .collect(),
+            held_by: evidence
+                .held_by
+                .iter()
+                .map(|dependent| DependentDocument {
+                    name: &dependent.name,
+                    version: dependent.version.to_string(),
+                    requires: &dependent.requires,
+                    requirement: dependent.requirement.to_string(),
+                })
                 .collect(),
         }
     }

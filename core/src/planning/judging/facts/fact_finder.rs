@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::planning::judging::facts::copies::Copies;
+use crate::planning::judging::facts::dependents::Dependents;
 use crate::planning::judging::facts::downgrade_finder::DowngradeFinder;
 use crate::planning::judging::facts::exposure::Exposure;
 use crate::planning::judging::facts::footprints::Footprints;
@@ -59,6 +60,7 @@ impl<'a> FactFinder<'a> {
             footprint: Footprints::new(surveyed.scan.as_ref(), &surveyed.workspace.members)
                 .footprint(&unit.members),
             removes_copy: Copies::new(&surveyed.workspace).removed(unit),
+            held_by: Dependents::new(&surveyed.workspace).holding(unit),
             held_back: count(HeldBack::new(self.context).versions(unit).len()),
             gates: count(surveyed.policy.gates.len()),
             small_footprint: surveyed.policy.thresholds.small_footprint,

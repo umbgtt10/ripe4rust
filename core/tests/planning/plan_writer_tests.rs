@@ -10,6 +10,7 @@ use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::git::git_source::GitSource;
 use ripe4rust_core::inputs::locked_package::LockedPackage;
+use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
 use ripe4rust_core::outcome::Outcome;
 use ripe4rust_core::planning::plan::Plan;
 use ripe4rust_core::planning::plan_writer::PlanWriter;
@@ -115,6 +116,43 @@ fn plan_names_the_crates_the_units_share() {
     assert_eq!(
         plan.shared,
         vec![String::from("libc"), String::from("wasip2")]
+    );
+}
+
+#[test]
+fn plan_of_a_breaking_unit_a_dependent_holds_back_ripens_it_released_by_the_dependent() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.workspace.lock.push(LockedPackage {
+        name: String::from("frame"),
+        version: version("0.4.0"),
+        dependencies: vec![ResolvedDependency {
+            name: String::from("widget"),
+            version: version("1.4.0"),
+            requirement: Requirement::parse("^1.4").expect("a requirement"),
+        }],
+    });
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    let widget = plan
+        .units
+        .iter()
+        .find(|planned| planned.unit.id.to_string() == "breaking:widget")
+        .expect("the breaking unit");
+    assert_eq!(
+        (
+            widget.decision.outcome,
+            widget.decision.reasons.last().map(String::as_str),
+            widget.question.is_none()
+        ),
+        (
+            Outcome::Ripening,
+            Some("frame 0.4.0 requires widget ^1.4: moving it adds 2.1.0 beside 1.4.0"),
+            true
+        )
     );
 }
 

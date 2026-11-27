@@ -31,6 +31,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   cargo prints it -- the rest no longer reads two of `rand`'s versions moving as two crates added.
 - A rest of crates only added or removed applied nothing -- no `--precise` step takes them -- and its check could
   only fail. It is no unit now: those crates come with the units that need them, and are shared.
+- A breaking unit whose crate another package of the tree requires on the line in use was judged as if it could
+  land alone: `breaking:prost`, 0.13.5 to 0.14.6, read ripe by its footprint while `tonic` 0.12.3 requires `prost`
+  `^0.13`, so the edit only added 0.14.6 beside 0.13.5. Every package of the lock -- the unit's own members aside --
+  that depends on the version in use with a requirement the target does not meet now holds the crate back: it is
+  named among the unit's reasons, "tonic 0.12.3 requires prost ^0.13: moving it adds 0.14.6 beside 0.13.5", and in
+  its evidence as the new `held_by`, and a unit the rules would take or ask ripens instead, its rule kept, with the
+  new suggestion `until-its-dependents-move` -- the dependent's own upgrade releases it. An urgent unit keeps its
+  ask, and one already ripening what holds it; `guide` names the new fields, and says the rules are 1 to 13
+  (`ADR-ARequirementHoldsACrateBack`,
+  `ripe4rust_core::planning::judging::held_by_dependents::HeldByDependents`).
 
 ## [0.1.1] — 2026-11-26
 

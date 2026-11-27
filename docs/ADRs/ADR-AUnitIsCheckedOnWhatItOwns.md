@@ -34,7 +34,8 @@ that said not as planned; three of them with nothing wrong:
   for the whole workspace as two removals and two additions where each unit's
   report printed one version moving;
 - the fourth was a breaking unit, and another matter: a dependent's
-  requirement held its crate where it was, so the edit added a second copy.
+  requirement held its crate where it was, so the edit added a second copy
+  (ADR-ARequirementHoldsACrateBack).
 
 The three turned ripe units into asks: an agent trusting `check` reverts
 what it should have committed.

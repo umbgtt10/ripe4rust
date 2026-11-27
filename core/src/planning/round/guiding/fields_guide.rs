@@ -6,7 +6,7 @@ use crate::planning::round::guiding::field_guide::FieldGuide;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-const FIELDS: [(&str, &str, &str); 124] = [
+const FIELDS: [(&str, &str, &str); 129] = [
     (
         "every",
         "schema",
@@ -161,7 +161,7 @@ const FIELDS: [(&str, &str, &str); 124] = [
     (
         "plan",
         "units[].rule",
-        "the rule that decided it, 1 to 12; null for an advisory row",
+        "the rule that decided it, 1 to 13, kept where no gates, a move back or a dependent holding its crate back changes its outcome; null for an advisory row",
     ),
     (
         "plan",
@@ -360,6 +360,27 @@ const FIELDS: [(&str, &str, &str); 124] = [
         "plan",
         "units[].evidence.unfollowed_includes",
         "a breaking unit's: every `include!` the parse could not follow -- its path no literal, or generated code as `include_proto!` writes it -- in the members using the crate, as `file:line`; where there is one, the footprint is a floor, never small",
+    ),
+    (
+        "plan",
+        "units[].evidence.held_by",
+        "a breaking unit's: every package of the lock whose requirement keeps its crate on the version in use, so moving it adds the target beside that version; where there is one, the unit ripens until its dependents move",
+    ),
+    ("plan", "units[].evidence.held_by[].crate", "the dependent"),
+    (
+        "plan",
+        "units[].evidence.held_by[].version",
+        "its version in the lock",
+    ),
+    (
+        "plan",
+        "units[].evidence.held_by[].requires",
+        "the crate of the unit it requires",
+    ),
+    (
+        "plan",
+        "units[].evidence.held_by[].requirement",
+        "the requirement, which the unit's target does not meet",
     ),
     ("check", "unit", "the unit, or the move of a split, checked"),
     (

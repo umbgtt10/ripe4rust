@@ -12,7 +12,10 @@ use crate::support::units::breaking;
 use crate::support::units::compatible;
 use crate::support::units::moved;
 use ripe4rust_core::inputs::advisory::Advisory;
+use ripe4rust_core::inputs::locked_package::LockedPackage;
+use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
 use ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude;
+use ripe4rust_core::planning::judging::dependent::Dependent;
 use ripe4rust_core::planning::judging::facts::plan_context::PlanContext;
 use ripe4rust_core::planning::units::choice::line_stats::LineStats;
 use ripe4rust_core::planning::units::concern::Concern;
@@ -20,6 +23,41 @@ use ripe4rust_core::planning::writing::evidence::Evidence;
 use ripe4rust_core::planning::writing::evidence_writer::EvidenceWriter;
 use ripe4rust_core::values::line::Line;
 use ripe4rust_core::values::partial_version::PartialVersion;
+use ripe4rust_core::values::requirement::Requirement;
+
+#[test]
+fn evidence_of_a_breaking_unit_a_dependent_holds_back_names_the_dependent() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.workspace.lock.push(LockedPackage {
+        name: String::from("frame"),
+        version: version("0.4.0"),
+        dependencies: vec![ResolvedDependency {
+            name: String::from("widget"),
+            version: version("1.4.0"),
+            requirement: Requirement::parse("^1.4").expect("a requirement"),
+        }],
+    });
+    let (histories, toolchain) = (histories(&surveyed), toolchain(&surveyed));
+    let context = PlanContext::new(&surveyed, &histories, &toolchain);
+
+    // Act
+    let evidence =
+        EvidenceWriter::new(&context).evidence(&breaking("widget", "1.4.0", "2.1.0"), &[]);
+
+    // Assert
+    assert_eq!(
+        evidence.held_by,
+        vec![Dependent {
+            name: String::from("frame"),
+            version: version("0.4.0"),
+            requires: String::from("widget"),
+            requirement: Requirement::parse("^1.4").expect("a requirement"),
+            in_use: version("1.4.0"),
+            target: version("2.1.0"),
+        }]
+    );
+}
 
 #[test]
 fn evidence_of_a_breaking_unit_carries_its_work_list() {
@@ -57,6 +95,7 @@ fn evidence_of_a_breaking_unit_carries_its_work_list() {
             held: Vec::new(),
             downgrades: Vec::new(),
             unfollowed_includes: Vec::new(),
+            held_by: Vec::new(),
         }
     );
 }
