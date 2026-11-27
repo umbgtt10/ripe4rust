@@ -12,6 +12,7 @@ use crate::support::surveyed::at;
 use crate::support::surveyed::written;
 use crate::support::units::added;
 use crate::support::units::moved;
+use crate::support::units::removed;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::git::git_source::GitSource;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
@@ -116,6 +117,7 @@ pub fn plan() -> RecordedPlan {
         lock: base().lock,
         lines: lines(),
         git: Vec::new(),
+        shared: Vec::new(),
         units: vec![
             unit(
                 UnitKind::Breaking,
@@ -195,6 +197,100 @@ pub fn plan_with_git() -> RecordedPlan {
         },
     );
     plan
+}
+
+/// A plan whose units share crates, each unit's moves computed alone:
+/// `compatible:boon` takes `wasip2` to 1.0.4, which the whole workspace
+/// removes; `compatible:tonic` removes the `r-efi` 6.0.0 the whole workspace
+/// keeps; and the rest takes `libc` one `--precise` step, beside the
+/// `getrandom` and `r-efi` the whole workspace removes only with every unit
+/// applied.
+pub fn plan_with_shared() -> RecordedPlan {
+    let split = |unit: &str, names: &[&str]| {
+        names
+            .iter()
+            .map(|name| format!("compatible:{unit}/{name}"))
+            .collect::<Vec<String>>()
+    };
+    RecordedPlan {
+        lock: shared_base(),
+        shared: ["getrandom", "libc", "r-efi", "wasip2"]
+            .map(String::from)
+            .to_vec(),
+        units: vec![
+            RecordedUnit {
+                splits: split("boon", &["ahash", "wasip2"]),
+                ..unit(
+                    UnitKind::Compatible,
+                    "boon",
+                    vec![
+                        moved("ahash", "0.8.12", "0.8.14"),
+                        moved("wasip2", "1.0.3", "1.0.4"),
+                    ],
+                    Vec::new(),
+                )
+            },
+            RecordedUnit {
+                splits: split("proptest", &["proptest", "rand"]),
+                ..unit(
+                    UnitKind::Compatible,
+                    "proptest",
+                    vec![
+                        moved("proptest", "1.11.0", "1.12.0"),
+                        moved("rand", "0.9.4", "0.10.4"),
+                    ],
+                    Vec::new(),
+                )
+            },
+            unit(
+                UnitKind::Compatible,
+                "tonic",
+                vec![moved("h2", "0.4.20", "0.4.21"), removed("r-efi", "6.0.0")],
+                Vec::new(),
+            ),
+            RecordedUnit {
+                id: String::from("rest"),
+                name: None,
+                members: Vec::new(),
+                ..unit(
+                    UnitKind::Compatible,
+                    "rest",
+                    vec![
+                        removed("getrandom", "0.3.4"),
+                        moved("libc", "0.2.177", "0.2.178"),
+                        removed("r-efi", "5.3.0"),
+                    ],
+                    Vec::new(),
+                )
+            },
+        ],
+        ..plan()
+    }
+}
+
+/// The lock the shared plan was made from.
+pub fn shared_base() -> Vec<LockEntry> {
+    lock(&[
+        ("ahash", "0.8.12"),
+        ("getrandom", "0.3.4"),
+        ("h2", "0.4.20"),
+        ("libc", "0.2.177"),
+        ("proptest", "1.11.0"),
+        ("r-efi", "5.3.0"),
+        ("r-efi", "6.0.0"),
+        ("rand", "0.9.4"),
+        ("wasip2", "1.0.3"),
+    ])
+}
+
+/// The shared plan's workspace with its lock as given, its fingerprint
+/// another.
+pub fn shared_changed(entries: &[(&str, &str)]) -> FakeFiles {
+    FakeFiles {
+        fingerprint: String::from("0000000000000004"),
+        lock: lock(entries),
+        ..base()
+    }
 }
 
 pub fn transitive(name: &str, to: &str) -> LockMove {

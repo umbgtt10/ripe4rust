@@ -9,9 +9,11 @@ use crate::support::recorded::lines_with;
 use crate::support::recorded::lock;
 use crate::support::recorded::plan;
 use crate::support::recorded::plan_with_git;
+use crate::support::recorded::plan_with_shared;
 use crate::support::recorded::transitive;
 use crate::support::surveyed::at;
 use crate::support::units::moved;
+use crate::support::units::removed;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::planning::round::current_state::CurrentState;
 use ripe4rust_core::planning::round::sorting::Sorting;
@@ -35,6 +37,24 @@ fn git_of_a_plan_and_a_workspace_reads_each_source_at_its_rev_now() {
 
     // Assert
     assert_eq!(rev, Some(String::from("ce129c85")));
+}
+
+#[test]
+fn ownership_of_a_plan_tells_the_crates_its_units_share() {
+    // Arrange
+    let plan = plan_with_shared();
+    let current = CurrentState {
+        lock: plan.lock.clone(),
+        lines: lines(),
+        git: Vec::new(),
+    };
+
+    // Act
+    let shared =
+        ["wasip2", "ahash"].map(|name| Sorting::new(&plan, &current).ownership().is_shared(name));
+
+    // Assert
+    assert_eq!(shared, [true, false]);
 }
 
 #[test]
@@ -194,6 +214,44 @@ fn sort_of_an_edit_a_unit_writes_is_no_staleness() {
     // Assert
     assert_eq!(sorted.stale, Vec::new());
     assert_eq!(sorted.applied, ids(&["toolchain:rust"]));
+}
+
+#[test]
+fn sort_of_the_changes_no_move_explains_names_those_of_crates_the_units_share() {
+    // Arrange
+    let plan = plan_with_shared();
+    let current = CurrentState {
+        lock: lock(&[
+            ("ahash", "0.8.14"),
+            ("h2", "0.4.22"),
+            ("libc", "0.2.180"),
+            ("proptest", "1.12.0"),
+            ("r-efi", "5.3.0"),
+            ("r-efi", "6.0.0"),
+            ("rand", "0.10.4"),
+        ]),
+        lines: lines(),
+        git: Vec::new(),
+    };
+
+    // Act
+    let sorted = Sorting::new(&plan, &current).sort();
+
+    // Assert
+    assert_eq!(
+        (sorted.unexplained, sorted.shared),
+        (
+            vec![
+                moved("h2", "0.4.20", "0.4.22"),
+                moved("libc", "0.2.177", "0.2.180"),
+                removed("wasip2", "1.0.3")
+            ],
+            vec![
+                moved("libc", "0.2.177", "0.2.180"),
+                removed("wasip2", "1.0.3")
+            ]
+        )
+    );
 }
 
 #[test]

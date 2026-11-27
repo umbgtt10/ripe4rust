@@ -4,6 +4,8 @@
 
 use crate::support::releases::version;
 use crate::support::surveyed::surveyed;
+use crate::support::units::moved;
+use crate::support::units::removed;
 use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::git::git_source::GitSource;
@@ -94,6 +96,25 @@ fn plan_names_a_crate_the_lock_holds_twice_at_its_version() {
         vec![Step::Run {
             command: String::from("cargo update -p gizmo@2.7.5 --precise 2.7.6"),
         }]
+    );
+}
+
+#[test]
+fn plan_names_the_crates_the_units_share() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.dependency_moves[1]
+        .moves
+        .push(moved("wasip2", "1.0.3", "1.0.4"));
+    surveyed.workspace_moves.push(removed("wasip2", "1.0.3"));
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    assert_eq!(
+        plan.shared,
+        vec![String::from("libc"), String::from("wasip2")]
     );
 }
 

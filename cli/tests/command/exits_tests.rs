@@ -22,6 +22,7 @@ fn report(as_planned: bool) -> CheckReport {
         as_planned,
         transitive: Vec::new(),
         differences: Vec::new(),
+        shared: Vec::new(),
         applied: Vec::new(),
         to_go: Vec::new(),
         diagnostics: Vec::new(),

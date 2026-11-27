@@ -19,6 +19,7 @@ pub fn as_planned() -> CheckReport {
             moved("old", Some("1.0.0"), None),
         ],
         differences: Vec::new(),
+        shared: Vec::new(),
         applied: vec![
             String::from("compatible:widget"),
             String::from("breaking:gadget"),
@@ -68,6 +69,9 @@ pub fn not_as_planned() -> CheckReport {
             what: String::from("`libc` moved 0.2.177 -> 0.2.180, a move no unit of the plan makes"),
             action: String::from("carry out the unit's `revert`"),
         }],
+        shared: vec![String::from(
+            "`wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in",
+        )],
         applied: Vec::new(),
         to_go: vec![String::from("compatible:widget"), String::from("rest")],
         diagnostics: Vec::new(),

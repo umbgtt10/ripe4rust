@@ -7,6 +7,7 @@ use crate::support::units::added;
 use crate::support::units::dependency;
 use crate::support::units::git;
 use crate::support::units::moved;
+use crate::support::units::removed;
 use crate::support::units::source;
 use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::inputs::lock_move::LockMove;
@@ -38,6 +39,78 @@ fn moves_of(name: &str, in_use: &str, moves: Vec<LockMove>) -> DependencyMoves {
         dependency: dependency(name, in_use),
         moves,
     }
+}
+
+#[test]
+fn build_forms_no_rest_of_a_crate_in_two_versions_each_moved_by_a_unit() {
+    // Arrange
+    let dependencies = vec![
+        moves_of(
+            "proptest",
+            "1.11.0",
+            vec![
+                moved("proptest", "1.11.0", "1.12.0"),
+                moved("rand", "0.9.4", "0.10.4"),
+            ],
+        ),
+        moves_of("tonic", "0.12.3", vec![moved("rand", "0.8.6", "0.8.8")]),
+    ];
+    let workspace = vec![
+        moved("proptest", "1.11.0", "1.12.0"),
+        removed("rand", "0.8.6"),
+        removed("rand", "0.9.4"),
+        added("rand", "0.8.8"),
+        added("rand", "0.10.4"),
+    ];
+
+    // Act
+    let units = CompatibleUnits::new(Vec::new(), Vec::new()).build(dependencies, workspace);
+
+    // Assert
+    assert_eq!(
+        units
+            .iter()
+            .map(|unit| unit.id.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            String::from("compatible:proptest"),
+            String::from("compatible:tonic")
+        ]
+    );
+}
+
+#[test]
+fn build_forms_no_rest_of_crates_only_added_or_removed() {
+    // Arrange
+    let dependencies = vec![
+        moves_of("boon", "0.6.1", vec![moved("wasip2", "1.0.3", "1.0.4")]),
+        moves_of(
+            "proptest",
+            "1.11.0",
+            vec![moved("proptest", "1.11.0", "1.12.0")],
+        ),
+    ];
+    let workspace = vec![
+        removed("getrandom", "0.3.4"),
+        added("getrandom", "0.4.3"),
+        moved("proptest", "1.11.0", "1.12.0"),
+        removed("wasip2", "1.0.3"),
+    ];
+
+    // Act
+    let units = CompatibleUnits::new(Vec::new(), Vec::new()).build(dependencies, workspace);
+
+    // Assert
+    assert_eq!(
+        units
+            .iter()
+            .map(|unit| unit.id.to_string())
+            .collect::<Vec<String>>(),
+        vec![
+            String::from("compatible:boon"),
+            String::from("compatible:proptest")
+        ]
+    );
 }
 
 #[test]
@@ -146,6 +219,41 @@ fn build_gives_a_shared_move_to_the_first_unit_by_name() {
         ]
     );
     assert_eq!(units[1].moves, vec![moved("regex", "1.11.0", "1.11.1")]);
+}
+
+#[test]
+fn build_keeps_a_later_unit_s_move_of_a_crate_to_another_version_than_the_first_s() {
+    // Arrange
+    let dependencies = vec![
+        moves_of(
+            "anyhow",
+            "1.0.102",
+            vec![
+                moved("anyhow", "1.0.102", "1.0.104"),
+                moved("memchr", "2.7.5", "2.7.6"),
+            ],
+        ),
+        moves_of(
+            "regex",
+            "1.11.0",
+            vec![
+                moved("memchr", "2.7.5", "2.7.7"),
+                moved("regex", "1.11.0", "1.11.1"),
+            ],
+        ),
+    ];
+
+    // Act
+    let units = CompatibleUnits::new(Vec::new(), Vec::new()).build(dependencies, Vec::new());
+
+    // Assert
+    assert_eq!(
+        units[1].moves,
+        vec![
+            moved("memchr", "2.7.5", "2.7.7"),
+            moved("regex", "1.11.0", "1.11.1")
+        ]
+    );
 }
 
 #[test]

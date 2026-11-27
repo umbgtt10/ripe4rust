@@ -49,7 +49,7 @@ fn text_of_a_report_not_as_planned_lists_each_difference_with_what_to_do() {
     // Assert
     assert_eq!(
         text,
-        "check compatible:widget: not as planned\nCargo.lock: `libc` moved 0.2.177 -> 0.2.180, a move no unit of the plan makes. Do: carry out the unit's `revert`\napplied: none\nto go: compatible:widget, rest\n"
+        "check compatible:widget: not as planned\nCargo.lock: `libc` moved 0.2.177 -> 0.2.180, a move no unit of the plan makes. Do: carry out the unit's `revert`\nshared: `wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in.\napplied: none\nto go: compatible:widget, rest\n"
     );
 }
 

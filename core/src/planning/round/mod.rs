@@ -11,6 +11,7 @@ pub mod line_change;
 pub mod line_changes;
 pub mod lock_changes;
 pub mod move_wording;
+pub mod ownership;
 pub mod progress;
 pub mod round_inputs;
 pub mod round_reader;

@@ -29,6 +29,7 @@ fn document_of_a_report_as_planned_names_the_moves_its_edit_made() {
                 { "crate": "old", "from": "1.0.0", "to": null }
             ],
             "differences": [],
+            "shared": [],
             "applied": ["compatible:widget", "breaking:gadget"],
             "to_go": ["rest"],
             "diagnostics": []
@@ -52,7 +53,7 @@ fn document_of_a_report_keeps_the_design_s_order() {
         "{written}"
     );
     assert!(
-        written.ends_with(r#""applied":[],"to_go":["compatible:widget","rest"],"diagnostics":[]}"#),
+        written.ends_with(r#""shared":["`wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in"],"applied":[],"to_go":["compatible:widget","rest"],"diagnostics":[]}"#),
         "{written}"
     );
 }

@@ -6,7 +6,7 @@ use crate::planning::round::guiding::field_guide::FieldGuide;
 use alloc::string::String;
 use alloc::vec::Vec;
 
-const FIELDS: [(&str, &str, &str); 122] = [
+const FIELDS: [(&str, &str, &str); 124] = [
     (
         "every",
         "schema",
@@ -90,6 +90,11 @@ const FIELDS: [(&str, &str, &str); 122] = [
         "plan",
         "gates",
         "the commands that validate a change, in order; each must exit 0",
+    ),
+    (
+        "plan",
+        "shared",
+        "the crates the units share: their moves, each unit's computed alone, do not add up to the whole workspace's, so they depend on the order the units are applied in; `check` reports such a move a unit does not own, never as a difference",
     ),
     (
         "plan",
@@ -390,6 +395,11 @@ const FIELDS: [(&str, &str, &str); 122] = [
     ),
     ("check", "differences[].what", "what differs"),
     ("check", "differences[].do", "what to do about it"),
+    (
+        "check",
+        "shared",
+        "the moves of crates the units share that came out otherwise than the plan computed them, each unit alone: no difference, nothing to do",
+    ),
     (
         "check",
         "applied",

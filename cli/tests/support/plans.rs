@@ -217,6 +217,7 @@ pub fn plan(units: Vec<PlannedUnit>) -> Plan {
             git: Vec::new(),
         },
         gates: gates(),
+        shared: Vec::new(),
         diagnostics: Vec::new(),
         units,
     }

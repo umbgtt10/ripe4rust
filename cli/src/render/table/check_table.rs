@@ -11,6 +11,7 @@ const NONE: &str = "none";
 
 /// What `check` found, for a person: whether the unit is as planned, the
 /// moves a breaking unit's edit made, every difference with what to do, the
+/// moves of crates the units share, reported and never a difference, the
 /// units applied and those still to go, then the diagnostics.
 pub struct CheckTable;
 
@@ -38,6 +39,12 @@ impl CheckTable {
                 difference.action
             )
         }));
+        lines.extend(
+            report
+                .shared
+                .iter()
+                .map(|what| format!("shared: {}", Sentence.ended(what))),
+        );
         for (label, ids) in [("applied", &report.applied), ("to go", &report.to_go)] {
             let listed = if ids.is_empty() {
                 String::from(NONE)

@@ -20,7 +20,8 @@ use ripe4rust_core::planning::round::holding::hold_report::HoldReport;
 const FINGERPRINT_SHOWN: usize = 8;
 
 /// The plan for a person: the date, the registry's day and the workspace,
-/// one row per unit, then every diagnostic in text.
+/// one row per unit, the crates the units share, then every diagnostic in
+/// text.
 pub struct TableRenderer;
 
 impl TableRenderer {
@@ -77,6 +78,11 @@ impl DocumentRenderer for TableRenderer {
         for line in Columns.lines(&rows) {
             text.push_str(line.trim_end());
             text.push('\n');
+        }
+        if !plan.shared.is_empty() {
+            text.push_str("\nshared by the units: ");
+            text.push_str(&plan.shared.join(", "));
+            text.push_str(" -- their moves depend on the order the units are applied in\n");
         }
         if !plan.diagnostics.is_empty() {
             text.push('\n');

@@ -17,6 +17,7 @@ pub struct CheckReport {
     pub as_planned: bool,
     pub transitive: Vec<LockMove>,
     pub differences: Vec<Difference>,
+    pub shared: Vec<String>,
     pub applied: Vec<String>,
     pub to_go: Vec<String>,
     pub diagnostics: Vec<Diagnostic>,

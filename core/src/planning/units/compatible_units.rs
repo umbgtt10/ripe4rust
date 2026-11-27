@@ -16,12 +16,17 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 /// The compatible units, taken by crate name, and the git units among them,
-/// each a source moving with what it pulls in: a move several share belongs
-/// to the first, the moves no unit reaches form the rest, and a move of a
-/// crate pinned with `hold = "all"` is held out of every unit -- unless it
-/// clears an advisory or a yanked release, which no pin holds. A unit whose
-/// own move is held, or whose crate does not move, only what it pulls in,
-/// takes its crate to no version.
+/// each a source moving with what it pulls in: a move belongs to the first
+/// that makes it -- a later one's is left out where the moves already taken
+/// leave the version it leaves and reach the one it reaches, a crate in two
+/// versions told apart --, the moves no unit reaches form the rest, and a
+/// move of a crate pinned with `hold = "all"` is held out of every unit --
+/// unless it clears an advisory or a yanked release, which no pin holds. A
+/// rest of crates only added or removed is no unit: no step takes them
+/// alone, as cargo adds or removes a crate only as another's move needs
+/// it, so they come with the units. A unit whose own move is held, or whose
+/// crate does not move, only what it pulls in, takes its crate to no
+/// version.
 pub struct CompatibleUnits {
     held: Vec<String>,
     concerns: Vec<Concern>,
@@ -61,20 +66,7 @@ impl CompatibleUnits {
                 Claimant::Source(source) => units.push(Self::git(source, fresh)),
             }
         }
-        let rest = Self::unclaimed(workspace, &claimed);
-        if !rest.is_empty() {
-            units.push(Unit {
-                id: UnitId::rest(),
-                kind: UnitKind::Compatible,
-                name: None,
-                members: Vec::new(),
-                from: None,
-                to: None,
-                moves: self.kept(&rest, false),
-                held: self.kept(&rest, true),
-                git: None,
-            });
-        }
+        units.extend(self.rest(&Self::unclaimed(workspace, &claimed)));
         units
     }
 
@@ -108,14 +100,44 @@ impl CompatibleUnits {
             .collect()
     }
 
+    fn rest(&self, unclaimed: &[LockMove]) -> Option<Unit> {
+        let moves = self.kept(unclaimed, false);
+        moves
+            .iter()
+            .any(|lock_move| lock_move.from.is_some() && lock_move.to.is_some())
+            .then(|| Unit {
+                id: UnitId::rest(),
+                kind: UnitKind::Compatible,
+                name: None,
+                members: Vec::new(),
+                from: None,
+                to: None,
+                held: self.kept(unclaimed, true),
+                moves,
+                git: None,
+            })
+    }
+
+    fn taken(lock_move: &LockMove, claimed: &[LockMove]) -> bool {
+        let named = claimed
+            .iter()
+            .filter(|taken| taken.name == lock_move.name)
+            .collect::<Vec<&LockMove>>();
+        let left = lock_move
+            .from
+            .as_ref()
+            .is_none_or(|from| named.iter().any(|taken| taken.from.as_ref() == Some(from)));
+        let reached = lock_move
+            .to
+            .as_ref()
+            .is_none_or(|to| named.iter().any(|taken| taken.to.as_ref() == Some(to)));
+        left && reached
+    }
+
     fn unclaimed(moves: Vec<LockMove>, claimed: &[LockMove]) -> Vec<LockMove> {
         moves
             .into_iter()
-            .filter(|lock_move| {
-                !claimed
-                    .iter()
-                    .any(|taken| taken.name == lock_move.name && taken.from == lock_move.from)
-            })
+            .filter(|lock_move| !Self::taken(lock_move, claimed))
             .collect()
     }
 

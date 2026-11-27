@@ -54,6 +54,7 @@
   "gates": [
     "cargo test"
   ],
+  "shared": [],
   "diagnostics": [],
   "units": [
     {

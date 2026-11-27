@@ -5,6 +5,7 @@
 use crate::diagnostics::diagnostic::Diagnostic;
 use crate::diagnostics::diagnostic_code::DiagnosticCode;
 use crate::planning::plan_failure::PlanFailure;
+use crate::planning::round::checking::accountable::Accountable;
 use crate::planning::round::checking::check_report::CheckReport;
 use crate::planning::round::checking::difference_finder::DifferenceFinder;
 use crate::planning::round::round_reader::RoundReader;
@@ -59,13 +60,15 @@ impl<'a> Checker<'a> {
             diagnostics.extend(sorted.stale);
             return Err(PlanFailure { diagnostics });
         }
-        let finder = DifferenceFinder::new(&target, &sorting, &inputs.policy.pins);
+        let accountable = Accountable::new(&target, sorting.ownership(), sorting.lock());
+        let finder = DifferenceFinder::new(&target, &sorting, &inputs.policy.pins, &accountable);
         let differences = finder.differences(&sorted);
         Ok(CheckReport {
             unit: target.id.clone(),
             as_planned: differences.is_empty(),
             transitive: finder.transitive(&sorted),
             differences,
+            shared: finder.shared(&sorted),
             applied: sorted.applied,
             to_go: sorted.to_go,
             diagnostics: inputs.diagnostics,

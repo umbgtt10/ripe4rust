@@ -27,8 +27,9 @@ const SECTION: &str = "[workspace.metadata.ripe4rust.pins]";
 /// `hold`: the plan read, the unit named found in it -- an urgent one is never
 /// held --, the workspace read again and sorted as `check` sorts it, and the
 /// pins that hold the unit, with where they go. With no step taken, any change
-/// no unit explains, in the lock too, is the plan stale; the review date is
-/// the one given, or `hold-days` after the plan's date.
+/// no unit explains, in the lock too, is the plan stale -- but a change of a
+/// crate the units share, which is theirs together; the review date is the
+/// one given, or `hold-days` after the plan's date.
 pub struct Holder<'a> {
     plan: &'a dyn PlanSource,
     files: &'a dyn WorkspaceFiles,
@@ -72,6 +73,7 @@ impl<'a> Holder<'a> {
                 sorted
                     .unexplained
                     .iter()
+                    .filter(|lock_move| !sorted.shared.contains(lock_move))
                     .map(|lock_move| StaleFindings.lock(lock_move)),
             );
         }

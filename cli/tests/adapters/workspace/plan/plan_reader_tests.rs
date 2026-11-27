@@ -86,6 +86,24 @@ fn plan_of_a_plan_holding_git_sources_reads_each_crate_at_its_rev() {
 }
 
 #[test]
+fn plan_of_a_plan_naming_the_crates_its_units_share_reads_them() {
+    // Arrange
+    let text = PLAN.replace(
+        "\"shared\": [],",
+        "\"shared\": [\"getrandom\", \"wasip2\"],",
+    );
+
+    // Act
+    let plan = PlanReader.plan("plan.json", &text).expect("a plan");
+
+    // Assert
+    assert_eq!(
+        plan.shared,
+        vec![String::from("getrandom"), String::from("wasip2")]
+    );
+}
+
+#[test]
 fn plan_of_a_plan_that_failed_is_unreadable_saying_no_plan_was_made() {
     // Arrange & Act
     let plan = PlanReader.plan(
@@ -100,6 +118,18 @@ fn plan_of_a_plan_that_failed_is_unreadable_saying_no_plan_was_made() {
             "it holds no units: the run that wrote it made no plan"
         ))
     );
+}
+
+#[test]
+fn plan_of_a_plan_written_before_the_units_shared_crates_reads_none() {
+    // Arrange
+    let text = PLAN.replace("  \"shared\": [],\n", "");
+
+    // Act
+    let plan = PlanReader.plan("plan.json", &text).expect("a plan");
+
+    // Assert
+    assert_eq!(plan.shared, Vec::<String>::new());
 }
 
 #[test]

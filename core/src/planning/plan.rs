@@ -11,13 +11,15 @@ use alloc::vec::Vec;
 
 /// The plan: one row per unit, in plan order, with the date it was made
 /// for, the day its registry answers are from, the workspace it was made
-/// from, the gates and every problem met on the way.
+/// from, the gates, the crates its units share -- whose moves depend on the
+/// order the units are applied in -- and every problem met on the way.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Plan {
     pub date: Date,
     pub registry_read: Date,
     pub workspace: WorkspaceState,
     pub gates: Vec<String>,
+    pub shared: Vec<String>,
     pub diagnostics: Vec<Diagnostic>,
     pub units: Vec<PlannedUnit>,
 }

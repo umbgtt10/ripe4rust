@@ -123,6 +123,24 @@ fn plan_prints_its_diagnostics_after_the_table() {
 }
 
 #[test]
+fn plan_prints_the_crates_the_units_share_after_the_table() {
+    // Arrange
+    let mut plan = plan(Vec::new());
+    plan.shared = vec![String::from("getrandom"), String::from("wasip2")];
+
+    // Act
+    let text = TableRenderer.plan(&plan);
+
+    // Assert
+    assert!(
+        text.ends_with(
+            "outcome          reasons\n\nshared by the units: getrandom, wasip2 -- their moves depend on the order the units are applied in\n"
+        ),
+        "{text}"
+    );
+}
+
+#[test]
 fn plan_prints_the_header_then_one_row_per_unit() {
     // Arrange
     let plan = plan(vec![compatible(), toolchain(), breaking(), rest()]);

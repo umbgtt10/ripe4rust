@@ -141,6 +141,7 @@ fn plan_prints_its_keys_in_the_design_s_order() {
         "\"registry_read\"",
         "\"workspace\"",
         "\"gates\"",
+        "\"shared\"",
         "\"diagnostics\"",
         "\"units\"",
     ]
@@ -156,6 +157,19 @@ fn plan_prints_one_document_ending_in_a_newline() {
     // Assert
     assert!(text.ends_with("}\n"));
     assert_eq!(text.matches("\"schema\"").count(), 1);
+}
+
+#[test]
+fn plan_prints_the_crates_the_units_share() {
+    // Arrange
+    let mut planned = plan(vec![compatible()]);
+    planned.shared = vec![String::from("getrandom"), String::from("wasip2")];
+
+    // Act
+    let text = JsonRenderer::new("plan").plan(&planned);
+
+    // Assert
+    assert_eq!(parsed(&text)["shared"], json!(["getrandom", "wasip2"]));
 }
 
 #[test]
@@ -182,6 +196,7 @@ fn plan_prints_the_workspace_and_every_unit() {
         })
     );
     assert_eq!(document["gates"], json!(["just stage1", "just stage2"]));
+    assert_eq!(document["shared"], json!([]));
     assert_eq!(document["diagnostics"], json!([]));
     assert_eq!(document["units"][0]["id"], json!("compatible:widget"));
 }

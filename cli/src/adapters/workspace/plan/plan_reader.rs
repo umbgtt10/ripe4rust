@@ -19,6 +19,8 @@ const PLAN: &str = "plan";
 struct PlanJson {
     pub date: String,
     pub workspace: WorkspaceJson,
+    #[serde(default)]
+    pub shared: Vec<String>,
     pub units: Vec<Value>,
 }
 
@@ -40,7 +42,8 @@ struct LineJson {
 }
 
 /// A plan document read back: of schema 1, written by `plan`, and holding
-/// a plan -- the date, the workspace and the units -- or `plan-unreadable`,
+/// a plan -- the date, the workspace, the crates its units share, none for a
+/// plan written before they were named, and the units -- or `plan-unreadable`,
 /// and `plan-schema-unknown` for a schema this release does not read. What
 /// the document holds beyond what the round's commands read is left alone.
 pub struct PlanReader;
@@ -104,6 +107,7 @@ impl PlanReader {
                 .iter()
                 .map(|entry| read.git_entry(entry))
                 .collect::<Result<_, _>>()?,
+            shared: plan.shared,
             units: plan
                 .units
                 .iter()

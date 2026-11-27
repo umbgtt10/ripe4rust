@@ -79,6 +79,14 @@ pub fn moved(name: &str, from: &str, to: &str) -> LockMove {
     }
 }
 
+pub fn removed(name: &str, from: &str) -> LockMove {
+    LockMove {
+        name: String::from(name),
+        from: Some(version(from)),
+        to: None,
+    }
+}
+
 pub fn source(from: &str, to: &str) -> GitSource {
     GitSource {
         source: String::from(SOURCE),

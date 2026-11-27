@@ -11,6 +11,7 @@ use crate::planning::round::git_changes::GitChanges;
 use crate::planning::round::line_change::LineChange;
 use crate::planning::round::line_changes::LineChanges;
 use crate::planning::round::lock_changes::LockChanges;
+use crate::planning::round::ownership::Ownership;
 use crate::planning::round::progress::Progress;
 use crate::planning::round::sorted::Sorted;
 use crate::planning::round::stale_findings::StaleFindings;
@@ -19,8 +20,10 @@ use alloc::vec::Vec;
 
 /// Every difference between the workspace the plan found and the workspace
 /// now, sorted into the units that explain it. A lock move a unit of the plan
-/// makes is that unit's; a line rewritten to the value a unit's edit writes is
-/// that unit's; any other line is a change outside the plan.
+/// makes is that unit's; a change of a crate the units share no move
+/// explains is theirs together, and named so; a line rewritten to the value a
+/// unit's edit writes is that unit's; any other line is a change outside the
+/// plan.
 pub struct Sorting<'a> {
     plan: &'a RecordedPlan,
     lock: LockChanges,
@@ -50,8 +53,13 @@ impl<'a> Sorting<'a> {
         &self.lock
     }
 
+    pub fn ownership(&self) -> Ownership<'_> {
+        Ownership::new(&self.plan.shared)
+    }
+
     pub fn sort(&self) -> Sorted {
-        let progress = Progress::new(&self.lock, &self.lines, &self.git);
+        let ownership = self.ownership();
+        let progress = Progress::new(&self.lock, &self.lines, &self.git, &ownership);
         let units = self
             .plan
             .units
@@ -64,6 +72,7 @@ impl<'a> Sorting<'a> {
             .filter(|lock_move| self.lock.applied(lock_move))
             .cloned()
             .collect::<Vec<LockMove>>();
+        let unexplained = self.lock.unexplained(&moved);
         Sorted {
             applied: units
                 .iter()
@@ -75,7 +84,12 @@ impl<'a> Sorting<'a> {
                 .filter(|unit| unit.kind == UnitKind::Breaking && progress.whole(unit))
                 .map(|unit| unit.id.clone())
                 .collect(),
-            unexplained: self.lock.unexplained(&moved),
+            shared: unexplained
+                .iter()
+                .filter(|lock_move| ownership.is_shared(&lock_move.name))
+                .cloned()
+                .collect(),
+            unexplained,
             unexplained_git: self.git.unexplained(
                 &units
                     .iter()
