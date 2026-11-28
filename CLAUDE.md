@@ -28,8 +28,9 @@ only, ran with 0.1.0 over 32 of them, and 0.1.1 fixes what it found; the first r
 units sharing a crate and a crate its dependents hold back, which 0.1.2 fixes; the rounds after it found a plan blind
 to a release published since the day's first and dependencies re-pointed between versions the lock already held,
 which 0.1.3 fixes with `plan --refresh` and `check`'s `repointed`; the first pins it wrote were asked again before
-their review dates, which 0.1.4 fixes. Tuning the thresholds and the grouping is next.
-Version 0.1.4, on crates.io, is all of it.
+their review dates, which 0.1.4 fixes; and 0.1.5 parses the sources with syn 3, every plan byte for byte as it was.
+Tuning the thresholds and the grouping is next.
+Version 0.1.5, on crates.io, is all of it.
 
 It is self-contained.
 
