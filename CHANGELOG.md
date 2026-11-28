@@ -42,6 +42,11 @@ re-pointed dependencies between versions the lock already held, naming none of i
 - The source scan's records -- `Scan`, `CrateUse`, `UnfollowedInclude` and `UnparsedFile` -- moved from
   `ripe4rust_core::inputs` into `ripe4rust_core::inputs::source_scan`, beside `inputs::git`: `inputs/` had reached
   the 20 files stern4rust lets a directory hold, and the lock's edges are one more.
+- `cargo-ripe4rust` requires `ripe4rust-core` at exactly its own release, `=0.1.3`, where it took any `0.1` from
+  its own on: the two are released together, and the core's API moves within `0.1` -- this release adds a method to
+  `WorkspaceFiles` and moves the scan's records --, so a later core would break a release of the binary installed
+  without `--locked`. An earlier binary installed that way takes this core and does not build: install it with
+  `--locked`, or install this one.
 
 ### Fixed
 - A cache entry was written to `<name>.partial` beside it, then renamed: two rounds writing one answer at once --
