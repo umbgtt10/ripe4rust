@@ -200,6 +200,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serge4rust"
+version = "0.3.2"
+dependencies = [
+ "serde",
+ "serde_json",
+ "syn 3.0.10",
+]
+
+[[package]]
 name = "syn"
 version = "2.0.119"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -304,10 +313,7 @@ checksum = "8c3b93199df0ab874cdf0c6a94f0a0dc3423fe41f1cafb62b8bd7b1deb277aef"
 name = "xtask"
 version = "0.0.0"
 dependencies = [
- "serde",
- "serde_json",
- "syn 2.0.119",
- "tempfile",
+ "serge4rust",
 ]
 
 [[package]]

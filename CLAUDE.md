@@ -54,9 +54,10 @@ A workspace of three members, with a virtual root that holds no package:
 |---|---|
 | `core/` | package `ripe4rust-core`, library `ripe4rust_core`: the units, the version choice, the rules, the verdicts, the questions, the steps, the diagnostics and the plan. `#![no_std]`, no dependency, no technology. The ports in `traits/`, the data they hand over in `inputs/`, the hand-written arithmetic -- versions, requirements, dates -- in `values/`, the codes in `diagnostics/`, and the plan, from the policy to the questions, in `planning/` -- the version choice in `planning/units/choice/`, and the round's commands in `planning/round/`: `check`'s sorting of differences, `hold`'s pin and `guide`'s text. |
 | `cli/` | package `cargo-ripe4rust`: the `cargo-ripe4rust` binary, `main.rs` a thin shim over the library `cargo_ripe4rust`'s entry point, `command::ripe4rust::Ripe4rust`. `src/command/` the command line and the four commands; `src/adapters/` the real implementations of the core's ports -- `cargo/` (`cargo metadata`, `cargo update --dry-run`, `cargo deny`), `registry/` (the index and the API through `curl`, with the day cache), `workspace/` (the workspace's files, `Cargo.lock`, the fingerprint, the plan document read back in `plan/`, and the parse of the sources in `sources/` -- `walking/` a target's modules, `naming/` what a file's names stand for and the lines naming a dependency, `exposure/` a library's public API), `toolchain/` (`rustc`, and the distribution's list of channel manifests through `curl`, with the day cache), `clock/`; `src/system/` the seams they reach the system through -- `traits/`, the records in `model/`, the real implementations in `real/`; `src/render/` the renderers. Its tests replay output recorded from the pinned toolchain, under `tests/fixtures/`, scrubbed of local paths; none reaches the network. |
-| `xtask/` | gate orchestration, run as `cargo xtask`. `publish = false`. |
+| `xtask/` | gate orchestration, run as `cargo xtask`, `publish = false`: `src/main.rs` alone -- which gates each stage runs, in what order, and this workspace's constants. The gates, the command runner and the commit scoring are serge4rust's, the house's gates as a library; a gate this workspace needs is added there, released, and taken here. |
 
-Each `tests/` mirrors its `src/`, one registry, `all_tests.rs`, per package.
+Each `tests/` mirrors its `src/`, one registry, `all_tests.rs`, per package; `xtask` has no `tests/`, its gates' tests
+being serge4rust's.
 
 ## Quality Gates
 
@@ -68,7 +69,9 @@ Each `tests/` mirrors its `src/`, one registry, `all_tests.rs`, per package.
 If either gate is not green, the work is not complete.
 
 Stage 1 is `cargo fmt`, clippy pedantic with `-D warnings` on every target, and the tests -- cargo built-ins only.
-Stage 2 is `cargo xtask stage2`, the gates in this order, all on, nothing baselined:
+Stage 2 is `cargo xtask stage2`, the gates in this order, all on, nothing baselined. Every gate is serge4rust's,
+built in `xtask/src/main.rs` from this workspace's constants -- packages, directories, the boundary's rule,
+thresholds, the floor, the baseline -- and run in its `Stage`, which stops at the first failure:
 
 | gate | asks |
 |---|---|
@@ -83,7 +86,7 @@ Stage 2 is `cargo xtask stage2`, the gates in this order, all on, nothing baseli
 
 `just stage1` starts with `just sync`: `cargo update`, every dependency to its
 newest compatible version, in the lock file only, while the tool is in
-development. It needs the network. A requirement in a manifest never moves, so a
+development -- serge4rust's `CargoUpdateGate`, run by `cargo xtask sync`. It needs the network. A requirement in a manifest never moves, so a
 published crate's users can still resolve what they could; what it moves is
 committed on its own. Breaking versions are a separate decision, not taken here.
 
@@ -91,23 +94,23 @@ The technology-free gate runs first, because its fix -- moving code into `cli` -
 measures, and it needs no installed tool: `ripe4rust-core`'s manifest may name no crate in any section (read from
 `cargo metadata`), `core/src/lib.rs` must carry `#![no_std]` and `#![forbid(unsafe_code)]`, and no file under
 `core/src` or `core/tests` may reach `std::{env,fs,io,net,os,process,thread}`, a printing macro, a file-system method
-of `Path` or `extern crate std` (read with syn, so string literals are data). It is iceberg4rust's gate, in
-`xtask/src/gates/boundary/`. It cannot see a use inside a macro's arguments, and a method of the core's own named like
-a file-system one would be reported.
+of `Path` or `extern crate std` (read with syn, so string literals are data). It is serge4rust's `BoundaryGate`,
+shared with iceberg4rust, every one of those lists a constant of `xtask/src/main.rs`. It cannot see a use inside a
+macro's arguments, and a method of the core's own named like a file-system one would be reported.
 
 The stern gate runs the release on PATH, as every other gate runs its tool: `cargo stern4rust` 0.24.0 holds all
 thirty-nine of its rules here, nothing skipped and nothing unconfigured, so there is no stern baseline.
 `docs/header.txt` holds the header every `.rs` file carries, and `stern4rust.toml` names it -- in the config rather
 than the gate, so a hand-run of `cargo stern4rust` checks exactly what the gate checks.
 
-dry4rust makes one run from the workspace root, with `xtask/`, `core/tests/` and `cli/tests/` excluded by full path,
-so a copy from one crate into the other is seen. `dry4rust-baseline.json` records no group and may never gain one.
+dry4rust makes one run from the workspace root, with `xtask/`, `core/tests/` and `cli/tests/` excluded by full path
+(serge4rust's `DryGate::excluding`), so a copy from one crate into the other is seen. `dry4rust-baseline.json` records no group and may never gain one.
 Re-record it only to drop a group that is gone, at the same floor: `cargo dry4rust --path "$PWD" --exclude
 "$PWD/xtask" --exclude "$PWD/core/tests" --exclude "$PWD/cli/tests" --min-nodes 25 --baseline
 "$PWD/dry4rust-baseline.json" baseline`.
 
-The iceberg ceiling is a ratchet just above the worst file -- `xtask/src/main.rs`, 6.89, when the gates arrived:
-lower it when the score improves, never raise it to turn a red build green.
+The iceberg ceiling is a ratchet just above the worst file -- `xtask/src/main.rs`, 6.89, when the gates arrived, and
+6.76 since it took them from serge4rust: lower it when the score improves, never raise it to turn a red build green.
 
 cargo-deny runs **last**, and is the one gate that can turn red with nothing
 changed: its advisories come from the RustSec database, so a newly published
@@ -140,7 +143,9 @@ and macOS.
 The owner's rule of 2026-11-11: every commit message carries the grip and
 braintax of `core`, and their ratio, scored as the commit stages it.
 `.githooks/commit-msg` runs `cargo xtask grip-braintax` on the message's file,
-which writes the scores in as a paragraph of their own above the trailers:
+which hands it to serge4rust's `ScoringHook::single_crate`, `core` being one
+crate at the workspace's root; it writes the scores in as a paragraph of their
+own above the trailers:
 `core`'s `grip_absolute_total` over its `total_braintax` and their ratio, under
 a title naming the releases of `cargo-grip4rust` and `cargo-braintax4rust` --
 scores of different releases do not compare. The files under `core/` that the
