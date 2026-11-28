@@ -85,11 +85,9 @@ thresholds, the floor, the baseline -- and run in its `Stage`, which stops at th
 | `cargo iceberg4rust` | is any file's private implementation risk at or above 7 |
 | `cargo deny` | do the dependencies carry an advisory, a refused licence or a foreign source |
 
-`just stage1` starts with `just sync`: `cargo update`, every dependency to its
-newest compatible version, in the lock file only, while the tool is in
-development -- serge4rust's `CargoUpdateGate`, run by `cargo xtask sync`. It needs the network. A requirement in a manifest never moves, so a
-published crate's users can still resolve what they could; what it moves is
-committed on its own. Breaking versions are a separate decision, not taken here.
+Stage 1 does not move the lock file. `cargo ripe4rust plan`, run on this workspace, plans each compatible move, and
+the round applies it under both stages: a `cargo update` inside them would move more than the upgrade they are
+checking.
 
 The technology-free gate runs first, because its fix -- moving code into `cli` -- changes what every gate behind it
 measures, and it needs no installed tool: `ripe4rust-core`'s manifest may name no crate in any section (read from

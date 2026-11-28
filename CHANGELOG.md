@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Removed
+- `just sync` and `cargo xtask sync`: stage 1 no longer starts with `cargo update`, serge4rust's `CargoUpdateGate`.
+  `cargo ripe4rust plan` plans each compatible move and the round applies it under both stages; a blind sync inside
+  them moved more than the upgrade being checked.
+
 ## [0.1.5] — 2026-11-28
 
 What the round after 0.1.4 took from ripe4rust's own plan: syn 3 inside the cli, every plan byte for byte as it was,
