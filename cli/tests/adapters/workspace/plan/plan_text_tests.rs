@@ -4,6 +4,7 @@
 
 use cargo_ripe4rust::adapters::workspace::plan::plan_text::PlanText;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::lock_edge::LockEdge;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::date::Date;
@@ -31,6 +32,36 @@ fn date_of_a_date_is_it_and_of_anything_else_unreadable() {
         [
             Ok(Date::parse("2026-11-26").expect("a date")),
             Err(unreadable("`26 November` is not a date, YYYY-MM-DD")),
+        ]
+    );
+}
+
+#[test]
+fn edge_of_a_crate_depending_on_another_is_the_lock_s_edge() {
+    // Arrange
+    let text = PlanText::new("plan.json");
+
+    // Act
+    let read = [
+        text.edge("errno 0.3.14 -> windows-sys 0.61.2"),
+        text.edge("errno 0.3.14 -> windows-sys"),
+        text.edge("errno 0.3.14 -> windows-sys 0.61"),
+    ];
+
+    // Assert
+    assert_eq!(
+        read,
+        [
+            Ok(LockEdge {
+                dependent: String::from("errno"),
+                dependent_version: Version::parse("0.3.14").expect("a version"),
+                dependency: String::from("windows-sys"),
+                dependency_version: Version::parse("0.61.2").expect("a version"),
+            }),
+            Err(text.unreadable(
+                "`errno 0.3.14 -> windows-sys` in the lock's edges is not a crate at its version depending on another at its own"
+            )),
+            Err(text.unreadable("`0.61` is not a version")),
         ]
     );
 }

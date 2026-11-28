@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use ripe4rust_core::inputs::port_failure::PortFailure;
-use ripe4rust_core::inputs::scan::Scan;
+use ripe4rust_core::inputs::source_scan::scan::Scan;
 use ripe4rust_core::traits::source_scan::SourceScan;
 
 pub struct FakeScan {

@@ -173,6 +173,22 @@ fn plan_prints_the_crates_the_units_share() {
 }
 
 #[test]
+fn plan_prints_the_lock_s_edges_after_its_git_sources() {
+    // Arrange
+    let mut planned = plan(Vec::new());
+    planned.workspace.edges = vec![String::from("errno 0.3.14 -> windows-sys 0.61.2")];
+
+    // Act
+    let text = compact(&JsonRenderer::new("plan").plan(&planned));
+
+    // Assert
+    assert!(
+        text.contains(r#""git":[],"edges":["errno0.3.14->windows-sys0.61.2"],"lines":[{"#),
+        "{text}"
+    );
+}
+
+#[test]
 fn plan_prints_the_workspace_and_every_unit() {
     // Arrange & Act
     let text = JsonRenderer::new("plan").plan(&plan(vec![compatible()]));
@@ -189,6 +205,7 @@ fn plan_prints_the_workspace_and_every_unit() {
             "fingerprint": "9f2c41d0e3b5a7c9",
             "lock": ["gadget 0.13.1", "widget 4.6.6"],
             "git": [],
+            "edges": [],
             "lines": [
                 { "where": "Cargo.toml:22", "key": "gadget", "value": "0.13" },
                 { "where": "rust-toolchain.toml:2", "key": "channel", "value": "1.99.1" }

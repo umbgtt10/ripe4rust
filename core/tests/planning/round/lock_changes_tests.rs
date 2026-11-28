@@ -97,6 +97,21 @@ fn holds_of_a_version_is_whether_the_lock_holds_it_now() {
 }
 
 #[test]
+fn kept_of_a_version_is_whether_the_plan_s_lock_and_the_lock_now_both_hold_it() {
+    // Arrange
+    let changes = LockChanges::new(
+        &lock(&[("windows-sys", "0.52.0"), ("windows-sys", "0.61.2")]),
+        &lock(&[("windows-sys", "0.52.0"), ("windows-sys", "0.60.2")]),
+    );
+
+    // Act
+    let kept = ["0.52.0", "0.60.2", "0.61.2"].map(|at| changes.kept("windows-sys", &version(at)));
+
+    // Assert
+    assert_eq!(kept, [true, false, false]);
+}
+
+#[test]
 fn unexplained_of_changes_no_applied_move_accounts_for_are_paired_by_crate() {
     // Arrange
     let changes = LockChanges::new(

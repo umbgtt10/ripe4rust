@@ -8,6 +8,8 @@ use crate::planning::plan_failure::PlanFailure;
 use crate::planning::round::checking::accountable::Accountable;
 use crate::planning::round::checking::check_report::CheckReport;
 use crate::planning::round::checking::difference_finder::DifferenceFinder;
+use crate::planning::round::edge_changes::EdgeChanges;
+use crate::planning::round::lock_changes::LockChanges;
 use crate::planning::round::round_reader::RoundReader;
 use crate::planning::round::sorting::Sorting;
 use crate::planning::round::target_finder::TargetFinder;
@@ -63,15 +65,23 @@ impl<'a> Checker<'a> {
         let accountable = Accountable::new(&target, sorting.ownership(), sorting.lock());
         let finder = DifferenceFinder::new(&target, &sorting, &inputs.policy.pins, &accountable);
         let differences = finder.differences(&sorted);
+        let edges = EdgeChanges::new(
+            LockChanges::new(&plan.lock, &inputs.current.lock),
+            plan.edges.as_deref(),
+            &inputs.current.edges,
+        );
+        let mut diagnostics = inputs.diagnostics;
+        diagnostics.extend(edges.unseen());
         Ok(CheckReport {
             unit: target.id.clone(),
             as_planned: differences.is_empty(),
             transitive: finder.transitive(&sorted),
             differences,
             shared: finder.shared(&sorted),
+            repointed: edges.repointed(),
             applied: sorted.applied,
             to_go: sorted.to_go,
-            diagnostics: inputs.diagnostics,
+            diagnostics,
         })
     }
 }

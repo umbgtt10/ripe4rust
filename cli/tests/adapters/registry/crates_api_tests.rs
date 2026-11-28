@@ -10,6 +10,7 @@ use crate::support::replay_runner::ReplayRunner;
 use cargo_ripe4rust::adapters::registry::crates_api::CratesApi;
 use cargo_ripe4rust::adapters::registry::curl::Curl;
 use cargo_ripe4rust::adapters::registry::day_cache::DayCache;
+use cargo_ripe4rust::adapters::registry::lookup::Lookup;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::traits::repositories::Repositories;
 use ripe4rust_core::values::date::Date;
@@ -50,7 +51,12 @@ fn repository_answered_with_another_status_is_unreachable() {
     // Arrange
     let (runner, files, pause) = (recorded(), MemoryFiles::new(), CountingPause::new());
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let repository = CratesApi::new(&curl, &cache, &pause).repository("busy");
@@ -77,7 +83,12 @@ fn repository_of_a_cached_crate_asks_nothing_and_waits_for_nothing() {
         )
         .with("/cache/2026-11-26/api/smallvec", "");
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
     let api = CratesApi::new(&curl, &cache, &pause);
 
     // Act
@@ -97,7 +108,12 @@ fn repository_of_a_crate_the_api_does_not_know_is_none_cached_as_such() {
     // Arrange
     let (runner, files, pause) = (recorded(), MemoryFiles::new(), CountingPause::new());
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let repository = CratesApi::new(&curl, &cache, &pause).repository("gone");
@@ -115,7 +131,12 @@ fn repository_of_two_crates_asks_the_api_a_second_apart() {
     // Arrange
     let (runner, files, pause) = (recorded(), MemoryFiles::new(), CountingPause::new());
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
     let api = CratesApi::new(&curl, &cache, &pause);
 
     // Act
@@ -131,4 +152,34 @@ fn repository_of_two_crates_asks_the_api_a_second_apart() {
     );
     assert_eq!(*pause.pauses.borrow(), vec![1]);
     assert!(files.contents("/cache/2026-11-26/api/itoa").is_some());
+}
+
+#[test]
+fn repository_refreshed_of_a_cached_crate_asks_the_api_again() {
+    // Arrange
+    let (runner, pause) = (recorded(), CountingPause::new());
+    let files = MemoryFiles::new().with("/cache/2026-11-26/api/itoa", "");
+    let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Refreshed,
+    );
+
+    // Act
+    let repository = CratesApi::new(&curl, &cache, &pause).repository("itoa");
+
+    // Assert
+    assert_eq!(
+        repository,
+        Ok(Some(String::from("https://github.com/dtolnay/itoa")))
+    );
+    let (body, _) = include_str!("../../fixtures/workspace/registry/api/itoa.txt")
+        .rsplit_once('\n')
+        .expect("a status");
+    assert_eq!(
+        files.contents("/cache/2026-11-26/api/itoa"),
+        Some(String::from(body))
+    );
 }

@@ -81,6 +81,7 @@ impl FakePorts {
                 rust_version_lines: surveyed.rust_version_lines.clone(),
                 written: surveyed.written.clone(),
                 git: surveyed.git.clone(),
+                edges: surveyed.edges.clone(),
                 failure: None,
             },
             advisories: FakeAdvisories {

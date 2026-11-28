@@ -12,7 +12,7 @@ use crate::adapters::workspace::sources::walking::parsed_file::ParsedFile;
 use crate::adapters::workspace::sources::walking::walk::Walk;
 use crate::system::model::file_failure::FileFailure;
 use crate::system::traits::file_system::FileSystem;
-use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
+use ripe4rust_core::inputs::source_scan::unparsed_file::UnparsedFile;
 use ripe4rust_core::values::location::Location;
 use std::path::Path;
 use syn::parse_file;

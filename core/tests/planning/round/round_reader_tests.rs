@@ -7,18 +7,21 @@ use crate::support::policy_trees::text;
 use crate::support::policy_trees::tree;
 use crate::support::recorded::base;
 use crate::support::recorded::changed;
+use crate::support::recorded::edge;
 use crate::support::recorded::lines_with;
 use crate::support::recorded::lock;
 use crate::support::recorded::plan;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::inputs::policy_value::PolicyValue;
+use ripe4rust_core::inputs::recorded_plan::RecordedPlan;
 use ripe4rust_core::planning::round::current_state::CurrentState;
 use ripe4rust_core::planning::round::round_reader::RoundReader;
 
 #[test]
 fn read_of_a_changed_workspace_is_its_lock_and_lines_now() {
     // Arrange
-    let files = changed(lock(&[("widget", "1.4.1")]), lines_with(&[(21, "1.5")]));
+    let mut files = changed(lock(&[("widget", "1.4.1")]), lines_with(&[(21, "1.5")]));
+    files.edges = vec![edge(("gadget", "0.13.1"), ("widget", "1.4.1"))];
 
     // Act
     let read = RoundReader::new(&files).read(&plan());
@@ -30,6 +33,7 @@ fn read_of_a_changed_workspace_is_its_lock_and_lines_now() {
             lock: lock(&[("widget", "1.4.1")]),
             lines: lines_with(&[(21, "1.5")]),
             git: Vec::new(),
+            edges: vec![edge(("gadget", "0.13.1"), ("widget", "1.4.1"))],
         })
     );
 }
@@ -65,9 +69,14 @@ fn read_of_a_workspace_with_the_plan_s_fingerprint_is_the_plan_s_lock_and_lines(
     // Arrange
     let mut files = base();
     files.lock = lock(&[("unread", "1.0.0")]);
+    files.edges = vec![edge(("unread", "1.0.0"), ("widget", "1.4.0"))];
+    let recorded = RecordedPlan {
+        edges: Some(vec![edge(("gadget", "0.13.1"), ("widget", "1.4.0"))]),
+        ..plan()
+    };
 
     // Act
-    let read = RoundReader::new(&files).read(&plan());
+    let read = RoundReader::new(&files).read(&recorded);
 
     // Assert
     assert_eq!(
@@ -76,6 +85,7 @@ fn read_of_a_workspace_with_the_plan_s_fingerprint_is_the_plan_s_lock_and_lines(
             lock: plan().lock,
             lines: plan().lines,
             git: Vec::new(),
+            edges: vec![edge(("gadget", "0.13.1"), ("widget", "1.4.0"))],
         })
     );
 }

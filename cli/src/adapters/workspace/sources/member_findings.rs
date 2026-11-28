@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
+use ripe4rust_core::inputs::source_scan::unparsed_file::UnparsedFile;
 use ripe4rust_core::values::location::Location;
 
 /// What the parse found of one member, or of one of its targets: every line

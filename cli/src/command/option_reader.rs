@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::adapters::registry::lookup::Lookup;
 use crate::command::command_spec::CommandSpec;
 use crate::command::format::Format;
 use crate::command::request::Request;
@@ -47,7 +48,7 @@ impl OptionReader {
             command: String::from(self.spec.name),
             format,
             date: None,
-            offline: false,
+            lookup: Lookup::Cached,
             unit: None,
             plan: None,
             because: None,
@@ -64,7 +65,12 @@ impl OptionReader {
                 .map_or((*word, None), |(flag, value)| (flag, Some(value)));
             let mut value = || inline.or_else(|| words.next().copied());
             match flag {
-                "--offline" if inline.is_none() && self.knows(flag) => request.offline = true,
+                "--offline" if inline.is_none() && self.knows(flag) => {
+                    request.lookup = self.lookup(request.lookup, Lookup::Offline)?;
+                }
+                "--refresh" if inline.is_none() && self.knows(flag) => {
+                    request.lookup = self.lookup(request.lookup, Lookup::Refreshed)?;
+                }
                 "--format" => request.format = self.format(value())?,
                 "--date" if self.knows(flag) => request.date = Some(self.date(flag, value())?),
                 "--review" if self.knows(flag) => request.review = Some(self.date(flag, value())?),
@@ -118,6 +124,17 @@ impl OptionReader {
 
     fn knows(&self, flag: &str) -> bool {
         self.spec.options.contains(&flag)
+    }
+
+    fn lookup(&self, given: Lookup, asked: Lookup) -> Result<Lookup, Diagnostic> {
+        if given == Lookup::Cached || given == asked {
+            Ok(asked)
+        } else {
+            Err(self.usage(format!(
+                "`--offline` and `--refresh` were both given, and `{}` takes one of them: `--offline` reads the cache alone, `--refresh` fetches every answer again",
+                self.spec.name
+            )))
+        }
     }
 
     fn unit(&self, word: &str, given: Option<&str>) -> Result<String, Diagnostic> {

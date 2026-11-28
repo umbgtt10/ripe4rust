@@ -2,9 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::inputs::crate_use::CrateUse;
-use crate::inputs::unfollowed_include::UnfollowedInclude;
-use crate::inputs::unparsed_file::UnparsedFile;
+use crate::inputs::source_scan::crate_use::CrateUse;
+use crate::inputs::source_scan::unfollowed_include::UnfollowedInclude;
+use crate::inputs::source_scan::unparsed_file::UnparsedFile;
 use alloc::string::String;
 use alloc::vec::Vec;
 

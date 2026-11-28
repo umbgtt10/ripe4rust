@@ -6,6 +6,7 @@ use crate::support::fakes::fake_files::FakeFiles;
 use crate::support::fakes::fake_plan::FakePlan;
 use crate::support::recorded::base;
 use crate::support::recorded::changed;
+use crate::support::recorded::edge;
 use crate::support::recorded::entry_of;
 use crate::support::recorded::lines;
 use crate::support::recorded::lines_with;
@@ -20,6 +21,7 @@ use crate::support::surveyed::at;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::port_failure::PortFailure;
+use ripe4rust_core::inputs::recorded_plan::RecordedPlan;
 use ripe4rust_core::planning::plan_failure::PlanFailure;
 use ripe4rust_core::planning::round::checking::check_report::CheckReport;
 use ripe4rust_core::planning::round::checking::checker::Checker;
@@ -54,6 +56,14 @@ fn check_shared(entries: &[(&str, &str)], unit: &str) -> CheckReport {
 
 fn codes(failure: &PlanFailure) -> Vec<DiagnosticCode> {
     failure
+        .diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.code)
+        .collect()
+}
+
+fn codes_of(report: &CheckReport) -> Vec<DiagnosticCode> {
+    report
         .diagnostics
         .iter()
         .map(|diagnostic| diagnostic.code)
@@ -197,6 +207,29 @@ fn check_of_a_move_no_unit_makes_is_not_as_planned_with_what_to_do() {
 }
 
 #[test]
+fn check_of_a_plan_without_edges_is_as_planned_saying_once_that_they_cannot_be_compared() {
+    // Arrange
+    let source = FakePlan {
+        plan: Ok(RecordedPlan {
+            edges: None,
+            ..plan()
+        }),
+    };
+    let mut files = changed(widget_applied(), lines());
+    files.edges = vec![edge(("gadget", "0.13.1"), ("widget", "1.4.1"))];
+
+    // Act
+    let report = Checker::new(&source, &files)
+        .check("compatible:widget")
+        .expect("a check");
+
+    // Assert
+    assert!(report.as_planned, "{report:?}");
+    assert_eq!(report.repointed, Vec::<String>::new());
+    assert_eq!(codes_of(&report), vec![DiagnosticCode::PlanWithoutEdges]);
+}
+
+#[test]
 fn check_of_a_requirement_edited_by_hand_is_the_plan_stale() {
     // Arrange
     let files = changed(widget_applied(), lines_with(&[(21, "1.5")]));
@@ -322,6 +355,7 @@ fn check_of_a_unit_after_another_that_moved_a_crate_they_share_is_as_planned_say
             transitive: Vec::new(),
             differences: Vec::new(),
             shared: Vec::new(),
+            repointed: Vec::new(),
             applied: ids(&["compatible:boon", "compatible:proptest"]),
             to_go: ids(&["compatible:tonic", "rest"]),
             diagnostics: Vec::new(),
@@ -346,6 +380,7 @@ fn check_of_a_unit_applied_is_as_planned_listing_what_is_applied_and_what_is_to_
             transitive: Vec::new(),
             differences: Vec::new(),
             shared: Vec::new(),
+            repointed: Vec::new(),
             applied: ids(&["compatible:widget"]),
             to_go: ids(&[
                 "breaking:gadget",
@@ -356,6 +391,43 @@ fn check_of_a_unit_applied_is_as_planned_listing_what_is_applied_and_what_is_to_
             diagnostics: Vec::new(),
         })
     );
+}
+
+#[test]
+fn check_of_a_unit_beside_a_dependency_repointed_between_locked_versions_is_as_planned_naming_it() {
+    // Arrange
+    let tiny = [("tiny", "1.0.0"), ("tiny", "2.0.0")];
+    let mut base = plan().lock;
+    base.extend(lock(&tiny));
+    let source = FakePlan {
+        plan: Ok(RecordedPlan {
+            lock: base,
+            edges: Some(vec![edge(("gadget", "0.13.1"), ("tiny", "1.0.0"))]),
+            ..plan()
+        }),
+    };
+    let mut now = widget_applied();
+    now.extend(lock(&tiny));
+    let mut files = changed(now, lines());
+    files.edges = vec![edge(("gadget", "0.13.1"), ("tiny", "2.0.0"))];
+
+    // Act
+    let report = Checker::new(&source, &files)
+        .check("compatible:widget")
+        .expect("a check");
+
+    // Assert
+    assert_eq!(
+        (report.as_planned, report.differences, report.repointed),
+        (
+            true,
+            Vec::new(),
+            vec![String::from(
+                "`gadget` 0.13.1's `tiny` 1.0.0 -> 2.0.0, both already in the lock"
+            )]
+        )
+    );
+    assert_eq!(report.diagnostics, Vec::new());
 }
 
 #[test]

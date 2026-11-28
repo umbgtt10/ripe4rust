@@ -20,6 +20,7 @@ pub fn as_planned() -> CheckReport {
         ],
         differences: Vec::new(),
         shared: Vec::new(),
+        repointed: Vec::new(),
         applied: vec![
             String::from("compatible:widget"),
             String::from("breaking:gadget"),
@@ -72,6 +73,7 @@ pub fn not_as_planned() -> CheckReport {
         shared: vec![String::from(
             "`wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in",
         )],
+        repointed: Vec::new(),
         applied: Vec::new(),
         to_go: vec![String::from("compatible:widget"), String::from("rest")],
         diagnostics: Vec::new(),

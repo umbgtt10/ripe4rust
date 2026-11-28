@@ -32,6 +32,12 @@ Checked on 2026-11-26, the sparse index carries them: every entry has a
   `--offline` reads the cache alone, an earlier day's with a warning. With the
   registry unreachable and nothing cached for the day, no plan is produced
   (`registry-unreachable`).
+- A day's answers are the morning's for every later plan that day, so a
+  release published since is not seen. `--refresh` reads none of them: every
+  answer is fetched again and the day's copy overwritten, so the same day's
+  plans that follow read it too. It and `--offline` exclude each other. An
+  answer is written to a temporary file of the writer's own and renamed over
+  the day's, so a round sharing the cache never reads half of one.
 
 ## Rejected alternatives
 
@@ -44,4 +50,7 @@ Checked on 2026-11-26, the sparse index carries them: every entry has a
 
 A round costs one index read per crate in the lock and one API call per
 direct dependency, cached for the day. Plans are reproducible from the cache,
-which tests use as their fake.
+which tests use as their fake. A plan that must see a release published
+during the day pays the day's requests again, with `--refresh`; the first
+applied rounds, on 2026-11-27, missed a crate's release and Rust 1.100.1
+that way, and saw them only from a cache directory of their own.

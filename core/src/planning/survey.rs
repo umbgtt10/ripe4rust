@@ -8,7 +8,7 @@ use crate::inputs::git::git_move::GitMove;
 use crate::inputs::git::git_source::GitSource;
 use crate::inputs::port_failure::PortFailure;
 use crate::inputs::release::Release;
-use crate::inputs::scan::Scan;
+use crate::inputs::source_scan::scan::Scan;
 use crate::inputs::workspace::Workspace;
 use crate::planning::findings::Findings;
 use crate::planning::pins_and_policy::policy::Policy;
@@ -204,6 +204,7 @@ impl<'a> Survey<'a> {
             workspace_moves: workspace_moves.registry,
             source_moves: self.source_moves(&workspace_moves.git).map_err(stop)?,
             git: self.ports.files.git().map_err(stop)?,
+            edges: self.ports.files.edges().map_err(stop)?,
             repositories: self.repositories(&direct).map_err(stop)?,
             reached: self.reached(&policy).map_err(stop)?,
             requirement_lines: self.requirement_lines(&direct).map_err(stop)?,

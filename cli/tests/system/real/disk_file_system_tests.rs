@@ -72,6 +72,36 @@ fn read_of_a_written_file_is_its_text() {
 }
 
 #[test]
+fn write_leaves_another_writer_s_partial_file_alone() {
+    // Arrange
+    let directory = tempdir().expect("a directory");
+    let theirs = ["either.partial", "either.json.partial"];
+    for name in theirs {
+        DiskFileSystem
+            .write(&directory.path().join(name), "half an answer")
+            .expect("written");
+    }
+
+    // Act
+    DiskFileSystem
+        .write(&directory.path().join("either.json"), "{}")
+        .expect("written");
+
+    // Assert
+    assert_eq!(
+        theirs.map(|name| DiskFileSystem.read(&directory.path().join(name))),
+        [
+            Ok(String::from("half an answer")),
+            Ok(String::from("half an answer"))
+        ]
+    );
+    assert_eq!(
+        DiskFileSystem.read(&directory.path().join("either.json")),
+        Ok(String::from("{}"))
+    );
+}
+
+#[test]
 fn write_leaves_no_partial_file_beside_it() {
     // Arrange
     let directory = tempdir().expect("a directory");
@@ -103,5 +133,24 @@ fn write_over_a_directory_fails_with_what_the_system_said() {
     assert!(
         matches!(written, Err(FileFailure::Failed { .. })),
         "{written:?}"
+    );
+}
+
+#[test]
+fn write_that_fails_leaves_no_partial_file_behind() {
+    // Arrange
+    let directory = tempdir().expect("a directory");
+    DiskFileSystem
+        .write(&directory.path().join("taken/inner"), "")
+        .expect("written");
+
+    // Act
+    let written = DiskFileSystem.write(&directory.path().join("taken"), "{}");
+
+    // Assert
+    assert!(written.is_err(), "{written:?}");
+    assert_eq!(
+        DiskFileSystem.entries(directory.path()),
+        Ok(vec![String::from("taken")])
     );
 }

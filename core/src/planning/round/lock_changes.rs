@@ -9,8 +9,8 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 /// The lock as the plan found it and as it is now: whether a move shows in
-/// it -- its old version gone, its new one there --, and the changes no move
-/// accounts for, paired crate by crate.
+/// it -- its old version gone, its new one there --, whether a version is
+/// held by both, and the changes no move accounts for, paired crate by crate.
 pub struct LockChanges {
     base: Vec<LockEntry>,
     current: Vec<LockEntry>,
@@ -41,6 +41,10 @@ impl LockChanges {
 
     pub fn holds(&self, name: &str, version: &Version) -> bool {
         Self::within(&self.current, name, version)
+    }
+
+    pub fn kept(&self, name: &str, version: &Version) -> bool {
+        Self::within(&self.base, name, version) && self.holds(name, version)
     }
 
     pub fn unexplained(&self, applied: &[LockMove]) -> Vec<LockMove> {

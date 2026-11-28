@@ -8,12 +8,12 @@ use crate::support::releases::release;
 use crate::support::releases::version;
 use crate::support::units::dependency;
 use crate::support::units::moved;
-use ripe4rust_core::inputs::crate_use::CrateUse;
 use ripe4rust_core::inputs::locked_package::LockedPackage;
 use ripe4rust_core::inputs::member::Member;
 use ripe4rust_core::inputs::release::Release;
 use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
-use ripe4rust_core::inputs::scan::Scan;
+use ripe4rust_core::inputs::source_scan::crate_use::CrateUse;
+use ripe4rust_core::inputs::source_scan::scan::Scan;
 use ripe4rust_core::inputs::workspace::Workspace;
 use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::planning::pins_and_policy::policy::Policy;
@@ -204,6 +204,7 @@ pub fn surveyed() -> Surveyed {
         ],
         source_moves: Vec::new(),
         git: Vec::new(),
+        edges: Vec::new(),
         workspace_moves: vec![
             moved("gizmo", "2.7.5", "2.7.6"),
             moved("libc", "0.2.177", "0.2.178"),

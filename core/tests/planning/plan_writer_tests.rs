@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::recorded::edge;
 use crate::support::releases::version;
 use crate::support::surveyed::surveyed;
 use crate::support::units::moved;
@@ -301,6 +302,30 @@ fn plan_records_every_line_a_unit_can_edit_as_it_was_written() {
 
     // Assert
     assert_eq!(plan.workspace.lines, surveyed.written);
+}
+
+#[test]
+fn plan_records_the_lock_s_versioned_edges_in_order() {
+    // Arrange
+    let mut surveyed = surveyed();
+    surveyed.edges = vec![
+        edge(("rustix", "1.1.2"), ("windows-sys", "0.61.2")),
+        edge(("errno", "0.3.14"), ("windows-sys", "0.61.2")),
+        edge(("app", "0.1.0"), ("windows-sys", "0.52.0")),
+    ];
+
+    // Act
+    let plan = PlanWriter::new(&surveyed).plan();
+
+    // Assert
+    assert_eq!(
+        plan.workspace.edges,
+        vec![
+            String::from("app 0.1.0 -> windows-sys 0.52.0"),
+            String::from("errno 0.3.14 -> windows-sys 0.61.2"),
+            String::from("rustix 1.1.2 -> windows-sys 0.61.2"),
+        ]
+    );
 }
 
 #[test]

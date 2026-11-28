@@ -6,6 +6,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-11-28
+
+What the rounds after 0.1.2 found, applying plans in three workspaces: a plan made later the same day read the
+morning's cached answers and missed a release published since, and `check` said "as planned" of units that
+re-pointed dependencies between versions the lock already held, naming none of it.
+
+### Added
+- `cargo ripe4rust plan --refresh`: online, every answer the plan reads -- the crates' index files, the API's answers
+  and the Rust distribution's list of channel manifests -- is fetched again and the day's cached copy overwritten.
+  The day cache served a plan made later the same day the morning's answers, so it never saw a release published
+  since: the first applied rounds missed a crate's new release and Rust 1.100.1, and saw them only from a cache
+  directory of their own. `--refresh` with `--offline` is `usage-invalid` -- one reads the cache alone, the other
+  none of it --, and `guide` names the option and says in the round when to take it
+  (`cargo_ripe4rust::adapters::registry::lookup::Lookup`, which `DayCache` and the request take in place of
+  `offline: bool`).
+- `check` tells every dependency re-pointed between versions the lock already held. `cargo update -p proptest`
+  took the `windows-sys` dependency of `errno`, `rustix` and `tempfile` from 0.61.2 to 0.52.0, both locked, no
+  version added or removed, and the next unit took them back; `check` said "as planned" both times and named none of
+  it. The plan now records the lock's versioned edges in the new `workspace.edges`, after `git` -- every dependency
+  `Cargo.lock` writes with a version, of every package, members included, on a crates.io package, `errno 0.3.14 ->
+  windows-sys 0.61.2`; a bare edge, to a crate the lock holds once, cannot re-point and is left out. `check` reports
+  each edge whose dependent is in both locks at the same version and whose dependency moved between two versions both
+  hold, in the new `repointed` after `shared`, "`errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the
+  lock", in the table as `repointed: ...`; an edge a version's move explains is not reported. A re-point is
+  information, never a difference: `as_planned`, the exit code and staleness are unchanged. It is cumulative against
+  the plan's lock, and the round says to name in the unit's commit message those its check lists that the check
+  before did not, and those it no longer lists; the gates judge them. A plan written by 0.1.2 or earlier, with no
+  `edges`, still reads and checks as before, with the new notice `plan-without-edges`, once; `guide` lists it with
+  its remedy, and names both fields (`ADR-ARepointIsToldNeverJudged`, `ripe4rust_core::inputs::lock_edge::LockEdge`,
+  `ripe4rust_core::planning::round::edge_changes::EdgeChanges`, the core's `WorkspaceFiles::edges`, read by the cli's
+  `LockReader::edges`).
+
+### Changed
+- The source scan's records -- `Scan`, `CrateUse`, `UnfollowedInclude` and `UnparsedFile` -- moved from
+  `ripe4rust_core::inputs` into `ripe4rust_core::inputs::source_scan`, beside `inputs::git`: `inputs/` had reached
+  the 20 files stern4rust lets a directory hold, and the lock's edges are one more.
+- `cargo-ripe4rust` requires `ripe4rust-core` at exactly its own release, `=0.1.3`, where it took any `0.1` from
+  its own on: the two are released together, and the core's API moves within `0.1` -- this release adds a method to
+  `WorkspaceFiles` and moves the scan's records --, so a later core would break a release of the binary installed
+  without `--locked`. An earlier binary installed that way takes this core and does not build: install it with
+  `--locked`, or install this one.
+
+### Fixed
+- A cache entry was written to `<name>.partial` beside it, then renamed: two rounds writing one answer at once --
+  two plans refreshing the same day, say -- shared that file, so one could rename the other's half-written answer
+  into place for a third to read, and fail its own rename. Each write now has a temporary file of its own, named for
+  the process and the write, and one whose rename fails is removed.
+
 ## [0.1.2] — 2026-11-27
 
 What the first round that applied a plan found, in one real workspace: units sharing a crate made `check` say "not

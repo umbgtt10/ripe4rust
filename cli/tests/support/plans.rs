@@ -217,6 +217,7 @@ pub fn plan(units: Vec<PlannedUnit>) -> Plan {
                 written(at("rust-toolchain.toml", 2), "channel", "1.99.1"),
             ],
             git: Vec::new(),
+            edges: Vec::new(),
         },
         gates: gates(),
         shared: Vec::new(),

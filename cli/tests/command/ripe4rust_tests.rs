@@ -198,6 +198,46 @@ fn run_of_a_workspace_on_an_older_toolchain_names_what_the_newest_releases() {
 }
 
 #[test]
+fn run_of_check_after_a_dependency_repointed_between_locked_versions_names_it_and_exits_zero() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let plan = PLAN
+        .replacen(
+            "\"either 1.5.0\",",
+            "\"either 1.5.0\",\n      \"either 1.6.0\",",
+            1,
+        )
+        .replace(
+            "\"edges\": [],",
+            "\"edges\": [\"itertools 0.10.0 -> either 1.5.0\"],",
+        );
+    let lock = moved(LOCK, "itoa", "0.4.7", "0.4.8")
+        .replace(" \"either\",\n", " \"either 1.6.0\",\n")
+        .replace(
+            "[[package]]\nname = \"itertools\"",
+            "[[package]]\nname = \"either\"\nversion = \"1.6.0\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\n\n[[package]]\nname = \"itertools\"",
+        );
+    let files = files()
+        .with("/work/ws/plan.json", &plan)
+        .with("/work/ws/Cargo.lock", &lock);
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&check("compatible:itoa"));
+
+    // Assert
+    let document = parsed(&ran.output);
+    assert_eq!(
+        (ran.code, &document["as_planned"], &document["repointed"]),
+        (
+            0,
+            &json!(true),
+            &json!(["`itertools` 0.10.0's `either` 1.5.0 -> 1.6.0, both already in the lock"])
+        )
+    );
+    assert_eq!(document["differences"], json!([]));
+}
+
+#[test]
 fn run_of_check_after_a_requirement_edited_by_hand_exits_three() {
     // Arrange
     let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
@@ -265,6 +305,37 @@ fn run_of_check_of_a_plan_of_another_schema_exits_two() {
     assert_eq!(
         parsed(&ran.output)["diagnostics"][0]["code"],
         "plan-schema-unknown"
+    );
+}
+
+#[test]
+fn run_of_check_of_a_plan_written_before_the_lock_s_edges_says_so_once_and_exits_zero() {
+    // Arrange
+    let (runner, pause, clock) = (layout(), CountingPause::new(), clock());
+    let files = files()
+        .with(
+            "/work/ws/plan.json",
+            &PLAN.replace("    \"edges\": [],\n", ""),
+        )
+        .with(
+            "/work/ws/Cargo.lock",
+            &moved(LOCK, "itoa", "0.4.7", "0.4.8"),
+        );
+
+    // Act
+    let ran = Ripe4rust::new(seams(&runner, &files, &pause, &clock)).run(&check("compatible:itoa"));
+
+    // Assert
+    let document = parsed(&ran.output);
+    assert_eq!((ran.code, &document["as_planned"]), (0, &json!(true)));
+    assert_eq!(
+        document["diagnostics"]
+            .as_array()
+            .map(|diagnostics| diagnostics
+                .iter()
+                .map(|diagnostic| (diagnostic["severity"].clone(), diagnostic["code"].clone()))
+                .collect::<Vec<(Value, Value)>>()),
+        Some(vec![(json!("notice"), json!("plan-without-edges"))])
     );
 }
 
@@ -606,6 +677,35 @@ fn run_offline_on_a_later_day_warns_the_cache_is_old() {
         "{}",
         ran.output
     );
+}
+
+#[test]
+fn run_refreshed_after_an_online_run_fetches_every_answer_again_over_the_day_s_copy() {
+    // Arrange
+    let (online, files, pause, clock) = (recorded(false), files(), CountingPause::new(), clock());
+    let first =
+        Ripe4rust::new(seams(&online, &files, &pause, &clock)).run(&plan_json("2026-11-26", false));
+    let cached = "/cache/2026-11-26/toolchain/manifests.txt";
+    let kept = files.contents(cached);
+    let files = files.with(cached, "an answer read in the morning");
+    let refreshed = recorded(false);
+    let mut words = plan_json("2026-11-26", false);
+    words.push(String::from("--refresh"));
+
+    // Act
+    let second = Ripe4rust::new(seams(&refreshed, &files, &pause, &clock)).run(&words);
+
+    // Assert
+    let fetched = |runner: &ReplayRunner| {
+        runner
+            .commands()
+            .into_iter()
+            .filter(|command| command.starts_with("curl"))
+            .collect::<Vec<String>>()
+    };
+    assert_eq!((second.code, &second.output), (0, &first.output));
+    assert_eq!(fetched(&refreshed), fetched(&online));
+    assert_eq!(files.contents(cached), kept);
 }
 
 #[test]

@@ -11,7 +11,8 @@ const NONE: &str = "none";
 
 /// What `check` found, for a person: whether the unit is as planned, the
 /// moves a breaking unit's edit made, every difference with what to do, the
-/// moves of crates the units share, reported and never a difference, the
+/// moves of crates the units share and the dependencies re-pointed between
+/// versions the lock already held, each reported and never a difference, the
 /// units applied and those still to go, then the diagnostics.
 pub struct CheckTable;
 
@@ -44,6 +45,12 @@ impl CheckTable {
                 .shared
                 .iter()
                 .map(|what| format!("shared: {}", Sentence.ended(what))),
+        );
+        lines.extend(
+            report
+                .repointed
+                .iter()
+                .map(|what| format!("repointed: {}", Sentence.ended(what))),
         );
         for (label, ids) in [("applied", &report.applied), ("to go", &report.to_go)] {
             let listed = if ids.is_empty() {

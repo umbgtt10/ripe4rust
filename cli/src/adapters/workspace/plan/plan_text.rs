@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::lock_edge::LockEdge;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::date::Date;
@@ -11,7 +12,9 @@ use ripe4rust_core::values::version::Version;
 
 /// The plan document's values read back, each the kind it was written as or
 /// `plan-unreadable`, naming the plan and the value: a date, a version, a
-/// `file:line`, a lock entry `<crate> <version>`.
+/// `file:line`, a lock entry `<crate> <version>`, a crate of a git source
+/// `<crate> <source>#<rev>`, an edge `<crate> <version> -> <dependency>
+/// <version>`.
 pub struct PlanText {
     file: String,
 }
@@ -26,6 +29,23 @@ impl PlanText {
     pub fn date(&self, text: &str) -> Result<Date, PortFailure> {
         Date::parse(text)
             .map_err(|failure| self.unreadable(&format!("`{text}` is not {}", failure.expected)))
+    }
+
+    pub fn edge(&self, text: &str) -> Result<LockEdge, PortFailure> {
+        let unreadable = || {
+            self.unreadable(&format!(
+                "`{text}` in the lock's edges is not a crate at its version depending on another at its own"
+            ))
+        };
+        let (dependent, dependency) = text.split_once(" -> ").ok_or_else(unreadable)?;
+        let (dependent, dependent_version) = dependent.split_once(' ').ok_or_else(unreadable)?;
+        let (dependency, dependency_version) = dependency.split_once(' ').ok_or_else(unreadable)?;
+        Ok(LockEdge {
+            dependent: String::from(dependent),
+            dependent_version: self.version(dependent_version)?,
+            dependency: String::from(dependency),
+            dependency_version: self.version(dependency_version)?,
+        })
     }
 
     pub fn entry(&self, text: &str) -> Result<LockEntry, PortFailure> {

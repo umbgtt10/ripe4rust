@@ -28,6 +28,7 @@ fn found(unit: &str, lock: Vec<LockEntry>, lines: Vec<WrittenLine>, pins: &[Pin]
         lock,
         lines,
         git: Vec::new(),
+        edges: Vec::new(),
     };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan).find(unit).expect("a unit");
@@ -207,6 +208,7 @@ fn differences_say_each_time_what_to_do() {
         lock: plan.lock.clone(),
         lines: lines(),
         git: Vec::new(),
+        edges: Vec::new(),
     };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan)
@@ -236,6 +238,7 @@ fn transitive_of_a_breaking_unit_applied_is_every_move_no_unit_explains() {
         lock: gadget_moved(&[("gizmo", "2.7.5"), ("tiny", "1.0.0")]),
         lines: lines_with(&[(22, "0.14.0")]),
         git: Vec::new(),
+        edges: Vec::new(),
     };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan)
@@ -264,6 +267,7 @@ fn transitive_of_a_compatible_unit_is_none() {
         ]),
         lines: lines(),
         git: Vec::new(),
+        edges: Vec::new(),
     };
     let sorting = Sorting::new(&plan, &current);
     let target = TargetFinder::new(&plan)

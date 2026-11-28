@@ -7,8 +7,10 @@ renderers, the adapters with `plan` end to end, the round's commands, `check`,
 as 0.1.0. The first dry round across real workspaces ran with it, and 0.1.1
 fixes what it found; the first round that applied a plan found two flaws,
 units sharing a crate and a crate its dependents hold back, which 0.1.2
-fixes. The decisions that were not obvious each have an ADR under
-`docs/ADRs/`.
+fixes; the rounds after it found two more, a plan blind to a release
+published since the day's first and dependencies re-pointed between versions
+the lock already held, which 0.1.3 fixes. The decisions that were not
+obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
 
@@ -133,7 +135,10 @@ once; the API only for a direct dependency's repository, at most one request
 a second; each with a user agent that names the tool, its version and its
 repository and nothing personal. Every answer is cached for the day it was read, under
 `~/.cache/ripe4rust/<date>/`; a plan names that date, and with the same cache
-and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). The
+and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). A
+plan made later the same day reads the morning's answers, and so does not see
+a release published since: `--refresh` fetches every answer again and
+overwrites the day's copy. The
 requests go through a `curl` process, not an HTTP crate
 (ADR-TheRegistryThroughCurl). The toolchain's releases are read the same way,
 one request a day, and kept in the same cache.
@@ -214,8 +219,17 @@ Where the sections above are silent, the adapters read the inputs this way:
   `<date>/index/<crate>` and `<date>/api/<crate>`, each the body as it came; a
   404 is kept as an empty answer, so an offline plan reads what the online one
   did. The day is the plan's date, `--date` included: online, an answer the
-  day lacks is fetched and kept under it; `--offline` reads the latest day on or
-  before the plan's date, and an answer it lacks is `registry-unreachable`. A
+  day lacks is fetched and kept under it; with `--refresh`, no answer is read
+  from the cache, so every one -- the index files, the API's answers and the
+  list of channel manifests -- is fetched again and the day's copy
+  overwritten; `--offline` reads the latest day on or before the plan's date,
+  and an answer it lacks is `registry-unreachable`. `--offline` and
+  `--refresh` exclude each other, `usage-invalid`: one reads the cache alone,
+  the other none of it. An answer is written whole, to a temporary file
+  beside it named for the process and the write, then renamed over it, so a
+  round reading the cache while another writes it -- refreshing it, say --
+  never reads half an answer, and two rounds writing one answer never take
+  over each other's temporary file; one whose rename fails is removed. A
   cache that cannot be read or written, or no directory to keep it in, is
   `registry-cache-unusable`.
 - **The workspace's files** are found where `cargo metadata --format-version 1
@@ -237,6 +251,13 @@ Where the sections above are silent, the adapters read the inputs this way:
   order. A member's `rust-version` line is its own,
   or `[workspace.package]`'s where it inherits it. `rust-toolchain.toml` gives
   its channel and that line, an empty channel where it names none.
+  `Cargo.lock` is read with the same parser, never through cargo: its
+  crates.io packages, by `source`; its git sources' crates, each at the short
+  rev of its `source`; and its edges, every package's `dependencies` entry
+  that carries a version, `"<crate> <version>"` or `"<crate> <version>
+  (<source>)"`, on a crates.io package the lock holds -- an entry whose source
+  is no crates.io one is passed over, and so is a bare `"<crate>"`. A version
+  that is no version is `workspace-unreadable`.
 - **The fingerprint** is FNV-1a, 64 bits, written by hand rather than taken from
   a crate: over `Cargo.lock`, every manifest and `rust-toolchain.toml`, each by
   its name from the root, then its length and bytes, or a mark where it is
@@ -770,6 +791,7 @@ The problems the design already names, at least:
 | `plan-schema-unknown` | error | the plan file is of a `schema` this release does not read |
 | `unit-unknown` | error | `check` or `hold` names an id that is no unit of the plan nor a move of a unit's split, or an advisory row, which applies nothing |
 | `unit-urgent` | error | `hold` names an urgent unit, which is never held: it becomes an urgent ask |
+| `plan-without-edges` | notice | `check` of a plan written by 0.1.2 or earlier, which recorded no edges of the lock: a dependency re-pointed between versions the lock already held cannot be seen |
 
 Of these, the policy's own codes, `target-unknown`, `gates-undeclared`,
 `lock-missing` and `unit-urgent` need a person: each asks for a fact or a
@@ -797,6 +819,8 @@ the rest                      compatible  --       --       ripe          2 move
   "workspace": {
     "fingerprint": "9f2c41d0...",
     "lock": ["anyhow 1.0.102", "clap 4.6.6", "..."],
+    "git": [],
+    "edges": ["errno 0.3.14 -> windows-sys 0.61.2", "..."],
     "lines": [
       { "where": "Cargo.toml:12", "key": "clap", "value": "4.6" },
       { "where": "rust-toolchain.toml:2", "key": "channel", "value": "1.99.1" }
@@ -858,7 +882,17 @@ member's `rust-version`, its own or the one it inherits; and
 `rust-toolchain.toml`'s `channel` -- what `check` compares the manifests and
 the toolchain file with; its `git`, after `lock`, every crate of a git source
 the lock holds, `<crate> <source>#<rev>`, the rev short, which `check` sorts a
-git unit by. The plan's `shared`, after `gates`, names the crates the units
+git unit by; its `edges`, after `git`, every dependency `Cargo.lock` writes
+with a version, `<crate> <version> -> <dependency> <version>`, in order, which
+`check` reads a re-point from. Cargo writes a dependency with its version --
+`"windows-sys 0.52.0"`, a source after it where the version alone is
+ambiguous -- only where the lock holds that crate at more than one; a bare
+`"name"` means it holds one, and no edge to it can move between locked
+versions. So `edges` records every package's -- a member's, a crates.io
+package's, a git source's crate's -- versioned dependencies on a crates.io
+package, and nothing else: a handful in most workspaces, one line each. A
+plan written before them, by 0.1.2 or earlier, has no `edges`, which `check`
+says once. The plan's `shared`, after `gates`, names the crates the units
 share, in order, which `check` holds no unit to a move of it does not own;
 a plan written before it reads as sharing none. A git unit's `from` and `to` are the short revs its source
 leaves and takes, its `source` the URL and spec cargo writes, null for every
@@ -969,6 +1003,9 @@ whichever row they come from.
   "shared": [
     "`wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in"
   ],
+  "repointed": [
+    "`errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the lock"
+  ],
   "applied": ["compatible:itoa"],
   "to_go": ["compatible:memchr"],
   "diagnostics": []
@@ -982,14 +1019,17 @@ units share, of the crates the unit checked moves, that came out otherwise
 than the plan computed it, a unit alone: a move of the unit's own it does
 not own, not in the lock, and a change of such a crate no move explains --
 each said, and no difference. A shared crate the unit does not move is
-another unit's to say, and goes unsaid. A
+another unit's to say, and goes unsaid. `repointed`, after `shared`, is every
+dependency re-pointed between versions the lock already held -- told, never
+a difference (ADR-ARepointIsToldNeverJudged). A plan with no `edges` adds the
+notice `plan-without-edges` to the diagnostics, once. A
 check that could not be made, or that
 found the plan stale, prints the failure document -- `schema`, `command` and
 `diagnostics` --, a stale plan's each a `plan-stale` at its `file:line`. In
 text: `check <unit>: as planned` or `not as planned`, the tail as
 `transitive: ...`, each difference as `<where>: <what>. Do: <do>`, each
-shared move as `shared: <what>.`, the units `applied:` and `to go:`, then the
-diagnostics.
+shared move as `shared: <what>.`, each re-point as `repointed: <what>.`, the
+units `applied:` and `to go:`, then the diagnostics.
 
 ## Commands
 
@@ -1005,7 +1045,9 @@ Every command but `--version`, which takes nothing and prints its one line,
 takes `--format table|json`. `plan` also takes `--date
 <YYYY-MM-DD>`, for a reproducible plan, and `--offline`, to read the cache
 only -- and to keep cargo and cargo-deny off the network too, so an offline
-plan reaches none. With no command, the command is `plan`; the name cargo
+plan reaches none --, or `--refresh`, to fetch every answer again over the
+day's cached copy, for a release published since the day's first plan; given
+both, the line is `usage-invalid`. With no command, the command is `plan`; the name cargo
 passes a subcommand first is skipped, so `cargo ripe4rust` and
 `cargo-ripe4rust` read alike. An option takes its value after it or after `=`.
 A command or an option ripe4rust does not know is `usage-invalid`, an error,
@@ -1022,7 +1064,8 @@ the system through.
 `check` is what makes a step's result visible to the agent
 (ADR-ACheckAfterEveryUnit). The plan holds the workspace it was made from: a
 fingerprint of `Cargo.lock`, every manifest and `rust-toolchain.toml`, the
-lock's packages, and every line a unit's `apply` can edit with what it said.
+lock's packages and the dependencies it writes with a version, and every line
+a unit's `apply` can edit with what it said.
 The fingerprint alone tells that something changed, not what; the lines are
 what lets `check` tell a requirement a unit wrote from one edited by hand.
 Against them, `check` sorts every difference in the
@@ -1033,7 +1076,8 @@ workspace into the units it belongs to:
   --: **0**, with the units already applied and those still to go, so an
   interrupted round resumes where it stopped, and every move of a crate the
   units share, of those the unit moves, that came out otherwise, reported
-  and no difference;
+  and no difference, and so is every dependency re-pointed between versions
+  the lock already held;
 - the unit named shows nothing, or something else -- a move missing, another
   version, an extra move, a crate pinned on its line taken to a new one by a
   breaking unit: **1**, each difference listed, with what to do: revert, and
@@ -1053,9 +1097,10 @@ Where the lines above leave it open, the differences are sorted this way:
   so is an advisory row, which applies nothing. Then the policy as it stands,
   whose errors stop the command as they stop `plan` and whose warnings the
   document carries. Then the workspace: the fingerprint, and where it is the
-  plan's nothing has changed; otherwise `Cargo.lock`'s crates.io packages --
-  read from the file, not from cargo, so a lock a manifest edited by hand no
-  longer matches still reads -- and the lines a unit can edit.
+  plan's nothing has changed; otherwise `Cargo.lock`'s crates.io packages and
+  its versioned edges -- read from the file, not from cargo, so a lock a
+  manifest edited by hand no longer matches still reads -- and the lines a
+  unit can edit.
 - **A move shows in the lock** where the version it leaves is gone and the one
   it takes is there, whatever else the lock holds of the crate: a move to a copy
   the lock already held shows as the old copy gone.
@@ -1095,6 +1140,30 @@ Where the lines above leave it open, the differences are sorted this way:
   moves when it is that unit, and otherwise an earlier one's, so a compatible
   unit checked after a migration is not blamed for it. A tail move of a crate a
   pin holds -- off its line, or at all with `hold = "all"` -- is a difference.
+- **A dependency re-pointed between versions the lock already held**
+  (ADR-ARepointIsToldNeverJudged). cargo can move a dependency from one
+  version the lock holds to another it holds too, with no version added or
+  removed: `cargo update -p proptest` took `errno`, `rustix` and `tempfile`
+  from `windows-sys` 0.61.2 to 0.52.0, both locked, and the next unit took them
+  back. No version move shows it, and which unit makes it depends on the order
+  they are applied in. `check` reports every edge of the plan's `edges` whose
+  dependent is in both locks at the same version and whose dependency moved
+  from one version to another, both held by the plan's lock and by the lock
+  now: "`errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the
+  lock". A dependent that depends on two versions of a crate has them paired,
+  the lowest left with the lowest reached. An edge whose old version left the
+  lock, or whose new one joined it, is that move's to explain, and is not
+  reported. A re-point is information, never a difference: `as_planned`,
+  the exit code and the plan's staleness are what they would be without it,
+  so it never fails a check, nor makes a plan stale. It is cumulative against
+  the plan's lock, as everything `check` sorts is: one an earlier unit made is
+  reported while it stands, and one a later unit undoes is reported no more.
+  So the agent compares it with the check before: a re-point new in it is the
+  unit's to name in its commit message, and so is one gone from it; the gates
+  judge them, as they judge the rest of the unit. A plan written before the
+  edges were recorded is still read and checked as before, with the notice
+  `plan-without-edges`, once: re-points cannot be compared until the next
+  plan.
 - **Applied and still to go**, in plan order, advisory rows left out: a unit
   every move it owns and every edit of which shows is applied -- one that owns
   none of its moves, by them all; one none of which shows is still to go; one
@@ -1182,7 +1251,7 @@ document's keys and holds each to a field of the guide.
 {
   "schema": 1,
   "command": "guide",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "round": ["1. Run `cargo ripe4rust plan --format json > plan.json`.", "..."],
   "commands": [
     { "usage": "cargo ripe4rust check <unit> --plan <file> [--format table|json]",
@@ -1207,12 +1276,21 @@ What `guide` prints, and what the agent does, every time:
 1. Run `cargo ripe4rust plan --format json > plan.json`.
    - Exit `2`: carry out each error's `do`; one that `needs_person` goes to
      the person. Then plan again.
+   - A plan reads the registry's answers and the Rust distribution's list of
+     releases from the day's cache, so one made later the same day does not
+     see a release published since the day's first plan. Where one came out
+     since -- a crate's, or Rust's --, plan with `--refresh`: every answer is
+     fetched again and the day's copy overwritten.
 2. Take the urgent units first, then the rest, in plan order.
 3. For each **ripe** unit, one at a time:
    1. carry out `apply`;
    2. run `check`:
       - `0`: run `gates` in order. All green: commit, one commit per unit,
-        `summary` as its subject in the workspace's own conventions. One red:
+        `summary` as its subject in the workspace's own conventions, its
+        message naming the dependencies `repointed` lists that the check
+        before it did not, and those it no longer lists -- the unit re-pointed
+        them, between versions the lock already held, and the gates are what
+        judge it. One red:
         carry out `revert`; a compatible unit of several moves is bisected
         through `split` (apply, check, gates each), its green moves committed;
         hold the one that failed -- or the unit, if it has no split -- with

@@ -9,4 +9,5 @@ pub mod crates_api;
 pub mod curl;
 pub mod day_cache;
 pub mod index_reader;
+pub mod lookup;
 pub mod sparse_index;

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use cargo_ripe4rust::adapters::registry::lookup::Lookup;
 use cargo_ripe4rust::command::command_line::CommandLine;
 use cargo_ripe4rust::command::format::Format;
 use cargo_ripe4rust::command::request::Request;
@@ -10,19 +11,18 @@ use ripe4rust_core::values::date::Date;
 
 const CHECK_USAGE: &str = "run `cargo ripe4rust check <unit> --plan <file> [--format table|json]`";
 const HOLD_USAGE: &str = "run `cargo ripe4rust hold <unit> --plan <file> --because <text> [--review YYYY-MM-DD] [--format table|json]`";
-const USAGE: &str =
-    "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]`";
+const USAGE: &str = "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline | --refresh]`";
 
 fn args(words: &[&str]) -> Vec<String> {
     words.iter().map(|word| String::from(*word)).collect()
 }
 
-fn plan(format: Format, date: Option<&str>, offline: bool) -> Request {
+fn plan(format: Format, date: Option<&str>, lookup: Lookup) -> Request {
     Request {
         command: String::from("plan"),
         format,
         date: date.map(|date| Date::parse(date).expect("a date")),
-        offline,
+        lookup,
         unit: None,
         plan: None,
         because: None,
@@ -199,7 +199,7 @@ fn read_of_check_takes_its_unit_and_its_plan() {
             command: String::from("check"),
             format: Format::Json,
             date: None,
-            offline: false,
+            lookup: Lookup::Cached,
             unit: Some(String::from("compatible:itoa/itoa")),
             plan: Some(String::from("plans/today.json")),
             because: None,
@@ -249,7 +249,10 @@ fn read_of_every_option_takes_each() {
     ]));
 
     // Assert
-    assert_eq!(request, Ok(plan(Format::Json, Some("2026-10-30"), true)));
+    assert_eq!(
+        request,
+        Ok(plan(Format::Json, Some("2026-10-30"), Lookup::Offline))
+    );
 }
 
 #[test]
@@ -267,7 +270,7 @@ fn read_of_guide_takes_its_format_and_nothing_else() {
             command: String::from("guide"),
             format: Format::Json,
             date: None,
-            offline: false,
+            lookup: Lookup::Cached,
             unit: None,
             plan: None,
             because: None,
@@ -329,7 +332,7 @@ fn read_of_hold_takes_its_unit_plan_reason_and_review() {
             command: String::from("hold"),
             format: Format::Table,
             date: None,
-            offline: false,
+            lookup: Lookup::Cached,
             unit: Some(String::from("compatible:itoa")),
             plan: Some(String::from("plan.json")),
             because: Some(String::from("--format=json failed: \"stage 2\"")),
@@ -362,8 +365,8 @@ fn read_of_nothing_is_a_plan_in_a_table_for_today() {
     assert_eq!(
         requests,
         [
-            Ok(plan(Format::Table, None, false)),
-            Ok(plan(Format::Table, None, false))
+            Ok(plan(Format::Table, None, Lookup::Cached)),
+            Ok(plan(Format::Table, None, Lookup::Cached))
         ]
     );
 }
@@ -379,7 +382,38 @@ fn read_of_options_without_the_command_is_a_plan() {
     ]));
 
     // Assert
-    assert_eq!(request, Ok(plan(Format::Table, Some("2026-11-26"), true)));
+    assert_eq!(
+        request,
+        Ok(plan(Format::Table, Some("2026-11-26"), Lookup::Offline))
+    );
+}
+
+#[test]
+fn read_of_refresh_asks_a_plan_that_fetches_every_answer_again() {
+    // Arrange & Act
+    let request = CommandLine.read(&args(&["ripe4rust", "plan", "--refresh"]));
+
+    // Assert
+    assert_eq!(request, Ok(plan(Format::Table, None, Lookup::Refreshed)));
+}
+
+#[test]
+fn read_of_refresh_with_offline_is_usage_invalid_in_either_order() {
+    // Arrange & Act
+    let refusals = [
+        refused(&["plan", "--refresh", "--offline"]),
+        refused(&["--offline", "--date", "2026-11-26", "--refresh"]),
+    ];
+
+    // Assert
+    let refusal = (
+        DiagnosticCode::UsageInvalid,
+        String::from(
+            "`--offline` and `--refresh` were both given, and `plan` takes one of them: `--offline` reads the cache alone, `--refresh` fetches every answer again",
+        ),
+        String::from(USAGE),
+    );
+    assert_eq!(refusals, [refusal.clone(), refusal]);
 }
 
 #[test]

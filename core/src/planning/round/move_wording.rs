@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::git::git_source::GitSource;
+use crate::inputs::lock_edge::LockEdge;
 use crate::inputs::lock_move::LockMove;
+use crate::values::version::Version;
 use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
@@ -12,8 +14,9 @@ const SHARED: &str =
     "the units share the crate, and its moves depend on the order they are applied in";
 
 /// A change of the lock no unit of the plan makes, in words: a crate's, or a
-/// git source's from one rev to another; and one of a crate the units share,
-/// said to be no difference and why.
+/// git source's from one rev to another; one of a crate the units share,
+/// said to be no difference and why; and a dependency re-pointed between
+/// versions the lock already held.
 pub struct MoveWording;
 
 impl MoveWording {
@@ -21,6 +24,13 @@ impl MoveWording {
         format!(
             "`{}` moved {} -> {}, a move no unit of the plan makes",
             moved.source, moved.from, moved.to
+        )
+    }
+
+    pub fn repointed(&self, edge: &LockEdge, to: &Version) -> String {
+        format!(
+            "`{}` {}'s `{}` {} -> {to}, both already in the lock",
+            edge.dependent, edge.dependent_version, edge.dependency, edge.dependency_version
         )
     }
 

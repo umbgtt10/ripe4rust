@@ -31,6 +31,7 @@ impl CheckJson {
                 })
                 .collect(),
             shared: &report.shared,
+            repointed: &report.repointed,
             applied: &report.applied,
             to_go: &report.to_go,
             diagnostics: report

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::inputs::member::Member;
-use crate::inputs::scan::Scan;
+use crate::inputs::source_scan::scan::Scan;
 use crate::planning::judging::footprint::Footprint;
 use crate::values::location::Location;
 use alloc::string::String;

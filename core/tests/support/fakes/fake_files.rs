@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::lock_edge::LockEdge;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::port_failure::PortFailure;
@@ -20,10 +21,15 @@ pub struct FakeFiles {
     pub rust_version_lines: Vec<(String, Location)>,
     pub written: Vec<WrittenLine>,
     pub git: Vec<GitEntry>,
+    pub edges: Vec<LockEdge>,
     pub failure: Option<PortFailure>,
 }
 
 impl WorkspaceFiles for FakeFiles {
+    fn edges(&self) -> Result<Vec<LockEdge>, PortFailure> {
+        Ok(self.edges.clone())
+    }
+
     fn fingerprint(&self) -> Result<String, PortFailure> {
         Ok(self.fingerprint.clone())
     }

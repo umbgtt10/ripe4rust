@@ -6,6 +6,7 @@ use crate::support::counting_pause::CountingPause;
 use crate::support::workspace::files;
 use crate::support::workspace::layout;
 use cargo_ripe4rust::adapters::clock::fixed_clock::FixedClock;
+use cargo_ripe4rust::adapters::registry::lookup::Lookup;
 use cargo_ripe4rust::command::format::Format;
 use cargo_ripe4rust::command::hold_command::HoldCommand;
 use cargo_ripe4rust::command::request::Request;
@@ -36,7 +37,7 @@ fn hold_of_a_unit_takes_the_reason_and_review_the_line_gave() {
         command: String::from("hold"),
         format: Format::Json,
         date: None,
-        offline: false,
+        lookup: Lookup::Cached,
         unit: Some(String::from("compatible:memchr")),
         plan: Some(String::from("plan.json")),
         because: Some(String::from("2.8.3 broke the gates")),

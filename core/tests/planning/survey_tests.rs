@@ -6,6 +6,7 @@ use crate::support::fakes::fake_ports::FakePorts;
 use crate::support::policy_trees::entry;
 use crate::support::policy_trees::texts;
 use crate::support::policy_trees::tree;
+use crate::support::recorded::edge;
 use crate::support::releases::date;
 use crate::support::releases::release;
 use crate::support::releases::version;
@@ -21,8 +22,8 @@ use ripe4rust_core::inputs::git::moves::Moves;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::policy_value::PolicyValue;
 use ripe4rust_core::inputs::port_failure::PortFailure;
+use ripe4rust_core::inputs::source_scan::unparsed_file::UnparsedFile;
 use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
-use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
 use ripe4rust_core::planning::pins_and_policy::hold::Hold;
 use ripe4rust_core::planning::pins_and_policy::pin::Pin;
 use ripe4rust_core::planning::pins_and_policy::release_condition::ReleaseCondition;
@@ -242,6 +243,22 @@ fn source_moves_ask_cargo_for_each_git_source_moving_by_its_first_crate_in_the_l
             ],
             moves: pulled.registry,
         }])
+    );
+}
+
+#[test]
+fn survey_carries_the_lock_s_edges_as_the_files_read_them() {
+    // Arrange
+    let mut fakes = FakePorts::new();
+    fakes.files.edges = vec![edge(("gadget", "0.13.1"), ("gizmo", "2.7.5"))];
+
+    // Act
+    let survey = Survey::new(fakes.ports()).survey();
+
+    // Assert
+    assert_eq!(
+        survey.map(|surveyed| surveyed.edges),
+        Ok(vec![edge(("gadget", "0.13.1"), ("gizmo", "2.7.5"))])
     );
 }
 

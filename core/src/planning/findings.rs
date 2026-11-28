@@ -4,8 +4,8 @@
 
 use crate::diagnostics::diagnostic::Diagnostic;
 use crate::diagnostics::diagnostic_code::DiagnosticCode;
+use crate::inputs::source_scan::unparsed_file::UnparsedFile;
 use crate::inputs::toolchain_file::ToolchainFile;
-use crate::inputs::unparsed_file::UnparsedFile;
 use crate::planning::pins_and_policy::pin::Pin;
 use crate::values::date::Date;
 use crate::values::location::Location;

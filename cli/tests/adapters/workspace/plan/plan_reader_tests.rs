@@ -4,6 +4,7 @@
 
 use cargo_ripe4rust::adapters::workspace::plan::plan_reader::PlanReader;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::lock_edge::LockEdge;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::written_line::WrittenLine;
@@ -104,6 +105,29 @@ fn plan_of_a_plan_naming_the_crates_its_units_share_reads_them() {
 }
 
 #[test]
+fn plan_of_a_plan_recording_the_lock_s_edges_reads_each() {
+    // Arrange
+    let text = PLAN.replace(
+        "\"edges\": [],",
+        "\"edges\": [\"itertools 0.10.0 -> either 1.5.0\"],",
+    );
+
+    // Act
+    let plan = PlanReader.plan("plan.json", &text).expect("a plan");
+
+    // Assert
+    assert_eq!(
+        plan.edges,
+        Some(vec![LockEdge {
+            dependent: String::from("itertools"),
+            dependent_version: Version::parse("0.10.0").expect("a version"),
+            dependency: String::from("either"),
+            dependency_version: Version::parse("1.5.0").expect("a version"),
+        }])
+    );
+}
+
+#[test]
 fn plan_of_a_plan_that_failed_is_unreadable_saying_no_plan_was_made() {
     // Arrange & Act
     let plan = PlanReader.plan(
@@ -121,6 +145,18 @@ fn plan_of_a_plan_that_failed_is_unreadable_saying_no_plan_was_made() {
 }
 
 #[test]
+fn plan_of_a_plan_written_before_the_lock_s_edges_reads_none_recorded() {
+    // Arrange
+    let text = PLAN.replace("    \"edges\": [],\n", "");
+
+    // Act
+    let plan = PlanReader.plan("plan.json", &text).expect("a plan");
+
+    // Assert
+    assert_eq!(plan.edges, None);
+}
+
+#[test]
 fn plan_of_a_plan_written_before_the_units_shared_crates_reads_none() {
     // Arrange
     let text = PLAN.replace("  \"shared\": [],\n", "");
@@ -130,6 +166,26 @@ fn plan_of_a_plan_written_before_the_units_shared_crates_reads_none() {
 
     // Assert
     assert_eq!(plan.shared, Vec::<String>::new());
+}
+
+#[test]
+fn plan_of_an_edge_that_does_not_read_is_unreadable() {
+    // Arrange
+    let text = PLAN.replace(
+        "\"edges\": [],",
+        "\"edges\": [\"itertools 0.10.0 => either 1.5.0\"],",
+    );
+
+    // Act
+    let plan = PlanReader.plan("plan.json", &text);
+
+    // Assert
+    assert_eq!(
+        plan,
+        Err(unreadable(
+            "`itertools 0.10.0 => either 1.5.0` in the lock's edges is not a crate at its version depending on another at its own"
+        ))
+    );
 }
 
 #[test]
@@ -175,6 +231,7 @@ fn plan_of_the_recorded_plan_is_its_date_its_workspace_and_its_units() {
         }
     );
     assert_eq!(plan.lock.len(), 5);
+    assert_eq!(plan.edges, Some(Vec::new()));
     assert_eq!(
         plan.lines[1],
         WrittenLine {
