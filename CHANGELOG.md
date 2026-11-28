@@ -18,6 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   boundary gate, and serge4rust builds on 1.85.
 - The compiler the gates pass with, pinned in `rust-toolchain.toml`, moves from 1.99.1 to 1.100.1, the unit
   ripe4rust's own plan called ripe. `rust-version`, the minimum a user's toolchain needs, stays 1.85.
+- `cargo-ripe4rust` parses the sources with syn 3, where it took syn 2: the plan's `breaking:syn`, 2.0.119 to
+  3.0.10, asked as "migrate now", for it removes the second copy of syn from the tree -- serde_derive and
+  serge4rust take syn 3 already --, and taken on the owner's word. Of syn 3's changes to the tree, one met the
+  parse: an impl's `!` moved out of the trait's tuple, which the exposure never read. Every footprint, exposure and
+  verdict is what it was: the plans of three workspaces and of this repository's own sources, made before and
+  after, offline on one day's cache, are byte for byte the same, and so is every member's whole scan.
+  `rust-version` stays 1.85; syn 3 needs 1.71.
 
 ## [0.1.4] — 2026-11-28
 

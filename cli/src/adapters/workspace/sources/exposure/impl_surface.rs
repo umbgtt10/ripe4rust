@@ -65,7 +65,7 @@ impl<'a> ImplSurface<'a> {
 
     pub fn of<'b>(&self, item: &'b ItemImpl) -> Vec<Fragment<'b>> {
         match &item.trait_ {
-            Some((_, path, _)) => self.implemented(item, path),
+            Some((path, _)) => self.implemented(item, path),
             None => self.inherent(item),
         }
     }

@@ -296,7 +296,7 @@ Where the sections above are silent, the adapters read the inputs this way:
   the registry's, an offline plan reads the list of the day it reads the
   registry's answers on, a cache that cannot be read or written is
   `registry-cache-unusable`, and curl not on the PATH `curl-missing`.
-- **The sources** are parsed with `syn` 2 (MIT OR Apache-2.0, with `full` and
+- **The sources** are parsed with `syn` 3 (MIT OR Apache-2.0, with `full` and
   `visit`), `proc-macro2`'s span locations giving every name its line: each
   member's targets as the same `cargo metadata --no-deps` lists them --
   library, binaries, tests, benches, examples, build script --, and the
