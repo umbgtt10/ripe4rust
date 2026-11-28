@@ -16,6 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   (`cargo_ripe4rust::adapters::registry::lookup::Lookup`, which `DayCache` and the request take in place of
   `offline: bool`).
 
+### Changed
+- The source scan's records -- `Scan`, `CrateUse`, `UnfollowedInclude` and `UnparsedFile` -- moved from
+  `ripe4rust_core::inputs` into `ripe4rust_core::inputs::source_scan`, beside `inputs::git`: `inputs/` had reached
+  the 20 files stern4rust lets a directory hold, and the lock's edges are one more.
+
 ### Fixed
 - A cache entry was written to `<name>.partial` beside it, then renamed: two rounds writing one answer at once --
   two plans refreshing the same day, say -- shared that file, so one could rename the other's half-written answer

@@ -4,7 +4,7 @@
 
 use crate::support::surveyed::at;
 use crate::support::surveyed::surveyed;
-use ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude;
+use ripe4rust_core::inputs::source_scan::unfollowed_include::UnfollowedInclude;
 use ripe4rust_core::planning::judging::facts::footprints::Footprints;
 use ripe4rust_core::planning::judging::footprint::Footprint;
 

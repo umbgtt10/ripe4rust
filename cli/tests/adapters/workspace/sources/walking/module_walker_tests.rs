@@ -6,7 +6,7 @@ use crate::support::memory_files::MemoryFiles;
 use cargo_ripe4rust::adapters::workspace::sources::walking::module_source::ModuleSource;
 use cargo_ripe4rust::adapters::workspace::sources::walking::module_walker::ModuleWalker;
 use cargo_ripe4rust::adapters::workspace::sources::walking::walk::Walk;
-use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
+use ripe4rust_core::inputs::source_scan::unparsed_file::UnparsedFile;
 use ripe4rust_core::values::location::Location;
 use std::path::Path;
 use std::path::PathBuf;

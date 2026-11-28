@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::adapters::workspace::sources::walking::parsed_file::ParsedFile;
-use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
+use ripe4rust_core::inputs::source_scan::unparsed_file::UnparsedFile;
 use ripe4rust_core::values::location::Location;
 
 /// What walking a target's modules found: every file it read, in the order

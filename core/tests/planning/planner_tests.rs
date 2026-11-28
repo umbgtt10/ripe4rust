@@ -6,7 +6,7 @@ use crate::support::fakes::fake_ports::FakePorts;
 use crate::support::surveyed::surveyed;
 use ripe4rust_core::diagnostics::diagnostic_code::DiagnosticCode;
 use ripe4rust_core::inputs::port_failure::PortFailure;
-use ripe4rust_core::inputs::scan::Scan;
+use ripe4rust_core::inputs::source_scan::scan::Scan;
 use ripe4rust_core::outcome::Outcome;
 use ripe4rust_core::planning::plan_writer::PlanWriter;
 use ripe4rust_core::planning::planned_unit::PlannedUnit;

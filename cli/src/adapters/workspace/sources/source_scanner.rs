@@ -6,11 +6,11 @@ use crate::adapters::workspace::sources::member_findings::MemberFindings;
 use crate::adapters::workspace::sources::member_scanner::MemberScanner;
 use crate::system::traits::file_system::FileSystem;
 use crate::system::traits::layout_source::LayoutSource;
-use ripe4rust_core::inputs::crate_use::CrateUse;
 use ripe4rust_core::inputs::port_failure::PortFailure;
-use ripe4rust_core::inputs::scan::Scan;
-use ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude;
-use ripe4rust_core::inputs::unparsed_file::UnparsedFile;
+use ripe4rust_core::inputs::source_scan::crate_use::CrateUse;
+use ripe4rust_core::inputs::source_scan::scan::Scan;
+use ripe4rust_core::inputs::source_scan::unfollowed_include::UnfollowedInclude;
+use ripe4rust_core::inputs::source_scan::unparsed_file::UnparsedFile;
 use ripe4rust_core::traits::source_scan::SourceScan;
 
 /// The workspace's sources parsed with `syn`, every member's targets as the

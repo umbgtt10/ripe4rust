@@ -8,7 +8,7 @@ use crate::inputs::git::git_move::GitMove;
 use crate::inputs::git::git_source::GitSource;
 use crate::inputs::port_failure::PortFailure;
 use crate::inputs::release::Release;
-use crate::inputs::scan::Scan;
+use crate::inputs::source_scan::scan::Scan;
 use crate::inputs::workspace::Workspace;
 use crate::planning::findings::Findings;
 use crate::planning::pins_and_policy::policy::Policy;

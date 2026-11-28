@@ -14,7 +14,7 @@ use crate::support::units::moved;
 use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::inputs::locked_package::LockedPackage;
 use ripe4rust_core::inputs::resolved_dependency::ResolvedDependency;
-use ripe4rust_core::inputs::unfollowed_include::UnfollowedInclude;
+use ripe4rust_core::inputs::source_scan::unfollowed_include::UnfollowedInclude;
 use ripe4rust_core::planning::judging::dependent::Dependent;
 use ripe4rust_core::planning::judging::facts::plan_context::PlanContext;
 use ripe4rust_core::planning::units::choice::line_stats::LineStats;

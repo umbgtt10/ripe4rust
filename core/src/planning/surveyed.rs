@@ -7,7 +7,7 @@ use crate::inputs::advisory::Advisory;
 use crate::inputs::git::git_entry::GitEntry;
 use crate::inputs::lock_move::LockMove;
 use crate::inputs::release::Release;
-use crate::inputs::scan::Scan;
+use crate::inputs::source_scan::scan::Scan;
 use crate::inputs::workspace::Workspace;
 use crate::inputs::written_line::WrittenLine;
 use crate::planning::pins_and_policy::policy::Policy;
