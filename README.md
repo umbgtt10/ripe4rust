@@ -29,7 +29,7 @@ the Rust distribution's list of releases through `curl`: both are needed on
 
 ## Status
 
-**0.1.4, the applied rounds' fixes.** `cargo ripe4rust plan [--format table|json] [--date
+**0.1.5, the applied rounds' fixes.** `cargo ripe4rust plan [--format table|json] [--date
 YYYY-MM-DD] [--offline | --refresh]` reads a real workspace -- cargo, cargo-deny, rustc,
 the crates.io registry and the Rust distribution's list of releases, through
 `curl` and cached for the day, `--refresh` fetching them again for a release
@@ -55,7 +55,8 @@ what 0.1.3 fixes: `plan --refresh` fetches the day's answers again, for a
 release published since the day's first plan, and `check` names every
 dependency re-pointed between versions the lock already held, told and never
 a difference. 0.1.4 lets a pin with a review date hold until that date, however
-far behind its crate falls. Tuning the thresholds and the grouping is next. The
+far behind its crate falls, and 0.1.5 parses the sources with syn 3, every plan
+byte for byte as it was. Tuning the thresholds and the grouping is next. The
 design is in [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## License

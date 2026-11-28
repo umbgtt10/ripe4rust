@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-11-28
+
+What the round after 0.1.4 took from ripe4rust's own plan: syn 3 inside the cli, every plan byte for byte as it was,
+the compiler at 1.100.1 and the gates from serge4rust 0.3.3; and the docs made true. The core's API is unchanged.
+
 ### Changed
 - `xtask` takes its gates from serge4rust 0.3.3, the house's gates as a library, as beggar's, cartel's and
   faction's do, and keeps `src/main.rs` alone: which gates each stage runs, in what order, and this workspace's
