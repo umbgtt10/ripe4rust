@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- `xtask` takes its gates from serge4rust 0.3.2, the house's gates as a library, as beggar's, cartel's and
+  faction's do, and keeps `src/main.rs` alone: which gates each stage runs, in what order, and this workspace's
+  constants. Its own copy of the drill -- the runner, the gates, the stage, the failures, crap4rust's report and the
+  commit scoring, 42 files of source and their 146 tests -- is gone; the technology-free core, the cargo-shear and
+  the lock-sync gates went into serge4rust with their tests, and the rest were serge4rust's already. Both stages and
+  the commit's score block say what they said, but for the counts of what is no longer here: stern scans 694 files,
+  not 776, crap4rust measures 721 functions, not 833, and the xtask runs no test of its own.
+- `xtask` inherits the workspace's `rust-version`, 1.85, again: the let-chain that needed 1.88 went with the
+  boundary gate, and serge4rust builds on 1.85.
+
 ## [0.1.4] — 2026-11-28
 
 What the first pins written in a round found: a pin with its review date ahead held nothing once its crate fell
