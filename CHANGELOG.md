@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-11-28
+
+What the first pins written in a round found: a pin with its review date ahead held nothing once its crate fell
+far behind.
+
+### Changed
+- The rule against drift no longer asks a unit a pin holds where every pin holding it carries a review date: until
+  that date it is ripening, however far behind its crate falls, and on that date rule 5 asks it, as before. Two pins
+  a round wrote from the owner's "wait" and "later", each with its review date, were asked again on the next plan
+  as overripe, keep-pinned or unpin -- a decision already made, recorded with its date, asked on every plan until
+  that date. A pin released by a condition alone has no date that asks it again, and is still asked overripe; so is
+  a young line (`ADR-AReviewDateHoldsAgainstDrift`).
+
 ## [0.1.3] — 2026-11-28
 
 What the rounds after 0.1.2 found, applying plans in three workspaces: a plan made later the same day read the
