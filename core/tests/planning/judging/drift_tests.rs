@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::facts::facts;
+use crate::support::facts::pinned;
 use crate::support::facts::standing;
 use crate::support::releases::date;
 use ripe4rust_core::outcome::Outcome;
@@ -10,6 +11,7 @@ use ripe4rust_core::planning::judging::decision::Decision;
 use ripe4rust_core::planning::judging::drift::Drift;
 use ripe4rust_core::planning::judging::suggestion::Suggestion;
 use ripe4rust_core::planning::judging::unit_facts::UnitFacts;
+use ripe4rust_core::planning::pins_and_policy::release_condition::ReleaseCondition;
 use ripe4rust_core::unit_kind::UnitKind;
 
 fn held(rule: u8) -> Decision {
@@ -47,6 +49,53 @@ fn applied_to_a_pin_hold_in_a_freeze_keeps_the_freeze() {
     // Assert
     assert_eq!(decision.outcome, Outcome::Ripening);
     assert_eq!(decision.rule, Some(6));
+}
+
+// A pin with a review date cannot become "never": its own date asks it
+// again (rule 5). Until then it holds, however far behind the line in use
+// falls, as its owner decided.
+#[test]
+fn applied_to_a_pin_hold_with_a_review_date_ahead_keeps_it_however_far_behind() {
+    // Arrange
+    let behind = UnitFacts {
+        lines_behind: 11,
+        pins: vec![pinned(None)],
+        fully_held: true,
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = Drift.applied(held(4), &behind);
+
+    // Assert
+    assert_eq!(decision, held(4));
+}
+
+// A pin released by a condition alone has no date that asks it again: the
+// release it waits for may never come, so drift still asks it.
+#[test]
+fn applied_to_a_pin_hold_with_no_review_date_asks_it_overripe() {
+    // Arrange
+    let mut standing = pinned(None);
+    standing.pin.review = None;
+    standing.pin.until = Some(ReleaseCondition::Words(String::from(
+        "the visitor API settles",
+    )));
+    let behind = UnitFacts {
+        lines_behind: 3,
+        pins: vec![standing],
+        fully_held: true,
+        ..facts(UnitKind::Breaking)
+    };
+
+    // Act
+    let decision = Drift.applied(held(4), &behind);
+
+    // Assert
+    assert_eq!(
+        (decision.outcome, decision.rule, decision.suggestion),
+        (Outcome::Ask, Some(4), Some(Suggestion::Overripe))
+    );
 }
 
 #[test]

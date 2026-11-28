@@ -14,12 +14,19 @@ use alloc::string::String;
 /// Against drift: a unit a pin (rule 4) or a young line (rule 9) would hold
 /// is asked instead, overripe, when the workspace is two lines or more
 /// behind or the line in use is stale while a newer one is active. A freeze
-/// still holds: it ends on its own date.
+/// still holds: it ends on its own date. So do pins that each carry a review
+/// date: that date asks them again (rule 5), so they cannot become "never";
+/// a pin released by a condition alone may wait for ever, and is asked.
 pub struct Drift;
 
 impl Drift {
     pub fn applied(&self, decision: Decision, facts: &UnitFacts) -> Decision {
-        let held = decision.outcome == Outcome::Ripening && matches!(decision.rule, Some(4 | 9));
+        let held = decision.outcome == Outcome::Ripening
+            && match decision.rule {
+                Some(4) => !Self::dated(facts),
+                Some(9) => true,
+                _ => false,
+            };
         match self.escalation(facts) {
             Some(_) if held && facts.freeze.is_some() => {
                 FreezeOpen.decide(facts).unwrap_or(decision)
@@ -53,5 +60,13 @@ impl Drift {
                     in_use.stats.line
                 )
             })
+    }
+
+    fn dated(facts: &UnitFacts) -> bool {
+        !facts.pins.is_empty()
+            && facts
+                .pins
+                .iter()
+                .all(|standing| standing.pin.review.is_some())
     }
 }

@@ -14,6 +14,7 @@ use ripe4rust_core::inputs::advisory::Advisory;
 use ripe4rust_core::planning::judging::footprint::Footprint;
 use ripe4rust_core::planning::judging::judge::Judge;
 use ripe4rust_core::planning::judging::unit_facts::UnitFacts;
+use ripe4rust_core::planning::pins_and_policy::release_condition::ReleaseCondition;
 use ripe4rust_core::planning::units::concern::Concern;
 use ripe4rust_core::planning::units::unit::Unit;
 use ripe4rust_core::planning::writing::answer::Answer;
@@ -206,8 +207,13 @@ fn question_of_a_git_unit_moves_it_to_its_rev_take_it_or_wait() {
 #[test]
 fn question_of_a_pinned_unit_overripe_offers_unpin_or_keep_it() {
     // Arrange
+    let mut undated = pinned(None);
+    undated.pin.review = None;
+    undated.pin.until = Some(ReleaseCondition::Words(String::from(
+        "the visitor API settles",
+    )));
     let overripe = UnitFacts {
-        pins: vec![pinned(None)],
+        pins: vec![undated],
         fully_held: true,
         lines_behind: 2,
         ..facts(UnitKind::Breaking)
