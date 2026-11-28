@@ -475,14 +475,18 @@ reasons and as its question's recommendation.
 ### Against drift
 
 Rule 4 must not become "never". A pin carries a review date or a release
-condition, and two escalations override a unit that rule 4 or rule 9 would
-hold:
+condition, and two escalations override a unit that rule 9 would hold, or rule
+4 where a pin holding it has no review date:
 
 - the workspace is two majors or more behind;
 - the line in use is stale while a newer line is active.
 
 Either turns the unit into **ask** with the suggestion "overripe". A freeze
-still holds: it ends on its own date. Rules 1 to 3 already override
+still holds: it ends on its own date. So does a pin hold whose pins each carry
+a review date: that date asks them again (rule 5), so they cannot become
+"never", and until it the person's decision stands, however far behind the
+unit falls; a pin released by a condition alone may wait for ever, and is
+asked (ADR-AReviewDateHoldsAgainstDrift). Rules 1 to 3 already override
 everything. "Two majors behind" counts lines -- majors, or minors for `0.x`
 and the toolchain -- among the candidates newer than the line in use, and "a
 newer line" is any of them; the unit keeps the number of the rule whose hold

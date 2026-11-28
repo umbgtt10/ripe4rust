@@ -1,7 +1,7 @@
 date 2026-11-26, registry read 2026-11-26, workspace af9871a4
 unit                       kind        from      to        outcome          reasons
 itertools (+1 transitive)  compatible  0.10.0    0.10.5    ask              reaches thumbv7em-none-eabihf
-itertools                  breaking    0.10.0    0.15.0    ask              pinned: the iterator chains are rewritten for 0.14; review 2027-03-01; overripe: 5 lines behind
+itertools                  breaking    0.10.0    0.15.0    ripening         pinned: the iterator chains are rewritten for 0.14; review 2027-03-01
 itoa                       compatible  0.4.7     0.4.8     ripe             compatible
 itoa                       breaking    0.4.7     1.0.19    ask              in app-core's public API; migrate now: 0.4.x is stale while 1.x is active
 memchr                     compatible  2.5.0     2.8.3     ripe             compatible

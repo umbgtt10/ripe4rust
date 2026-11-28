@@ -175,14 +175,13 @@
           "to": "0.15.0"
         }
       ],
-      "outcome": "ask",
+      "outcome": "ripening",
       "urgent": false,
       "rule": 4,
-      "suggestion": "overripe",
+      "suggestion": null,
       "reasons": [
         "pinned: the iterator chains are rewritten for 0.14",
-        "review 2027-03-01",
-        "overripe: 5 lines behind"
+        "review 2027-03-01"
       ],
       "summary": "Migrate itertools to 0.15.0",
       "steps": {
@@ -209,23 +208,7 @@
         },
         "split": []
       },
-      "question": {
-        "title": "Move itertools to 0.15.0?",
-        "why": "it is overripe: 5 lines behind",
-        "recommendation": "unpin",
-        "options": [
-          {
-            "answer": "unpin",
-            "means": "remove the pin and take the upgrade",
-            "then": "remove the pin on `itertools` at Cargo.toml:20, commit it, and plan again"
-          },
-          {
-            "answer": "keep-pinned",
-            "means": "keep it, with a new review date",
-            "then": "set the `review` of the pin on `itertools` at Cargo.toml:20 to the person's date, commit it, and plan again"
-          }
-        ]
-      },
+      "question": null,
       "evidence": {
         "line_in_use": {
           "line": "0.10.x",
