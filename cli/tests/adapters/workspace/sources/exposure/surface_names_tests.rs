@@ -32,7 +32,7 @@ fn of_fragments_is_every_crate_they_name_once() {
     else {
         panic!("the items");
     };
-    let Some((_, path, _)) = &implemented.trait_ else {
+    let Some((path, _)) = &implemented.trait_ else {
         panic!("a trait");
     };
     let fragments = [

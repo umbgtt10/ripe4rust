@@ -1,6 +1,6 @@
 # A virtual workspace: `core/` is the technology-free library that decides,
-# `cli/` the published cargo subcommand, `xtask/` the gates. The family's shape,
-# from the start.
+# `cli/` the published cargo subcommand, `xtask/` the stages, built from
+# serge4rust's gates. The family's shape, from the start.
 [workspace]
 members = ["core", "cli", "xtask"]
 resolver = "3"
@@ -18,8 +18,8 @@ proc-macro2 = { version = "1.0", features = ["span-locations"] }
 ripe4rust-core = { path = "core", version = "=0.1.4" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serge4rust = "0.3.2"
-syn = { version = "2.0.117", features = ["full", "visit"] }
+serge4rust = "0.3.3"
+syn = { version = "3.0.10", features = ["full", "visit"] }
 tempfile = "3"
 toml = { version = "1.2", default-features = false, features = ["parse", "std"] }
 

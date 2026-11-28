@@ -296,7 +296,7 @@ Where the sections above are silent, the adapters read the inputs this way:
   the registry's, an offline plan reads the list of the day it reads the
   registry's answers on, a cache that cannot be read or written is
   `registry-cache-unusable`, and curl not on the PATH `curl-missing`.
-- **The sources** are parsed with `syn` 2 (MIT OR Apache-2.0, with `full` and
+- **The sources** are parsed with `syn` 3 (MIT OR Apache-2.0, with `full` and
   `visit`), `proc-macro2`'s span locations giving every name its line: each
   member's targets as the same `cargo metadata --no-deps` lists them --
   library, binaries, tests, benches, examples, build script --, and the
@@ -1353,9 +1353,10 @@ In slices, each releasable and each held to the family's stages 1 and 2:
 5. **The toolchain unit.** The channel manifests, `rust-toolchain.toml`, the
    held-back versions as evidence.
 
-Every slice is in place. Next is a first dry round across real workspaces:
-plans only, nothing applied, to tune the thresholds and the grouping before
-any caller acts on a plan.
+Every slice is in place. The first dry round across real workspaces, plans
+only, ran with 0.1.0, and the rounds that applied plans since with 0.1.1 to
+0.1.3; what each found, the next release fixes, up to 0.1.4. Tuning the
+thresholds and the grouping is next.
 
 ## Open points
 
@@ -1366,5 +1367,5 @@ any caller acts on a plan.
    of unit, read from a list the policy keeps?
 2. **The thresholds.** `young-days`, `young-releases`, `toolchain-young-days`,
    `stale-months`, `small-footprint`, `moderate-footprint` and `hold-days` are
-   guesses, and so is the grouping's "same day". The first dry round tunes
-   them.
+   guesses, and so is the grouping's "same day". The rounds so far, from the
+   first dry round on, have left them as they were: tuning them is next.

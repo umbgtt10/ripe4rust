@@ -43,7 +43,7 @@ fn implemented_of_a_trait_on_a_type_only_where_neither_is_ours_and_private() {
     let found = implemented(
         "impl serde::Serialize for Shown {}\nimpl serde::Serialize for Hidden {}\nimpl Open for itoa::Buffer {}\nimpl Closed for url::Url {}\nimpl<T: log::Log> Open for T {\n    type A = smol_str::SmolStr;\n}\n",
         |surface, item, names| {
-            let Some((_, path, _)) = &item.trait_ else {
+            let Some((path, _)) = &item.trait_ else {
                 return Vec::new();
             };
             names.of(&surface.implemented(item, path))
