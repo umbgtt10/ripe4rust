@@ -5,9 +5,10 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-const STEPS: [&str; 13] = [
+const STEPS: [&str; 14] = [
     "1. Run `cargo ripe4rust plan --format json > plan.json`.",
     "   - Exit `2`: carry out each error's `do`; one that `needs_person` goes to the person. Then plan again.",
+    "   - A plan reads the registry's answers and the Rust distribution's list of releases from the day's cache, so one made later the same day does not see a release published since the day's first plan. Where one came out since -- a crate's, or Rust's --, plan with `--refresh`: every answer is fetched again and the day's copy overwritten.",
     "2. Take the urgent units first, then the rest, in plan order.",
     "3. For each ripe unit, one at a time:",
     "   1. carry out `apply`;",

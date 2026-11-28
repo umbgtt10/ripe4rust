@@ -6,6 +6,7 @@ use crate::support::counting_pause::CountingPause;
 use crate::support::workspace::files;
 use crate::support::workspace::layout;
 use cargo_ripe4rust::adapters::clock::fixed_clock::FixedClock;
+use cargo_ripe4rust::adapters::registry::lookup::Lookup;
 use cargo_ripe4rust::command::check_command::CheckCommand;
 use cargo_ripe4rust::command::format::Format;
 use cargo_ripe4rust::command::request::Request;
@@ -21,7 +22,7 @@ fn request(plan: &str) -> Request {
         command: String::from("check"),
         format: Format::Json,
         date: None,
-        offline: false,
+        lookup: Lookup::Cached,
         unit: Some(String::from("compatible:itoa")),
         plan: Some(String::from(plan)),
         because: None,

@@ -17,8 +17,8 @@ const VERSION_SHORT: &str = "-V";
 const COMMANDS: [CommandSpec; 5] = [
     CommandSpec {
         name: PLAN,
-        usage: "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]`",
-        options: &["--format", "--date", "--offline"],
+        usage: "run `cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline | --refresh]`",
+        options: &["--format", "--date", "--offline", "--refresh"],
         unit: false,
         required: &[],
     },
@@ -53,7 +53,7 @@ const COMMANDS: [CommandSpec; 5] = [
 ];
 
 /// The command line: `cargo ripe4rust [plan] [--format table|json] [--date
-/// YYYY-MM-DD] [--offline]`, `cargo ripe4rust check <unit> --plan <file>
+/// YYYY-MM-DD] [--offline | --refresh]`, `cargo ripe4rust check <unit> --plan <file>
 /// [--format table|json]`, `cargo ripe4rust hold <unit> --plan <file>
 /// --because <text> [--review YYYY-MM-DD] [--format table|json]` or `cargo
 /// ripe4rust guide [--format table|json]` or `cargo ripe4rust --version`,

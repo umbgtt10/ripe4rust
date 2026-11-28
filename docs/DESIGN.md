@@ -133,7 +133,10 @@ once; the API only for a direct dependency's repository, at most one request
 a second; each with a user agent that names the tool, its version and its
 repository and nothing personal. Every answer is cached for the day it was read, under
 `~/.cache/ripe4rust/<date>/`; a plan names that date, and with the same cache
-and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). The
+and the same date it is the same plan (ADR-TheIndexForVersionsAndDates). A
+plan made later the same day reads the morning's answers, and so does not see
+a release published since: `--refresh` fetches every answer again and
+overwrites the day's copy. The
 requests go through a `curl` process, not an HTTP crate
 (ADR-TheRegistryThroughCurl). The toolchain's releases are read the same way,
 one request a day, and kept in the same cache.
@@ -214,8 +217,17 @@ Where the sections above are silent, the adapters read the inputs this way:
   `<date>/index/<crate>` and `<date>/api/<crate>`, each the body as it came; a
   404 is kept as an empty answer, so an offline plan reads what the online one
   did. The day is the plan's date, `--date` included: online, an answer the
-  day lacks is fetched and kept under it; `--offline` reads the latest day on or
-  before the plan's date, and an answer it lacks is `registry-unreachable`. A
+  day lacks is fetched and kept under it; with `--refresh`, no answer is read
+  from the cache, so every one -- the index files, the API's answers and the
+  list of channel manifests -- is fetched again and the day's copy
+  overwritten; `--offline` reads the latest day on or before the plan's date,
+  and an answer it lacks is `registry-unreachable`. `--offline` and
+  `--refresh` exclude each other, `usage-invalid`: one reads the cache alone,
+  the other none of it. An answer is written whole, to a temporary file
+  beside it named for the process and the write, then renamed over it, so a
+  round reading the cache while another writes it -- refreshing it, say --
+  never reads half an answer, and two rounds writing one answer never take
+  over each other's temporary file; one whose rename fails is removed. A
   cache that cannot be read or written, or no directory to keep it in, is
   `registry-cache-unusable`.
 - **The workspace's files** are found where `cargo metadata --format-version 1
@@ -1005,7 +1017,9 @@ Every command but `--version`, which takes nothing and prints its one line,
 takes `--format table|json`. `plan` also takes `--date
 <YYYY-MM-DD>`, for a reproducible plan, and `--offline`, to read the cache
 only -- and to keep cargo and cargo-deny off the network too, so an offline
-plan reaches none. With no command, the command is `plan`; the name cargo
+plan reaches none --, or `--refresh`, to fetch every answer again over the
+day's cached copy, for a release published since the day's first plan; given
+both, the line is `usage-invalid`. With no command, the command is `plan`; the name cargo
 passes a subcommand first is skipped, so `cargo ripe4rust` and
 `cargo-ripe4rust` read alike. An option takes its value after it or after `=`.
 A command or an option ripe4rust does not know is `usage-invalid`, an error,
@@ -1207,6 +1221,11 @@ What `guide` prints, and what the agent does, every time:
 1. Run `cargo ripe4rust plan --format json > plan.json`.
    - Exit `2`: carry out each error's `do`; one that `needs_person` goes to
      the person. Then plan again.
+   - A plan reads the registry's answers and the Rust distribution's list of
+     releases from the day's cache, so one made later the same day does not
+     see a release published since the day's first plan. Where one came out
+     since -- a crate's, or Rust's --, plan with `--refresh`: every answer is
+     fetched again and the day's copy overwritten.
 2. Take the urgent units first, then the rest, in plan order.
 3. For each **ripe** unit, one at a time:
    1. carry out `apply`;

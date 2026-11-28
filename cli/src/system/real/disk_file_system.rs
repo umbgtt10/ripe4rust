@@ -4,19 +4,29 @@
 
 use crate::system::model::file_failure::FileFailure;
 use crate::system::traits::file_system::FileSystem;
+use std::ffi::OsString;
 use std::fs::create_dir_all;
 use std::fs::read_dir;
 use std::fs::read_to_string;
+use std::fs::remove_file;
 use std::fs::rename;
 use std::fs::write;
 use std::io::Error;
 use std::io::ErrorKind;
 use std::path::Path;
+use std::path::PathBuf;
+use std::process::id;
+use std::sync::atomic::AtomicU64;
+use std::sync::atomic::Ordering;
 
 const PARTIAL: &str = "partial";
 
-/// The disk: a file written whole -- to a file beside it, then renamed --
-/// so a cache entry is never read half-written.
+static WRITES: AtomicU64 = AtomicU64::new(0);
+
+/// The disk: a file written whole -- to a file of the writer's own beside it,
+/// named for the process and the write, then renamed over it -- so a cache
+/// entry is never read half-written, nor taken over by another round writing
+/// the same answer; a temporary file whose rename failed is removed.
 pub struct DiskFileSystem;
 
 impl DiskFileSystem {
@@ -27,6 +37,17 @@ impl DiskFileSystem {
                 detail: error.to_string(),
             },
         }
+    }
+
+    fn partial(path: &Path) -> PathBuf {
+        let mut name = OsString::from(".");
+        name.push(path.file_name().unwrap_or_default());
+        name.push(format!(
+            ".{}-{}.{PARTIAL}",
+            id(),
+            WRITES.fetch_add(1, Ordering::Relaxed)
+        ));
+        path.with_file_name(name)
     }
 }
 
@@ -49,8 +70,11 @@ impl FileSystem for DiskFileSystem {
         if let Some(parent) = path.parent() {
             create_dir_all(parent).map_err(|error| Self::failure(&error))?;
         }
-        let partial = path.with_extension(PARTIAL);
+        let partial = Self::partial(path);
         write(&partial, contents).map_err(|error| Self::failure(&error))?;
-        rename(&partial, path).map_err(|error| Self::failure(&error))
+        rename(&partial, path).map_err(|error| {
+            let _ = remove_file(&partial);
+            Self::failure(&error)
+        })
     }
 }

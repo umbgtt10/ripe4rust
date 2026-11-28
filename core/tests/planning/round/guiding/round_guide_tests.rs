@@ -37,3 +37,17 @@ fn steps_say_what_to_do_on_each_code_check_exits_with() {
         );
     }
 }
+
+#[test]
+fn steps_say_when_to_plan_with_every_answer_fetched_again() {
+    // Arrange & Act
+    let steps = RoundGuide.steps();
+
+    // Assert
+    assert_eq!(
+        steps.get(2).map(String::as_str),
+        Some(
+            "   - A plan reads the registry's answers and the Rust distribution's list of releases from the day's cache, so one made later the same day does not see a release published since the day's first plan. Where one came out since -- a crate's, or Rust's --, plan with `--refresh`: every answer is fetched again and the day's copy overwritten."
+        )
+    );
+}

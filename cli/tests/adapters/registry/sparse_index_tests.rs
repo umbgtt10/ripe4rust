@@ -8,6 +8,7 @@ use crate::support::registry::curl;
 use crate::support::replay_runner::ReplayRunner;
 use cargo_ripe4rust::adapters::registry::curl::Curl;
 use cargo_ripe4rust::adapters::registry::day_cache::DayCache;
+use cargo_ripe4rust::adapters::registry::lookup::Lookup;
 use cargo_ripe4rust::adapters::registry::sparse_index::SparseIndex;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::inputs::release::Release;
@@ -37,7 +38,12 @@ fn read_on_is_the_cache_s_day() {
     // Arrange
     let (runner, files) = (ReplayRunner::new(), MemoryFiles::new());
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let day = SparseIndex::new(&curl, &cache).read_on();
@@ -52,7 +58,12 @@ fn releases_answered_with_another_status_are_unreachable() {
     let runner = ReplayRunner::new().reply(&curl(URL), printed("busy\n503", ""));
     let files = MemoryFiles::new();
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
@@ -75,7 +86,12 @@ fn releases_of_a_cached_crate_read_the_cache_alone() {
         r#"{"name":"itoa","vers":"1.0.19","yanked":false}"#,
     );
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
@@ -91,7 +107,12 @@ fn releases_of_a_crate_fetch_its_index_file_and_cache_it_for_the_day() {
     let runner = ReplayRunner::new().reply(&curl(URL), printed(ITOA, ""));
     let files = MemoryFiles::new();
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
@@ -117,7 +138,12 @@ fn releases_of_a_crate_the_index_does_not_hold_are_none_cached_as_such() {
     );
     let files = MemoryFiles::new();
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
@@ -142,7 +168,12 @@ fn releases_of_several_crates_fetch_those_not_cached_together_answering_in_their
         r#"{"name":"anyhow","vers":"1.0.102","yanked":false}"#,
     );
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
     let names = ["itoa", "anyhow", "ryu"].map(String::from);
 
     // Act
@@ -165,11 +196,44 @@ fn releases_of_several_crates_fetch_those_not_cached_together_answering_in_their
 }
 
 #[test]
+fn releases_refreshed_of_a_cached_crate_fetch_its_index_file_again() {
+    // Arrange
+    let runner = ReplayRunner::new().reply(&curl(URL), printed(ITOA, ""));
+    let files = MemoryFiles::new().with(
+        "/cache/2026-11-26/index/itoa",
+        r#"{"name":"itoa","vers":"1.0.19","yanked":false}"#,
+    );
+    let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Refreshed,
+    );
+
+    // Act
+    let releases = SparseIndex::new(&curl, &cache).releases(&[String::from("itoa")]);
+
+    // Assert
+    assert_eq!(counted(releases), Ok(vec![(String::from("itoa"), 38)]));
+    let (body, _) = ITOA.rsplit_once('\n').expect("a status");
+    assert_eq!(
+        files.contents("/cache/2026-11-26/index/itoa"),
+        Some(String::from(body))
+    );
+}
+
+#[test]
 fn url_of_a_name_follows_the_index_s_layout_by_its_length() {
     // Arrange
     let (runner, files) = (ReplayRunner::new(), MemoryFiles::new());
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
     let index = SparseIndex::new(&curl, &cache);
 
     // Act

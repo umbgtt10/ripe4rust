@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- `cargo ripe4rust plan --refresh`: online, every answer the plan reads -- the crates' index files, the API's answers
+  and the Rust distribution's list of channel manifests -- is fetched again and the day's cached copy overwritten.
+  The day cache served a plan made later the same day the morning's answers, so it never saw a release published
+  since: the first applied rounds missed a crate's new release and Rust 1.100.1, and saw them only from a cache
+  directory of their own. `--refresh` with `--offline` is `usage-invalid` -- one reads the cache alone, the other
+  none of it --, and `guide` names the option and says in the round when to take it
+  (`cargo_ripe4rust::adapters::registry::lookup::Lookup`, which `DayCache` and the request take in place of
+  `offline: bool`).
+
+### Fixed
+- A cache entry was written to `<name>.partial` beside it, then renamed: two rounds writing one answer at once --
+  two plans refreshing the same day, say -- shared that file, so one could rename the other's half-written answer
+  into place for a third to read, and fail its own rename. Each write now has a temporary file of its own, named for
+  the process and the write, and one whose rename fails is removed.
+
 ## [0.1.2] — 2026-11-27
 
 What the first round that applied a plan found, in one real workspace: units sharing a crate made `check` say "not

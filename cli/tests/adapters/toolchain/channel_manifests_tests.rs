@@ -9,6 +9,7 @@ use crate::support::registry::curl;
 use crate::support::replay_runner::ReplayRunner;
 use cargo_ripe4rust::adapters::registry::curl::Curl;
 use cargo_ripe4rust::adapters::registry::day_cache::DayCache;
+use cargo_ripe4rust::adapters::registry::lookup::Lookup;
 use cargo_ripe4rust::adapters::toolchain::channel_manifests::ChannelManifests;
 use cargo_ripe4rust::system::traits::release_source::ReleaseSource;
 use ripe4rust_core::inputs::port_failure::PortFailure;
@@ -52,7 +53,12 @@ fn releases_answered_with_another_status_are_unreachable_and_not_kept() {
     );
     let files = MemoryFiles::new();
     let http = Curl::new(&runner, root());
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = ChannelManifests::new(&http, &cache).releases();
@@ -76,7 +82,12 @@ fn releases_cached_for_the_day_are_read_from_the_cache_alone() {
         "static.rust-lang.org/dist/2026-11-12/channel-rust-1.100.0.toml\n",
     );
     let http = Curl::new(&runner, root());
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = ChannelManifests::new(&http, &cache).releases();
@@ -92,7 +103,12 @@ fn releases_fetch_the_distribution_s_list_and_keep_it_for_the_day() {
     let runner = ReplayRunner::new().reply(&curl(URL), printed(RECORDED, ""));
     let files = MemoryFiles::new();
     let http = Curl::new(&runner, root());
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = ChannelManifests::new(&http, &cache)
@@ -116,7 +132,12 @@ fn releases_of_a_list_that_does_not_read_are_not_kept() {
     );
     let files = MemoryFiles::new();
     let http = Curl::new(&runner, root());
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = ChannelManifests::new(&http, &cache).releases();
@@ -135,7 +156,12 @@ fn releases_offline_with_nothing_cached_are_unreachable() {
     let runner = ReplayRunner::new();
     let files = MemoryFiles::new();
     let http = Curl::new(&runner, root());
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), true);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Offline,
+    );
 
     // Act
     let releases = ChannelManifests::new(&http, &cache).releases();
@@ -162,7 +188,12 @@ fn releases_out_of_curl_s_reach_are_unreachable_with_what_it_said() {
     );
     let files = MemoryFiles::new();
     let http = Curl::new(&runner, root());
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let releases = ChannelManifests::new(&http, &cache).releases();
@@ -174,4 +205,33 @@ fn releases_out_of_curl_s_reach_are_unreachable_with_what_it_said() {
             "curl: (6) Could not resolve host: static.rust-lang.invalid"
         ))
     );
+}
+
+#[test]
+fn releases_refreshed_fetch_the_list_again_over_the_day_s_copy() {
+    // Arrange
+    let runner = ReplayRunner::new().reply(&curl(URL), printed(RECORDED, ""));
+    let files = MemoryFiles::new().with(
+        CACHED,
+        "static.rust-lang.org/dist/2026-10-30/channel-rust-1.99.1.toml\n",
+    );
+    let http = Curl::new(&runner, root());
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Refreshed,
+    );
+
+    // Act
+    let releases = ChannelManifests::new(&http, &cache)
+        .releases()
+        .expect("releases");
+
+    // Assert
+    assert_eq!(
+        releases.last().map(|release| &release.version),
+        Some(&Version::parse("1.100.0").expect("a version"))
+    );
+    assert_eq!(files.contents(CACHED).as_deref(), Some(body(RECORDED)));
 }

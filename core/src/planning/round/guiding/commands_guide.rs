@@ -23,7 +23,7 @@ const PLAN: (&str, &str) = (
 
 const COMMANDS: [Entry; 5] = [
     Entry {
-        usage: "cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline]",
+        usage: "cargo ripe4rust [plan] [--format table|json] [--date YYYY-MM-DD] [--offline | --refresh]",
         does: "decides, for every upgrade the workspace could take, whether it is ripe, worth asking about, or not yet, and prints the plan; it never applies",
         options: &[
             FORMAT,
@@ -34,6 +34,10 @@ const COMMANDS: [Entry; 5] = [
             (
                 "--offline",
                 "read the registry's cache alone, the latest day on or before the plan's date, and keep cargo and cargo-deny off the network",
+            ),
+            (
+                "--refresh",
+                "fetch every answer again -- the crates' index files, the API's and the Rust distribution's list of releases -- and overwrite the day's cached copy, for a release published since the day's first plan; not with `--offline`",
             ),
         ],
         exits: &[

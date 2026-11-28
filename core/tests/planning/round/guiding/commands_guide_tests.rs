@@ -51,7 +51,12 @@ fn commands_name_every_option_each_takes() {
     assert_eq!(
         options,
         vec![
-            vec!["--format table|json", "--date YYYY-MM-DD", "--offline"],
+            vec![
+                "--format table|json",
+                "--date YYYY-MM-DD",
+                "--offline",
+                "--refresh"
+            ],
             vec!["<unit>", "--plan <file>", "--format table|json"],
             vec![
                 "<unit>",

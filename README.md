@@ -30,9 +30,10 @@ the Rust distribution's list of releases through `curl`: both are needed on
 ## Status
 
 **0.1.2, the first applied round's fixes.** `cargo ripe4rust plan [--format table|json] [--date
-YYYY-MM-DD] [--offline]` reads a real workspace -- cargo, cargo-deny, rustc,
+YYYY-MM-DD] [--offline | --refresh]` reads a real workspace -- cargo, cargo-deny, rustc,
 the crates.io registry and the Rust distribution's list of releases, through
-`curl` and cached for the day -- and prints the plan. `cargo ripe4rust check
+`curl` and cached for the day, `--refresh` fetching them again for a release
+published since the day's first plan -- and prints the plan. `cargo ripe4rust check
 <unit> --plan <file>` reads the plan back and the workspace again, and says
 whether the unit applied is as planned -- exit 0, or 1 with every difference
 and what to do -- or the plan is stale, 3. `cargo ripe4rust hold <unit> --plan

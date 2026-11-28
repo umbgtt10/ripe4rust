@@ -6,6 +6,7 @@ use crate::support::counting_pause::CountingPause;
 use crate::support::recorded::recorded;
 use crate::support::workspace::files;
 use cargo_ripe4rust::adapters::clock::fixed_clock::FixedClock;
+use cargo_ripe4rust::adapters::registry::lookup::Lookup;
 use cargo_ripe4rust::command::format::Format;
 use cargo_ripe4rust::command::plan_command::PlanCommand;
 use cargo_ripe4rust::command::request::Request;
@@ -22,7 +23,7 @@ fn request(date: Option<Date>) -> Request {
         command: String::from("plan"),
         format: Format::Json,
         date,
-        offline: false,
+        lookup: Lookup::Cached,
         unit: None,
         plan: None,
         because: None,

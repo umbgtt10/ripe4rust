@@ -9,6 +9,7 @@ use crate::support::replay_runner::ReplayRunner;
 use cargo_ripe4rust::adapters::registry::cached_answers::CachedAnswers;
 use cargo_ripe4rust::adapters::registry::curl::Curl;
 use cargo_ripe4rust::adapters::registry::day_cache::DayCache;
+use cargo_ripe4rust::adapters::registry::lookup::Lookup;
 use cargo_ripe4rust::system::model::fetched::Fetched;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::date::Date;
@@ -26,7 +27,12 @@ fn cached_of_a_day_holding_the_answer_is_it() {
     let runner = ReplayRunner::new();
     let files = MemoryFiles::new().with("/cache/2026-11-26/index/itoa", "an answer");
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let cached = CachedAnswers::new(&curl, &cache).cached("index", "itoa");
@@ -41,7 +47,12 @@ fn fetched_of_a_200_is_its_body_kept_for_the_day() {
     let runner = ReplayRunner::new().reply(&curl(URL), printed("an answer\n200", ""));
     let files = MemoryFiles::new();
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let fetched = CachedAnswers::new(&curl, &cache).fetched("index", "itoa", URL, "the index");
@@ -60,7 +71,12 @@ fn fetched_of_a_404_is_nothing_kept_for_the_day() {
     let runner = ReplayRunner::new().reply(&curl(URL), printed("not here\n404", ""));
     let files = MemoryFiles::new();
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let fetched = CachedAnswers::new(&curl, &cache).fetched("index", "itoa", URL, "the index");
@@ -79,7 +95,12 @@ fn fetched_of_another_status_is_unreachable_naming_who_answered() {
     let runner = ReplayRunner::new().reply(&curl(URL), printed("\n500", ""));
     let files = MemoryFiles::new();
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
 
     // Act
     let fetched = CachedAnswers::new(&curl, &cache).fetched("index", "itoa", URL, "the index");
@@ -100,7 +121,12 @@ fn kept_of_an_answer_fetched_elsewhere_reads_its_status_and_keeps_its_body() {
     let runner = ReplayRunner::new();
     let files = MemoryFiles::new();
     let curl = Curl::new(&runner, PathBuf::from("/work/ws"));
-    let cache = DayCache::new(&files, Some(PathBuf::from("/cache")), today(), false);
+    let cache = DayCache::new(
+        &files,
+        Some(PathBuf::from("/cache")),
+        today(),
+        Lookup::Cached,
+    );
     let answers = CachedAnswers::new(&curl, &cache);
 
     // Act

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::adapters::registry::lookup::Lookup;
 use crate::system::model::file_failure::FileFailure;
 use crate::system::traits::answer_cache::AnswerCache;
 use crate::system::traits::file_system::FileSystem;
@@ -14,14 +15,15 @@ const NO_DIRECTORY: &str = "there is no cache directory: neither `XDG_CACHE_HOME
 
 /// The registry's answers under `<root>/<date>/<kind>/<crate>`, the date
 /// the plan's own. Online, a day's answer is read where it is there and
-/// fetched where not, and written under the day; `--offline` reads the
-/// latest day on or before the plan's, and an answer it lacks stops the
-/// plan.
+/// fetched where not, and written under the day; refreshed, none is read, so
+/// every answer is fetched again and the day's copy overwritten; `--offline`
+/// reads the latest day on or before the plan's, and an answer it lacks
+/// stops the plan.
 pub struct DayCache<'a> {
     files: &'a dyn FileSystem,
     root: Option<PathBuf>,
     today: Date,
-    offline: bool,
+    lookup: Lookup,
     day: OnceCell<Result<Date, PortFailure>>,
 }
 
@@ -30,19 +32,19 @@ impl<'a> DayCache<'a> {
         files: &'a dyn FileSystem,
         root: Option<PathBuf>,
         today: Date,
-        offline: bool,
+        lookup: Lookup,
     ) -> Self {
         Self {
             files,
             root,
             today,
-            offline,
+            lookup,
             day: OnceCell::new(),
         }
     }
 
     fn chosen(&self) -> Result<Date, PortFailure> {
-        if !self.offline {
+        if self.lookup != Lookup::Offline {
             return Ok(self.today);
         }
         let days = self
@@ -76,16 +78,21 @@ impl<'a> DayCache<'a> {
 impl AnswerCache for DayCache<'_> {
     fn read(&self, kind: &str, name: &str) -> Result<Option<String>, PortFailure> {
         let day = self.day()?;
-        let Some(path) = self.path(day, kind, name) else {
+        let Some(path) = self
+            .path(day, kind, name)
+            .filter(|_| self.lookup != Lookup::Refreshed)
+        else {
             return Ok(None);
         };
         match self.files.read(&path) {
             Ok(body) => Ok(Some(body)),
-            Err(FileFailure::Missing) if self.offline => Err(PortFailure::RegistryUnreachable {
-                detail: format!(
-                    "`--offline`, and the cache of {day} holds no {kind} answer for `{name}`"
-                ),
-            }),
+            Err(FileFailure::Missing) if self.lookup == Lookup::Offline => {
+                Err(PortFailure::RegistryUnreachable {
+                    detail: format!(
+                        "`--offline`, and the cache of {day} holds no {kind} answer for `{name}`"
+                    ),
+                })
+            }
             Err(FileFailure::Missing) => Ok(None),
             Err(FileFailure::Failed { detail }) => Err(PortFailure::RegistryCacheUnusable {
                 detail: format!("`{}` could not be read: {detail}", path.display()),

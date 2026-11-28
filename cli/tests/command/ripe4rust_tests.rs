@@ -609,6 +609,35 @@ fn run_offline_on_a_later_day_warns_the_cache_is_old() {
 }
 
 #[test]
+fn run_refreshed_after_an_online_run_fetches_every_answer_again_over_the_day_s_copy() {
+    // Arrange
+    let (online, files, pause, clock) = (recorded(false), files(), CountingPause::new(), clock());
+    let first =
+        Ripe4rust::new(seams(&online, &files, &pause, &clock)).run(&plan_json("2026-11-26", false));
+    let cached = "/cache/2026-11-26/toolchain/manifests.txt";
+    let kept = files.contents(cached);
+    let files = files.with(cached, "an answer read in the morning");
+    let refreshed = recorded(false);
+    let mut words = plan_json("2026-11-26", false);
+    words.push(String::from("--refresh"));
+
+    // Act
+    let second = Ripe4rust::new(seams(&refreshed, &files, &pause, &clock)).run(&words);
+
+    // Assert
+    let fetched = |runner: &ReplayRunner| {
+        runner
+            .commands()
+            .into_iter()
+            .filter(|command| command.starts_with("curl"))
+            .collect::<Vec<String>>()
+    };
+    assert_eq!((second.code, &second.output), (0, &first.output));
+    assert_eq!(fetched(&refreshed), fetched(&online));
+    assert_eq!(files.contents(cached), kept);
+}
+
+#[test]
 fn run_with_the_rust_distribution_out_of_reach_prints_no_plan_and_exits_two() {
     // Arrange
     let runner = recorded(false).reply(
