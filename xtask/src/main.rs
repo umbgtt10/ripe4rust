@@ -62,8 +62,9 @@ const DRY_BASELINE: &str = "dry4rust-baseline.json";
 const DRY_MIN_NODES: &str = "25";
 const DENY_FETCH_ATTEMPTS: usize = 3;
 
-// Reading the real process argv and wiring the concrete runner are the two
-// things no test can reach, so they are all this binary does.
+// Which gates each stage runs, in what order, built from this workspace's
+// constants: the gates, the runner and the scoring are serge4rust's, and are
+// tested there, so reading argv and wiring them is all this binary does.
 fn main() -> ExitCode {
     match args().nth(1).as_deref() {
         Some("stage2") => run_stage2(),
@@ -121,10 +122,11 @@ fn run_stage2() -> ExitCode {
 
     // First: core stays free of technology -- no dependency in its manifest,
     // `no_std` and `forbid(unsafe_code)` on its root, and no file system,
-    // process, thread, environment or stdout in its tests -- so every input
-    // arrives through a trait, and every rule is tested against fakes, the date
-    // included. A breach is fixed by moving code into cli, which changes what
-    // every later gate, stern4rust's included, measures; and it costs a second.
+    // process, thread, environment or stdout in its sources or its tests -- so
+    // every input arrives through a trait, and every rule is tested against
+    // fakes, the date included. A breach is fixed by moving code into cli,
+    // which changes what every later gate, stern4rust's included, measures; and
+    // it costs a second.
     let root = workspace_root();
     let sources = DiskSourceFiles::new();
     let dependencies = PackageDependencies::new();
@@ -185,8 +187,9 @@ fn run_stage2() -> ExitCode {
     // Every source file has its mirrored test file.
     let twin = TwinGate::new(&runner, manifest_path.clone(), packages.clone());
 
-    // A ratchet just above the worst file (6.89, this one, when the gates
-    // arrived), lowered as it improves and never raised.
+    // A ratchet just above the worst file -- this one: 6.89 when the gates
+    // arrived, 6.76 since it took them from serge4rust --, lowered as it
+    // improves and never raised.
     let iceberg = IcebergGate::new(
         &runner,
         manifest_path.clone(),
@@ -194,7 +197,8 @@ fn run_stage2() -> ExitCode {
         String::from(ICEBERG_THRESHOLD),
     );
 
-    // Last in stage 2: its advisories change without the code changing (see DenyGate).
+    // Last in stage 2: its advisories change without the code changing (see
+    // serge4rust's DenyGate).
     let deny = DenyGate::new(&runner, manifest_path, DENY_FETCH_ATTEMPTS);
 
     let gates: Vec<&dyn Gate> = vec![

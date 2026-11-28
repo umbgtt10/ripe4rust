@@ -1,6 +1,6 @@
 # A virtual workspace: `core/` is the technology-free library that decides,
-# `cli/` the published cargo subcommand, `xtask/` the gates. The family's shape,
-# from the start.
+# `cli/` the published cargo subcommand, `xtask/` the stages, built from
+# serge4rust's gates. The family's shape, from the start.
 [workspace]
 members = ["core", "cli", "xtask"]
 resolver = "3"
