@@ -20,6 +20,34 @@ fn fields_belong_to_the_documents_the_commands_print_each_saying_what_it_is() {
 }
 
 #[test]
+fn fields_of_a_re_point_say_it_is_told_and_never_judged() {
+    // Arrange & Act
+    let fields = FieldsGuide.fields();
+
+    // Assert
+    let means = |document: &str, path: &str| {
+        fields
+            .iter()
+            .find(|field| field.document == document && field.field == path)
+            .map(|field| field.means.as_str())
+    };
+    assert_eq!(
+        [
+            means("plan", "workspace.edges"),
+            means("check", "repointed")
+        ],
+        [
+            Some(
+                "every dependency the lock writes with its version, `<crate> <version> -> <dependency> <version>`, the dependent a member, a crates.io package or a git source's crate and the dependency a crates.io package: what `check` reads a re-point from; a plan written before them has none"
+            ),
+            Some(
+                "every dependency re-pointed between versions the lock already held -- its dependent at one version in both locks, its target moved between two versions both hold, which no version move explains --, cumulative against the plan's lock: information, never a difference, nothing to revert; name in the unit's commit message those new since the last check, and those gone"
+            ),
+        ]
+    );
+}
+
+#[test]
 fn fields_of_a_unit_s_target_say_when_it_is_null() {
     // Arrange & Act
     let fields = FieldsGuide.fields();

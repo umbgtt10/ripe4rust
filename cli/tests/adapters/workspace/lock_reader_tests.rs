@@ -4,15 +4,92 @@
 
 use cargo_ripe4rust::adapters::workspace::lock_reader::LockReader;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::lock_edge::LockEdge;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::port_failure::PortFailure;
 use ripe4rust_core::values::version::Version;
+
+const REGISTRY: &str = "registry+https://github.com/rust-lang/crates.io-index";
+
+fn edge(dependent: &str, dependency: &str) -> LockEdge {
+    let split = |text: &str| {
+        let (name, version) = text.split_once(' ').expect("a crate and its version");
+        (
+            String::from(name),
+            Version::parse(version).expect("a version"),
+        )
+    };
+    let ((dependent, dependent_version), (dependency, dependency_version)) =
+        (split(dependent), split(dependency));
+    LockEdge {
+        dependent,
+        dependent_version,
+        dependency,
+        dependency_version,
+    }
+}
 
 fn entry(name: &str, version: &str) -> LockEntry {
     LockEntry {
         name: String::from(name),
         version: Version::parse(version).expect("a version"),
     }
+}
+
+#[test]
+fn edges_of_a_lock_are_every_dependency_it_writes_with_a_version_on_a_crates_io_package() {
+    // Arrange
+    let lock = format!(
+        "version = 4\n\n\
+        [[package]]\nname = \"app\"\nversion = \"0.1.0\"\ndependencies = [\n \"errno\",\n \"windows-sys 0.52.0\",\n]\n\n\
+        [[package]]\nname = \"errno\"\nversion = \"0.3.14\"\nsource = \"{REGISTRY}\"\ndependencies = [\n \"libc\",\n \"windows-sys 0.61.2 ({REGISTRY})\",\n]\n\n\
+        [[package]]\nname = \"gitcore\"\nversion = \"0.1.0\"\nsource = \"git+https://github.com/example/upstream?branch=main#9625c3d283b3313139f8aad4ebbb0dfd3bdb09c7\"\ndependencies = [\n \"windows-sys 0.52.0 ({REGISTRY})\",\n \"windows-sys 0.61.2 (git+https://github.com/example/windows-sys?branch=main#0abc1234)\",\n]\n\n\
+        [[package]]\nname = \"libc\"\nversion = \"0.2.177\"\nsource = \"{REGISTRY}\"\n\n\
+        [[package]]\nname = \"windows-sys\"\nversion = \"0.52.0\"\nsource = \"{REGISTRY}\"\n\n\
+        [[package]]\nname = \"windows-sys\"\nversion = \"0.61.2\"\nsource = \"{REGISTRY}\"\n\n\
+        [[package]]\nname = \"windows-sys\"\nversion = \"0.61.2\"\nsource = \"git+https://github.com/example/windows-sys?branch=main#0abc1234\"\n"
+    );
+
+    // Act
+    let edges = LockReader.edges(&lock);
+
+    // Assert
+    assert_eq!(
+        edges,
+        Ok(vec![
+            edge("app 0.1.0", "windows-sys 0.52.0"),
+            edge("errno 0.3.14", "windows-sys 0.61.2"),
+            edge("gitcore 0.1.0", "windows-sys 0.52.0"),
+        ])
+    );
+}
+
+#[test]
+fn edges_of_a_package_whose_version_is_no_version_are_unreadable() {
+    // Arrange & Act
+    let edges = LockReader.edges(&format!(
+        "version = 4\n\n[[package]]\nname = \"app\"\nversion = \"four\"\ndependencies = [\n \"itoa 1.0.10\",\n]\n\n[[package]]\nname = \"itoa\"\nversion = \"1.0.10\"\nsource = \"{REGISTRY}\"\n",
+    ));
+
+    // Assert
+    assert_eq!(
+        edges,
+        Err(PortFailure::WorkspaceUnreadable {
+            file: String::from("Cargo.lock"),
+            detail: String::from("the package `app` is at `four`, which is not a version"),
+        })
+    );
+}
+
+#[test]
+fn edges_of_the_recorded_lock_are_none_as_it_holds_every_crate_once() {
+    // Arrange & Act
+    let edges = LockReader.edges(include_str!(
+        "../../fixtures/workspace/files/Cargo.lock.txt"
+    ));
+
+    // Assert
+    assert_eq!(edges, Ok(Vec::new()));
 }
 
 #[test]

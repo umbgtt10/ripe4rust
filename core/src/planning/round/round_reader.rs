@@ -52,12 +52,14 @@ impl<'a> RoundReader<'a> {
                 lock: plan.lock.clone(),
                 lines: plan.lines.clone(),
                 git: plan.git.clone(),
+                edges: plan.edges.clone().unwrap_or_default(),
             });
         }
         Ok(CurrentState {
             lock: self.files.lock()?,
             lines: self.files.written()?,
             git: self.files.git()?,
+            edges: self.files.edges()?,
         })
     }
 }

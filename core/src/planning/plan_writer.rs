@@ -102,6 +102,7 @@ impl<'a> PlanWriter<'a> {
                     .iter()
                     .map(|entry| format!("{} {}#{}", entry.name, entry.source, entry.rev))
                     .collect(),
+                edges: self.edges(),
             },
             gates: surveyed.policy.gates.clone(),
             shared: self.shared(),
@@ -133,6 +134,25 @@ impl<'a> PlanWriter<'a> {
                 version: package.version.clone(),
             });
         advisories.chain(yanked).collect()
+    }
+
+    fn edges(&self) -> Vec<String> {
+        let mut edges = self
+            .surveyed
+            .edges
+            .iter()
+            .map(|edge| {
+                format!(
+                    "{} {} -> {} {}",
+                    edge.dependent,
+                    edge.dependent_version,
+                    edge.dependency,
+                    edge.dependency_version
+                )
+            })
+            .collect::<Vec<String>>();
+        edges.sort();
+        edges
     }
 
     fn held(&self) -> Vec<String> {

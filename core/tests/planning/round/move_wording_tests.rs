@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::recorded::edge;
 use crate::support::releases::version;
 use crate::support::units::added;
 use crate::support::units::moved;
@@ -18,6 +19,21 @@ fn git_of_a_source_moved_says_from_which_rev_to_which_no_unit_moves_it() {
     assert_eq!(
         said,
         "`https://github.com/example/upstream?branch=main` moved 9625c3d2 -> deadbeef, a move no unit of the plan makes"
+    );
+}
+
+#[test]
+fn repointed_of_an_edge_says_what_its_dependency_moved_between() {
+    // Arrange
+    let recorded = edge(("errno", "0.3.14"), ("windows-sys", "0.61.2"));
+
+    // Act
+    let said = MoveWording.repointed(&recorded, &version("0.52.0"));
+
+    // Assert
+    assert_eq!(
+        said,
+        "`errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the lock"
     );
 }
 

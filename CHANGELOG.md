@@ -15,6 +15,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   none of it --, and `guide` names the option and says in the round when to take it
   (`cargo_ripe4rust::adapters::registry::lookup::Lookup`, which `DayCache` and the request take in place of
   `offline: bool`).
+- `check` tells every dependency re-pointed between versions the lock already held. `cargo update -p proptest`
+  took the `windows-sys` dependency of `errno`, `rustix` and `tempfile` from 0.61.2 to 0.52.0, both locked, no
+  version added or removed, and the next unit took them back; `check` said "as planned" both times and named none of
+  it. The plan now records the lock's versioned edges in the new `workspace.edges`, after `git` -- every dependency
+  `Cargo.lock` writes with a version, of every package, members included, on a crates.io package, `errno 0.3.14 ->
+  windows-sys 0.61.2`; a bare edge, to a crate the lock holds once, cannot re-point and is left out. `check` reports
+  each edge whose dependent is in both locks at the same version and whose dependency moved between two versions both
+  hold, in the new `repointed` after `shared`, "`errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the
+  lock", in the table as `repointed: ...`; an edge a version's move explains is not reported. A re-point is
+  information, never a difference: `as_planned`, the exit code and staleness are unchanged. It is cumulative against
+  the plan's lock, and the round says to name in the unit's commit message those its check lists that the check
+  before did not, and those it no longer lists; the gates judge them. A plan written by 0.1.2 or earlier, with no
+  `edges`, still reads and checks as before, with the new notice `plan-without-edges`, once; `guide` lists it with
+  its remedy, and names both fields (`ADR-ARepointIsToldNeverJudged`, `ripe4rust_core::inputs::lock_edge::LockEdge`,
+  `ripe4rust_core::planning::round::edge_changes::EdgeChanges`, the core's `WorkspaceFiles::edges`, read by the cli's
+  `LockReader::edges`).
 
 ### Changed
 - The source scan's records -- `Scan`, `CrateUse`, `UnfollowedInclude` and `UnparsedFile` -- moved from

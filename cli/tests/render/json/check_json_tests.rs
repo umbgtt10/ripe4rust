@@ -30,6 +30,7 @@ fn document_of_a_report_as_planned_names_the_moves_its_edit_made() {
             ],
             "differences": [],
             "shared": [],
+            "repointed": [],
             "applied": ["compatible:widget", "breaking:gadget"],
             "to_go": ["rest"],
             "diagnostics": []
@@ -53,7 +54,25 @@ fn document_of_a_report_keeps_the_design_s_order() {
         "{written}"
     );
     assert!(
-        written.ends_with(r#""shared":["`wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in"],"applied":[],"to_go":["compatible:widget","rest"],"diagnostics":[]}"#),
+        written.ends_with(r#""shared":["`wasip2` 1.0.3 left the lock: the units share the crate, and its moves depend on the order they are applied in"],"repointed":[],"applied":[],"to_go":["compatible:widget","rest"],"diagnostics":[]}"#),
+        "{written}"
+    );
+}
+
+#[test]
+fn document_of_a_report_with_a_re_point_names_it_after_the_shared_moves() {
+    // Arrange
+    let mut report = as_planned();
+    report.repointed = vec![String::from(
+        "`errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the lock",
+    )];
+
+    // Act
+    let written = text(&CheckJson.document(&report));
+
+    // Assert
+    assert!(
+        written.contains(r#""shared":[],"repointed":["`errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the lock"],"applied":["#),
         "{written}"
     );
 }

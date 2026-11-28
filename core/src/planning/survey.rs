@@ -204,6 +204,7 @@ impl<'a> Survey<'a> {
             workspace_moves: workspace_moves.registry,
             source_moves: self.source_moves(&workspace_moves.git).map_err(stop)?,
             git: self.ports.files.git().map_err(stop)?,
+            edges: self.ports.files.edges().map_err(stop)?,
             repositories: self.repositories(&direct).map_err(stop)?,
             reached: self.reached(&policy).map_err(stop)?,
             requirement_lines: self.requirement_lines(&direct).map_err(stop)?,

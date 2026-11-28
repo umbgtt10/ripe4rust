@@ -7,6 +7,7 @@ use crate::support::workspace::files;
 use crate::support::workspace::layout;
 use cargo_ripe4rust::adapters::workspace::cargo_layout::CargoLayout;
 use cargo_ripe4rust::adapters::workspace::manifest_files::ManifestFiles;
+use ripe4rust_core::inputs::lock_edge::LockEdge;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_entry::PolicyEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
@@ -16,6 +17,7 @@ use ripe4rust_core::inputs::toolchain_file::ToolchainFile;
 use ripe4rust_core::inputs::written_line::WrittenLine;
 use ripe4rust_core::traits::workspace_files::WorkspaceFiles;
 use ripe4rust_core::values::location::Location;
+use ripe4rust_core::values::version::Version;
 use std::path::PathBuf;
 
 fn at(file: &str, line: u32) -> Location {
@@ -44,6 +46,33 @@ fn texts(items: &[&str]) -> PolicyValue {
             .map(|item| PolicyValue::Text(String::from(*item)))
             .collect(),
     )
+}
+
+#[test]
+fn edges_of_the_recorded_workspace_are_its_lock_s_versioned_dependencies() {
+    // Arrange
+    let runner = layout();
+    let lock = include_str!("../../fixtures/workspace/files/Cargo.lock.txt")
+        .replace(" \"either\",\n", " \"either 1.5.0\",\n")
+        .replace(
+            "[[package]]\nname = \"itertools\"",
+            "[[package]]\nname = \"either\"\nversion = \"1.6.0\"\nsource = \"registry+https://github.com/rust-lang/crates.io-index\"\n\n[[package]]\nname = \"itertools\"",
+        );
+    let files = files().with("/work/ws/Cargo.lock", &lock);
+
+    // Act
+    let edges = ManifestFiles::new(&CargoLayout::new(&runner, dir()), &files).edges();
+
+    // Assert
+    assert_eq!(
+        edges,
+        Ok(vec![LockEdge {
+            dependent: String::from("itertools"),
+            dependent_version: Version::parse("0.10.0").expect("a version"),
+            dependency: String::from("either"),
+            dependency_version: Version::parse("1.5.0").expect("a version"),
+        }])
+    );
 }
 
 #[test]

@@ -4,6 +4,7 @@
 
 pub mod checking;
 pub mod current_state;
+pub mod edge_changes;
 pub mod git_changes;
 pub mod guiding;
 pub mod holding;

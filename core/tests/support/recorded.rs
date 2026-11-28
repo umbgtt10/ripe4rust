@@ -15,6 +15,7 @@ use crate::support::units::moved;
 use crate::support::units::removed;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
 use ripe4rust_core::inputs::git::git_source::GitSource;
+use ripe4rust_core::inputs::lock_edge::LockEdge;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::lock_move::LockMove;
 use ripe4rust_core::inputs::recorded_plan::RecordedPlan;
@@ -43,6 +44,7 @@ pub fn base() -> FakeFiles {
         rust_version_lines: Vec::new(),
         written: lines(),
         git: Vec::new(),
+        edges: Vec::new(),
         failure: None,
     }
 }
@@ -55,6 +57,17 @@ pub fn changed(lock: Vec<LockEntry>, written: Vec<WrittenLine>) -> FakeFiles {
         lock,
         written,
         ..base()
+    }
+}
+
+/// An edge of the lock: `dependent` at its version depending on
+/// `dependency` at its own.
+pub fn edge(dependent: (&str, &str), dependency: (&str, &str)) -> LockEdge {
+    LockEdge {
+        dependent: String::from(dependent.0),
+        dependent_version: version(dependent.1),
+        dependency: String::from(dependency.0),
+        dependency_version: version(dependency.1),
     }
 }
 
@@ -117,6 +130,7 @@ pub fn plan() -> RecordedPlan {
         lock: base().lock,
         lines: lines(),
         git: Vec::new(),
+        edges: Some(Vec::new()),
         shared: Vec::new(),
         units: vec![
             unit(

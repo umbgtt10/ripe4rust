@@ -12,7 +12,7 @@ const UNLISTED: CodeEntry = CodeEntry {
     means: "",
     remedy: "",
 };
-const ENTRIES: [(DiagnosticCode, CodeEntry); 30] = [
+const ENTRIES: [(DiagnosticCode, CodeEntry); 31] = [
     (
         DiagnosticCode::CargoDenyFailed,
         CodeEntry {
@@ -123,6 +123,13 @@ const ENTRIES: [(DiagnosticCode, CodeEntry); 30] = [
         CodeEntry {
             means: "the plan file `--plan` names is not there, or is no plan `plan` wrote",
             remedy: "write the plan with `cargo ripe4rust plan --format json > plan.json`, and run the command again",
+        },
+    ),
+    (
+        DiagnosticCode::PlanWithoutEdges,
+        CodeEntry {
+            means: "the plan was written by ripe4rust 0.1.2 or earlier, which recorded no edges of the lock: `check` cannot see a dependency re-pointed between versions the lock already held, and says so once; nothing else about the check changes",
+            remedy: "nothing stops the check; to see re-points, plan again once the unit is committed or reverted -- `cargo ripe4rust plan --format json > plan.json` -- and go on with the new plan; until then `Cargo.lock`'s diff is the only witness of one",
         },
     ),
     (
@@ -248,6 +255,7 @@ pub enum DiagnosticCode {
     PlanSchemaUnknown,
     PlanStale,
     PlanUnreadable,
+    PlanWithoutEdges,
     PolicyInvalidValue,
     PolicyUnknownKey,
     RegistryCacheOld,
@@ -265,7 +273,7 @@ pub enum DiagnosticCode {
 }
 
 impl DiagnosticCode {
-    pub const ALL: [Self; 30] = [
+    pub const ALL: [Self; 31] = [
         Self::CargoDenyFailed,
         Self::CargoDenyMissing,
         Self::CargoMetadataFailed,
@@ -282,6 +290,7 @@ impl DiagnosticCode {
         Self::PlanSchemaUnknown,
         Self::PlanStale,
         Self::PlanUnreadable,
+        Self::PlanWithoutEdges,
         Self::PolicyInvalidValue,
         Self::PolicyUnknownKey,
         Self::RegistryCacheOld,
@@ -334,6 +343,7 @@ impl DiagnosticCode {
             Self::PlanSchemaUnknown => "plan-schema-unknown",
             Self::PlanStale => "plan-stale",
             Self::PlanUnreadable => "plan-unreadable",
+            Self::PlanWithoutEdges => "plan-without-edges",
             Self::PolicyInvalidValue => "policy-invalid-value",
             Self::PolicyUnknownKey => "policy-unknown-key",
             Self::RegistryCacheOld => "registry-cache-old",
@@ -372,7 +382,7 @@ impl DiagnosticCode {
             | Self::RegistryCacheOld
             | Self::SourceUnparsed
             | Self::SourceUnscanned => Severity::Warning,
-            Self::ToolchainUnpinned => Severity::Notice,
+            Self::PlanWithoutEdges | Self::ToolchainUnpinned => Severity::Notice,
             _ => Severity::Error,
         }
     }

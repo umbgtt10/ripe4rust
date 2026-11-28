@@ -30,6 +30,7 @@ fn git_of_a_plan_and_a_workspace_reads_each_source_at_its_rev_now() {
         lock: plan.lock.clone(),
         lines: lines(),
         git: git_at("ce129c85"),
+        edges: Vec::new(),
     };
 
     // Act
@@ -47,6 +48,7 @@ fn ownership_of_a_plan_tells_the_crates_its_units_share() {
         lock: plan.lock.clone(),
         lines: lines(),
         git: Vec::new(),
+        edges: Vec::new(),
     };
 
     // Act
@@ -72,6 +74,7 @@ fn sort_of_a_breaking_unit_applied_names_it_and_leaves_its_tail_unexplained() {
             ]),
             lines: lines_with(&[(22, "0.14.0")]),
             git: Vec::new(),
+            edges: Vec::new(),
         },
     );
 
@@ -92,6 +95,7 @@ fn sort_of_a_git_unit_applied_lists_it_applied_and_leaves_no_move_unexplained() 
         lock: plan.lock.clone(),
         lines: lines(),
         git: git_at("ce129c85"),
+        edges: Vec::new(),
     };
 
     // Act
@@ -122,6 +126,7 @@ fn sort_of_a_move_no_unit_explains_leaves_it_unexplained() {
             ]),
             lines: lines(),
             git: Vec::new(),
+            edges: Vec::new(),
         },
     );
 
@@ -145,6 +150,7 @@ fn sort_of_a_requirement_edited_by_hand_is_stale_where_it_is() {
             lock: plan().lock,
             lines: lines_with(&[(21, "1.5")]),
             git: Vec::new(),
+            edges: Vec::new(),
         },
     );
 
@@ -176,6 +182,7 @@ fn sort_of_a_unit_applied_lists_it_applied_and_every_other_to_go() {
             ]),
             lines: lines(),
             git: Vec::new(),
+            edges: Vec::new(),
         },
     );
 
@@ -205,6 +212,7 @@ fn sort_of_an_edit_a_unit_writes_is_no_staleness() {
             lock: plan().lock,
             lines: lines_with(&[(9, "1.100.0")]),
             git: Vec::new(),
+            edges: Vec::new(),
         },
     );
 
@@ -232,6 +240,7 @@ fn sort_of_the_changes_no_move_explains_names_those_of_crates_the_units_share() 
         ]),
         lines: lines(),
         git: Vec::new(),
+        edges: Vec::new(),
     };
 
     // Act
@@ -263,6 +272,7 @@ fn sort_of_the_workspace_the_plan_found_lists_every_unit_to_go() {
             lock: plan().lock,
             lines: lines(),
             git: Vec::new(),
+            edges: Vec::new(),
         },
     );
 

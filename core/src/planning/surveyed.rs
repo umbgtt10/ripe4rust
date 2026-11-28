@@ -5,6 +5,7 @@
 use crate::diagnostics::diagnostic::Diagnostic;
 use crate::inputs::advisory::Advisory;
 use crate::inputs::git::git_entry::GitEntry;
+use crate::inputs::lock_edge::LockEdge;
 use crate::inputs::lock_move::LockMove;
 use crate::inputs::release::Release;
 use crate::inputs::source_scan::scan::Scan;
@@ -28,7 +29,8 @@ use alloc::vec::Vec;
 /// more than the gates reaches; the lines are where each direct
 /// dependency's requirement and each member's `rust-version` are written,
 /// and `written` every line a unit can edit with what it says; `scan` is
-/// `None` where the scan failed as a whole.
+/// `None` where the scan failed as a whole; `edges` the dependencies the lock
+/// writes with a version.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Surveyed {
     pub today: Date,
@@ -47,6 +49,7 @@ pub struct Surveyed {
     pub workspace_moves: Vec<LockMove>,
     pub source_moves: Vec<SourceMoves>,
     pub git: Vec<GitEntry>,
+    pub edges: Vec<LockEdge>,
     pub repositories: Vec<CrateRepository>,
     pub reached: Vec<(String, Vec<String>)>,
     pub scan: Option<Scan>,

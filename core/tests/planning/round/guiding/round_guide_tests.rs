@@ -23,6 +23,20 @@ fn steps_open_with_the_plan_and_close_when_every_unit_is_done() {
 }
 
 #[test]
+fn steps_say_to_name_the_re_points_a_check_reports_in_the_unit_s_commit() {
+    // Arrange & Act
+    let steps = RoundGuide.steps();
+
+    // Assert
+    assert_eq!(
+        steps.get(7).map(String::as_str),
+        Some(
+            "      - `0`: run `gates` in order. All green: commit, one commit per unit, `summary` as its subject in the workspace's own conventions, its message naming the dependencies `repointed` lists that the check before it did not, and those it no longer lists -- the unit re-pointed them, between versions the lock already held, and the gates are what judge it. One red: carry out `revert`; a compatible unit of several moves is bisected through `split` (apply, check, gates each), its green moves committed; hold the one that failed -- or the unit, if it has no split -- with `hold --because \"<the failing gate and its first error>\"`, add the pin, commit it. A breaking unit that fails becomes ask, the failure attached; so does an urgent unit, still urgent -- it is never held, as holding it would keep what it clears."
+        )
+    );
+}
+
+#[test]
 fn steps_say_what_to_do_on_each_code_check_exits_with() {
     // Arrange & Act
     let steps = RoundGuide.steps();

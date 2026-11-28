@@ -16,6 +16,7 @@ pub struct CheckDocument<'a> {
     pub transitive: Vec<MoveDocument<'a>>,
     pub differences: Vec<DifferenceDocument<'a>>,
     pub shared: &'a [String],
+    pub repointed: &'a [String],
     pub applied: &'a [String],
     pub to_go: &'a [String],
     pub diagnostics: Vec<DiagnosticDocument<'a>>,

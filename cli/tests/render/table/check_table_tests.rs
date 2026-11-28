@@ -54,6 +54,24 @@ fn text_of_a_report_not_as_planned_lists_each_difference_with_what_to_do() {
 }
 
 #[test]
+fn text_of_a_report_with_a_re_point_names_it_after_the_shared_moves() {
+    // Arrange
+    let mut report = not_as_planned();
+    report.repointed = vec![String::from(
+        "`errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the lock",
+    )];
+
+    // Act
+    let text = CheckTable.text(&report);
+
+    // Assert
+    assert!(
+        text.contains("in.\nrepointed: `errno` 0.3.14's `windows-sys` 0.61.2 -> 0.52.0, both already in the lock.\napplied: none\n"),
+        "{text}"
+    );
+}
+
+#[test]
 fn text_of_a_report_with_diagnostics_prints_them_after_it() {
     // Arrange
     let mut report = not_as_planned();

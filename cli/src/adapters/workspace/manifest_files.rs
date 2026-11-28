@@ -14,6 +14,7 @@ use crate::system::model::layout::Layout;
 use crate::system::traits::file_system::FileSystem;
 use crate::system::traits::layout_source::LayoutSource;
 use ripe4rust_core::inputs::git::git_entry::GitEntry;
+use ripe4rust_core::inputs::lock_edge::LockEdge;
 use ripe4rust_core::inputs::lock_entry::LockEntry;
 use ripe4rust_core::inputs::policy_tree::PolicyTree;
 use ripe4rust_core::inputs::port_failure::PortFailure;
@@ -81,6 +82,10 @@ impl<'a> ManifestFiles<'a> {
 }
 
 impl WorkspaceFiles for ManifestFiles<'_> {
+    fn edges(&self) -> Result<Vec<LockEdge>, PortFailure> {
+        LockReader.edges(&self.at_root(LOCK)?)
+    }
+
     fn fingerprint(&self) -> Result<String, PortFailure> {
         let layout = self.source.layout()?;
         let mut paths = vec![layout.root.join(LOCK), layout.root.join(TOOLCHAIN)];

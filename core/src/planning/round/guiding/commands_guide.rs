@@ -52,7 +52,7 @@ const COMMANDS: [Entry; 5] = [
         exits: &[
             (
                 0,
-                "as planned: the units applied and those still to go are listed, and a move of a crate the units share, of those the unit moves, that came out otherwise is reported, no difference",
+                "as planned: the units applied and those still to go are listed, a move of a crate the units share, of those the unit moves, that came out otherwise is reported, and so is every dependency re-pointed between versions the lock already held -- told, never a difference",
             ),
             (
                 1,

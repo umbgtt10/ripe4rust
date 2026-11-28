@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod checking;
+pub mod edge_changes_tests;
 pub mod git_changes_tests;
 pub mod guiding;
 pub mod holding;

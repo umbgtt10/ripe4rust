@@ -17,8 +17,9 @@ Unnoticed, each of these ends in a commit that is not what it says.
 
 The plan records the workspace it was made from: a fingerprint of
 `Cargo.lock`, every manifest and `rust-toolchain.toml`, the lock's packages
-and versions, and every line a unit's `apply` can edit -- each requirement,
-each `rust-version`, the channel -- with what it said. `cargo ripe4rust check <unit> --plan <file>` reads the
+and versions, the dependencies the lock writes with a version
+(ADR-ARepointIsToldNeverJudged), and every line a unit's `apply` can edit --
+each requirement, each `rust-version`, the channel -- with what it said. `cargo ripe4rust check <unit> --plan <file>` reads the
 workspace again and sorts every difference into the units of the plan that
 explain it:
 

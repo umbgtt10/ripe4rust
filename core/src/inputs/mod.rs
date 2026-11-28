@@ -4,6 +4,7 @@
 
 pub mod advisory;
 pub mod git;
+pub mod lock_edge;
 pub mod lock_entry;
 pub mod lock_move;
 pub mod locked_package;
