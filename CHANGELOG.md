@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   not 776, crap4rust measures 721 functions, not 833, and the xtask runs no test of its own.
 - `xtask` inherits the workspace's `rust-version`, 1.85, again: the let-chain that needed 1.88 went with the
   boundary gate, and serge4rust builds on 1.85.
+- The compiler the gates pass with, pinned in `rust-toolchain.toml`, moves from 1.99.1 to 1.100.1, the unit
+  ripe4rust's own plan called ripe. `rust-version`, the minimum a user's toolchain needs, stays 1.85.
 
 ## [0.1.4] — 2026-11-28
 
