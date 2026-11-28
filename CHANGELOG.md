@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-11-28
+
+What the rounds after 0.1.2 found, applying plans in three workspaces: a plan made later the same day read the
+morning's cached answers and missed a release published since, and `check` said "as planned" of units that
+re-pointed dependencies between versions the lock already held, naming none of it.
+
 ### Added
 - `cargo ripe4rust plan --refresh`: online, every answer the plan reads -- the crates' index files, the API's answers
   and the Rust distribution's list of channel manifests -- is fetched again and the day's cached copy overwritten.

@@ -7,8 +7,10 @@ renderers, the adapters with `plan` end to end, the round's commands, `check`,
 as 0.1.0. The first dry round across real workspaces ran with it, and 0.1.1
 fixes what it found; the first round that applied a plan found two flaws,
 units sharing a crate and a crate its dependents hold back, which 0.1.2
-fixes. The decisions that were not obvious each have an ADR under
-`docs/ADRs/`.
+fixes; the rounds after it found two more, a plan blind to a release
+published since the day's first and dependencies re-pointed between versions
+the lock already held, which 0.1.3 fixes. The decisions that were not
+obvious each have an ADR under `docs/ADRs/`.
 
 ## The question
 
@@ -1249,7 +1251,7 @@ document's keys and holds each to a field of the guide.
 {
   "schema": 1,
   "command": "guide",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "round": ["1. Run `cargo ripe4rust plan --format json > plan.json`.", "..."],
   "commands": [
     { "usage": "cargo ripe4rust check <unit> --plan <file> [--format table|json]",
